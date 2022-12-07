@@ -2,6 +2,7 @@ import React from 'react';
 import {useState,useEffect} from 'react';
 import axios from 'axios';
 
+import {RunningServer} from './runningserver.js';
 
 function MonitorTableAll(prop){
     const[MTableCluster,setMTableCluster] = useState([]);
@@ -10,6 +11,7 @@ function MonitorTableAll(prop){
     const[sharedClustername,setsharedClustername]= useState([]);
     const[MTablePV,setMTablePV] = useState([]);
     const[MTableSC,setMTableSC] = useState([]);
+    const[MTableDeploy,setMTableDeploy] = useState([]);
 
     const [podInfoNamespace,setPodInfoNamespace]=useState('default');
     const [podInfoNamespaceList,setPodInfoNamespaceList]=useState(['']);
@@ -22,7 +24,6 @@ function MonitorTableAll(prop){
         monitor_panel_loadCluster();
         // eslint-disable-next-line
     },[]);
-    console.log('render');
 
     useEffect(() =>{
         if(sharedClustername[0]!==undefined){
@@ -35,6 +36,7 @@ function MonitorTableAll(prop){
             monitor_panel_loadPod();
             monitor_panel_loadPV();
             monitor_panel_loadSC();
+            monitor_panel_loadDeploy();
         }
         // eslint-disable-next-line
     },[sharedClustername]);
@@ -205,6 +207,32 @@ function MonitorTableAll(prop){
     function monitor_panel_clearSC(){
         setMTableSC([]);
     }
+
+    function monitor_panel_loadDeploy(){
+        const data={
+            "cluster":sharedClustername,
+            "namespace":podInfoNamespace
+        };
+        const datajson=JSON.stringify(data);
+        const config={"Content-Type": 'application/json'};
+        axios.post(process.env.REACT_APP_API+'/api/getStatusDeploy',datajson,config).then(response => {
+            var data=response['data'];
+            var dataKey=Object.keys(data);
+            update_list=[];
+            for(var i=0;i<dataKey.length;i++){
+                 update_list.push({
+                                    Deployname:data[dataKey[i]][0],
+                                    Collision:data[dataKey[i]][1],
+                                    AvailableReplicas:data[dataKey[i]][2],
+                                    ReadyReplicas:data[dataKey[i]][3],
+                                    Replicas:data[dataKey[i]][4],
+                 });
+            }
+            setMTableDeploy(update_list);
+        }).catch(err => {
+        })
+    }
+
     return(
         <>
             <h3> Cluster Info </h3>
@@ -238,6 +266,40 @@ function MonitorTableAll(prop){
                     </table>
                 </div>
             </div>
+            <RunningServer podinfo={MTablePod} clustername={sharedClustername} />
+
+            <h3> Deployment </h3>
+            <div className="MonitorTableMainWrapper">
+                <div className="MonitorTableMainContent">
+                    <table className="tableStyle">
+                        <thead>
+                            <tr>
+                                <th className="thStyle">Deployment Name</th>
+                                <th className="thStyle">Collision</th>
+                                <th className="thStyle">Available Replicas</th>
+                                <th className="thStyle">Ready Replicas</th>
+                                <th className="thStyle">Replicas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {MTableDeploy.map((user,index) => {
+                                const {Deployname,Collision,AvailableReplicas,ReadyReplicas,Replicas}= user;
+                                return(
+                                    <tr key={index}>
+                                        <td className="tdStyle">{Deployname}</td>
+                                        <td className="tdStyle">{Collision}</td>
+                                        <td className="tdStyle">{AvailableReplicas}</td>
+                                        <td className="tdStyle">{ReadyReplicas}</td>
+                                        <td className="tdStyle">{Replicas}</td>
+                                    </tr>
+                                );
+                            })
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <h3> Node IP({sharedClustername})  </h3>
             <div className="MonitorTableMainWrapper">
                 <div className="MonitorTableMainContent">

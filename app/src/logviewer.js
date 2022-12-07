@@ -131,38 +131,40 @@ function LogViewer(props){
 
     return (
 		<>
-		    <h3>logviewer</h3>
-		    <div id='logviewerMain'>
-                <form id='logviewerForm'>
-                    cluster<br />
-                        <select {...register('clusterName',{required:true})} onChange={updateNamespace}>
-                                    <option value="">---select---</option>
-                                    {listCluster.map((item) => (
-                                        <option value={item} key={item}>{item}</option>
-                                    ))}
-                        </select><br />
+		    <div id='logmain'>
+                <h3>logviewer</h3>
+                <div id='logviewerMain'>
+                    <form id='logviewerForm'>
+                        cluster<br />
+                            <select {...register('clusterName',{required:true})} onChange={updateNamespace}>
+                                        <option value="">---select---</option>
+                                        {listCluster.map((item) => (
+                                            <option value={item} key={item}>{item}</option>
+                                        ))}
+                            </select><br />
 
-                    namespace<br />
-                        <select {...register('namespaceName',{required:true})} onChange={updatePod}>
-                                    <option value="">---select---</option>
-                                    {listNamespace.map((item) => (
-                                        <option value={item} key={item}>{item}</option>
-                                    ))}
-                        </select><br />
+                        namespace<br />
+                            <select {...register('namespaceName',{required:true})} onChange={updatePod}>
+                                        <option value="">---select---</option>
+                                        {listNamespace.map((item) => (
+                                            <option value={item} key={item}>{item}</option>
+                                        ))}
+                            </select><br />
 
-                    pod<br />
-                        <select {...register('podName',{required:true})} onChange={updateTextarea}>
-                                    <option value="">---select---</option>
-                                    {listPod.map((item) => (
-                                        <option value={item} key={item}>{item}</option>
-                                    ))}
-                        </select><br />
-                </form>
-                <div id="divlogviewerButton">
-                    <button onClick={buttonAction}>{buttonText}</button>
+                        pod<br />
+                            <select {...register('podName',{required:true})} onChange={updateTextarea}>
+                                        <option value="">---select---</option>
+                                        {listPod.map((item) => (
+                                            <option value={item} key={item}>{item}</option>
+                                        ))}
+                            </select><br />
+                    </form>
+                    <div id="divlogviewerButton">
+                        <button onClick={buttonAction}>{buttonText}</button>
+                    </div>
+                    <textarea id="podLog" ref={textAreaRef}  disabled={true} value={podLog} />
                 </div>
-                <textarea id="podLog" ref={textAreaRef}  disabled={true} value={podLog} />
-		    </div>
+            </div>
 		</>
     );
 }
