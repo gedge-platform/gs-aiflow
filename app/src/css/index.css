@@ -5,7 +5,7 @@
 /* sidemenu.js */
 #sidemenu{
     width: 300px;
-    height: 100vh;
+    height: 100%;
     background-color:#5e5555
 }
 
@@ -30,9 +30,10 @@
 }
 
 #body{
-    border: 1px solid;
+
     display: flex;
     width: 100%;
+    overflow-y:hidden;
 }
 #body_main{
     width: 100%;
@@ -161,14 +162,19 @@
     width:100%;
     height:100%;
     font-size:2em;
-    overflow-y: auto;
+    overflow-y: hidden;
 }
 #createServerContent #cSC2 select{
     width:100%;
     font-size:2em;
-    overflow-y:auto;
+    overflow-y: hidden;
 }
 
+
+/* delete */
+#deletemain{
+    height:100vh;
+}
 #deleteDeploymentMain{
     border: 1px solid;
     border-radius: 10px;
@@ -176,7 +182,6 @@
 
 #deleteDeploymentContent{
     display:flex;
-
 }
 
 #deleteDeploymentContent label{
@@ -204,6 +209,9 @@
 }
 
 /* enroll.js */
+#enroll_main{
+    height:100vh;
+}
 #enrollClusterMain{
     background: #eeeeee;
     padding:10px;
@@ -227,6 +235,9 @@
 }
 
 /* logviewer */
+#logmain{
+    height:100vh
+}
 #divlogviewerButton{
     text-align:right;
 }
@@ -263,6 +274,8 @@
     height:100px;
 }
 
-#react-flow__panel react-flow__attribution bottom right{
-    display:none;
+#flowchart{
+    padding: 10px;
+    height:20rem;
+    pointer-events: none;
 }
