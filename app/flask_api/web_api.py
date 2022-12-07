@@ -110,6 +110,16 @@ def getPodLog():
 		result=request.form
 		return monitor_impl.getPodLog(result)
 
+@app.route('/api/getServerListDB/<string:cluster>',methods=['GET'])
+def getServerListDB(cluster):
+	return monitor_impl.getServerListDB(cluster)
+
+@app.route('/api/getStatusDeploy',methods=['POST'])
+def getStatusDeploy():
+	if request.method=='POST':
+		result=request.form
+		return monitor_impl.getStatusDeploy(result)
+
 @app.route('/api/testAPI')
 def test():
 	return monitor_impl.testAPI()
