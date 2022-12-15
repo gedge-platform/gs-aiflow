@@ -294,12 +294,12 @@ def createServer(result):
         if clusterName==[None] or serverName==[None]:
             return str("None")
 
-        # mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-        #                                 user='smarteye', password='softonnet',
-        #                                 )
-        # cursor = mycon.cursor()
-        # c=cursor.execute()
-
+        mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
+                                        user='smarteye', password='softonnet',
+                                        )
+        cursor = mycon.cursor()
+        c=cursor.execute(f'insert into runningserver(cluster_name,server_name) values(\"{clusterName}\",\"{serverName}\")')
+        mycon.commit()
 
         aApiClient = apiClient(clusterName)
         serverDir=os.path.join('../yamldir',serverName)
@@ -388,3 +388,43 @@ def getPodLog(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_log(name=pod,namespace=namespace)
     return str(response)
+
+def getServerListDB(cluster):
+    mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
+                                    user='smarteye', password='softonnet',
+                                    )
+    cursor = mycon.cursor()
+    c = cursor.execute(f'select server_name from runningserver where cluster_name=\'{cluster}\'')
+    d = dict()
+    for n,i in enumerate(cursor):
+        d[str(n)]=i[0]
+    ret=jsonify(d)
+
+    return ret
+
+def getStatusDeploy(result):
+    result = result.to_dict(flat=False)
+    result = json.loads(list(result.keys())[0])
+    cluster = result['cluster'][0]
+    namespace = result['namespace']
+
+    aApiClient = apiClient(cluster)
+    v1 = client.AppsV1Api(aApiClient)
+    response = v1.list_namespaced_deployment(namespace)
+    d = dict()
+    for n, i in enumerate(response.items):
+        data = []
+        data.append(i.metadata.name)
+        if(i.status.collision_count == ''):
+            data.append('0')
+        else:
+            data.append(i.status.collision_count)
+        data.append(i.status.available_replicas)
+        data.append(i.status.ready_replicas)
+        data.append(i.status.replicas)
+
+        d[str(n)] = data
+
+    ret = jsonify(d)
+
+    return ret

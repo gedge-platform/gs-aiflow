@@ -22,7 +22,8 @@ function Delete(){
 
     useEffect(()=>{
         getlistCluster();
-    })
+        // eslint-disable-next-line
+    },[])
     var update_list;
 
     function refreshPage(){
@@ -75,29 +76,31 @@ function Delete(){
     }
     return(
         <>
-            <h3 className='h3title'>delete deployment</h3>
-            <div id="deleteDeploymentMain">
-                <form onSubmit={handleSubmitDEL(deleteDeploymentSubmit)}>
-                    <div id="deleteDeploymentContent">
-                        <div id="dDC1">
-                            <label className='label13'>cluster</label>
-                            <select {...registerDEL('clusterName1',{required:true})} onChange={viewDN} multiple>
-                                                {listCluster.map((item) => (
-                                                    <option value={item} key={item}>{item}</option>
-                                                ))}
-                            </select><br />
+            <div id='deletemain'>
+                <h3 className='h3title'>delete deployment</h3>
+                <div id="deleteDeploymentMain">
+                    <form onSubmit={handleSubmitDEL(deleteDeploymentSubmit)}>
+                        <div id="deleteDeploymentContent">
+                            <div id="dDC1">
+                                <label className='label13'>cluster</label>
+                                <select {...registerDEL('clusterName1',{required:true})} onChange={viewDN} multiple>
+                                                    {listCluster.map((item) => (
+                                                        <option value={item} key={item}>{item}</option>
+                                                    ))}
+                                </select><br />
+                            </div>
+                            <div id="dDC2">
+                                <label className='label13'>name,namespaces</label>
+                                <select {...registerDEL('nameNamespace',{required:true})} multiple>
+                                    {listDeployment1.map((item) => (
+                                        <option className='formErrors' value={item} key={item}>{item}</option>
+                                    ))}
+                                </select><br />
+                            </div>
+                            <button disabled={isSubmittingDEL} type='submit'>삭제</button>
                         </div>
-                        <div id="dDC2">
-                            <label className='label13'>name,namespaces</label>
-                            <select {...registerDEL('nameNamespace',{required:true})} multiple>
-                                {listDeployment1.map((item) => (
-                                    <option className='formErrors' value={item} key={item}>{item}</option>
-                                ))}
-                            </select><br />
-                        </div>
-                        <button disabled={isSubmittingDEL} type='submit'>삭제</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </>
     )

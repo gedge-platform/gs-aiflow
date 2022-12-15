@@ -3,21 +3,20 @@ import {useState,useEffect} from 'react';
 import {useForm} from 'react-hook-form';
 import axios from 'axios';
 
-import {NivoCreateFlow} from './nivoCreateFlow.js';
-import {CreateFlow} from './createFlow.js';
+import {Flowchart} from './flowchart.js';
 
 function Create(){
-    console.log('render');
     const [listCluster,setListCluster] = useState(['']);
     const [listServer,setListServer] = useState(['']);
     const [listDeployment,setListDeployment] = useState(['']);
     const [listDeployment1,setListDeployment1] = useState(['']);
-    const { register,handleSubmit,formState: {errors,isSubmitting}} = useForm();
+    const { register,getValues,handleSubmit,formState: {errors,isSubmitting}} = useForm();
     const { register: registerDEL,
-
             handleSubmit: handleSubmitDEL,
             formState:{
                         isSubmitting:isSubmittingDEL}}= useForm();
+
+    const [propsServer,setPropsServer] = useState('test');
 
     const createServerSubmit = (e) => {
         createServer(e);
@@ -28,12 +27,18 @@ function Create(){
         refreshPage();
     }
 
+    const selectServer = (e) =>{
+        setPropsServer(e.target.label);
+    }
+
     useEffect(()=>{
         getlistCluster();
         getlistServer();
         // eslint-disable-next-line
     },[]);
 
+    useEffect(()=>{
+    },[propsServer])
 
     function refreshPage(){
         window.location.reload(false);
@@ -150,7 +155,7 @@ function Create(){
                                 <div>
                                     <label className='label13'>server</label>
                                 </div>
-                                <select {...register('serverName',{required:true})} onChange={viewdir} multiple>
+                                <select {...register('serverName',{required:true})} onChange={viewdir} multiple onClick={selectServer}>
                                         {listServer.map((item) => (
                                             <option value={item} key={item}>{item}</option>
                                         ))}
@@ -187,6 +192,7 @@ function Create(){
                     </form>
                 </div>
             </div>
+            <Flowchart value={propsServer} />
         </>
     )
 }
