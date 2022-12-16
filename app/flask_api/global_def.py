@@ -1,6 +1,6 @@
-class Namespace(object):
-    pass
 
-app_global = Namespace()
+from flask_api import Namespace
 
-app_global.mycon=None
+g_var = Namespace()
+
+g_var.db = None
