@@ -1,17 +1,17 @@
-import flask
 import yaml
-from flask import jsonify, request,make_response
-import flask_restful
-from flask_restful import reqparse, inputs
 import mysql.connector
-import global_def
+import requests
 import json
 import os
+from flask import jsonify, request, make_response
+from flask_restful import reqparse, inputs
 
 import kubernetes.client
-from kubernetes import client, config,utils
-import requests
+from kubernetes import client, config, utils
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+from flask_api import global_def
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 def dummy():
@@ -109,7 +109,7 @@ def getStorageclass(clustername=None):
         data.append(i.metadata.creation_timestamp)
 
         d[str(n)]=data
-    ret=jsonify(d)
+    ret = jsonify(d)
     return ret
 
 def getPV(clustername=None):

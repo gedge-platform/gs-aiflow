@@ -1,15 +1,17 @@
+import os
+import traceback
+import time
+import ssl
 import flask_restful
 import flask
 from flask import request
 from flask_sockets import Sockets
-from flask_restful import reqparse
 from flask_cors import CORS
-import os
-import traceback
-import time
-import monitor_impl
 
-import ssl
+#from flask_restful import reqparse
+
+from flask_api import monitor_impl
+
 
 app = flask.Flask(import_name='client_web',static_folder=os.path.join('../web_root','static'),
 				  static_url_path='',
@@ -22,6 +24,11 @@ sockets = Sockets(app)
 
 api = flask_restful.Api(app)
 
+
+
+@app.route('/')
+def index():
+	return "HELLO, AIEYEFLOW"
 
 
 @app.route('/api/getListNodeAll/<string:clustername>')
