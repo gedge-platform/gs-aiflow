@@ -10,18 +10,25 @@ import kubernetes.client
 from kubernetes import client, config, utils
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from flask_api import global_def
+from flask_api.global_def import g_var
+from flask_api.database import get_db_connection
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-def dummy():
 
+def getDBConnection():
+    if not g_var.mycon:
+        g_var.mycon = mysql.connector.conn
+
+
+def dummy():
     try:
         a=4
         a=a+'1'
     except:
         return make_response("dummyerror",200)
     return str('dummy')
+
 
 def testAPI():
     response='empty'
@@ -72,11 +79,8 @@ def testAPI():
     return str(response)
 
 
-
 def apiClient(clustername):
-    mycon=mysql.connector.connect(host='localhost', database='aieyeflow',
-                                                          user='smarteye', password='softonnet',
-                                                          )
+    mycon = get_db_connection()
 
     cursor=mycon.cursor()
     c = cursor.execute(f'select cluster_ip,port,token from listcluster where cluster_name="{clustername}"')
@@ -91,6 +95,7 @@ def apiClient(clustername):
     aConfiguration.api_key = {"authorization": "Bearer " + aToken}
     aApiClient = client.ApiClient(aConfiguration)
     return aApiClient
+
 
 def getStorageclass(clustername=None):
     aApiClient = apiClient(clustername)
@@ -112,6 +117,7 @@ def getStorageclass(clustername=None):
     ret = jsonify(d)
     return ret
 
+
 def getPV(clustername=None):
     aApiClient = apiClient(clustername)
     v1 = client.CoreV1Api(aApiClient)
@@ -124,7 +130,7 @@ def getPV(clustername=None):
         data.append(str(i.spec.access_modes))
         data.append(str(i.spec.capacity))
         data.append(i.spec.volume_mode)
-        data.append(i.spec.local.path)
+        data.append(i.spec.nfs.path)
         data.append(i.status.phase)
         data.append(i.metadata.creation_timestamp)
         data.append(i.spec.claim_ref.name)
@@ -134,6 +140,7 @@ def getPV(clustername=None):
         d[str(n)]=data
     ret=jsonify(d)
     return ret
+
 
 def getListNodeAll(clustername=None):
     aApiClient=apiClient(clustername)
@@ -191,6 +198,7 @@ def getListNamespacePod(result):
     ret = jsonify(d)
     return ret
 
+
 def getPodNamespaceList(clustername=None):
     aApiClient = apiClient(clustername)
     v1 = client.CoreV1Api(aApiClient)
@@ -205,22 +213,20 @@ def getPodNamespaceList(clustername=None):
 
 
 def getListCluster(clustername=None):
-    mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                  user='smarteye', password='softonnet',
-                                  )
+    mycon = get_db_connection()
 
-    cursor=mycon.cursor()
+    cursor = mycon.cursor()
+    c = cursor.execute('select * from listcluster')
 
-    c=cursor.execute('select * from listcluster')
-
-    d=dict()
+    d = dict()
     for i in cursor:
-        data=[i[1],i[2],i[3],"False" if i[4]==None else "True"]
-        d[i[0]]=data
-    ret=jsonify(d)
+        data = [i[1],i[2],i[3],"False" if i[4]==None else "True"]
+        d[i[0]] = data
+    ret = jsonify(d)
     mycon.commit()
 
     return ret
+
 
 def setMonitor(result):
     try:
@@ -231,22 +237,22 @@ def setMonitor(result):
         port=int(result["Port"])
         token=str(result["Token"])
 
-        mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                user='smarteye', password='softonnet',
-                                )
+        mycon = get_db_connection()
+
         cursor=mycon.cursor()
         cursor.execute(f'insert into listcluster(cluster_name,cluster_ip,port,token) '
                          f'values(\"{name}\",\"{host}\",\"{port}\",\"{token}\")')
         mycon.commit()
-    except:
+    except Exception as e:
+        print(e)
         return str('fail')
     return str('success')
 
+
 def abstractMonitor(clusterName):
     try:
-        mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                        user='smarteye', password='softonnet',
-                                        )
+        mycon = get_db_connection()
+
         cursor=mycon.cursor()
         c=cursor.execute(f'delete from listcluster where cluster_name=\"{clusterName}\"');
         mycon.commit()
@@ -254,12 +260,10 @@ def abstractMonitor(clusterName):
         return str('fail')
     return str('success')
 
+
 def createDict(result):
     result=result.to_dict(flat=False)
     result=json.loads(list(result.keys())[0])
-
-
-
     # aApiClient = apiClient('cluster_test1')
     # config.list_kube_config_contexts()
 
@@ -284,6 +288,7 @@ def deletePod(podName):
     response=v1.delete_namespaced_pod(podName,'default')
     return str(response)
 
+
 def createServer(result):
     try:
         result = result.to_dict(flat=False)
@@ -294,9 +299,8 @@ def createServer(result):
         if clusterName==[None] or serverName==[None]:
             return str("None")
 
-        mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                        user='smarteye', password='softonnet',
-                                        )
+        mycon = get_db_connection()
+
         cursor = mycon.cursor()
         c=cursor.execute(f'insert into runningserver(cluster_name,server_name) values(\"{clusterName}\",\"{serverName}\")')
         mycon.commit()
@@ -308,9 +312,11 @@ def createServer(result):
 
         response=utils.create_from_directory(aApiClient,serverDir,verbose=True)
     except Exception as e:
+        print(e)
         return str('fail')
 
     return str('success')
+
 
 def deleteDeployment(result):
     result = result.to_dict(flat=False)
@@ -324,6 +330,7 @@ def deleteDeployment(result):
     response=v1.delete_namespaced_deployment(name=serverName,namespace=serverNamespace)
 
     return str('success')
+
 
 def getListDeploymentAllNamespaecs(clusterName):
     aApiClient=apiClient(clusterName)
@@ -343,39 +350,40 @@ def getListDeploymentAllNamespaecs(clusterName):
     return ret
 
 
-
 def loginCheck(result):
     result=result.to_dict(flat=False)
     result= json.loads(list(result.keys())[0])
     id=result['ID']
     pw=result['Password']
 
-    mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                    user='smarteye', password='softonnet',
-                                    )
-    cursor = mycon.cursor()
+    mycon = get_db_connection()
 
+    cursor = mycon.cursor()
     cursor.execute(f'select login_id from users where login_id=\"{id}\" and login_pass=\"{pw}\"')
     sqlresult=cursor.fetchall()
     if len(sqlresult) ==1:
         return str('success')
     return str('fail')
 
+
 def getserverlist():
-    serverList=os.listdir('../yamldir')
+    print(os.getcwd())
+    serverList=os.listdir('./yamldir')
     d=dict()
     d['serverList']=sorted(serverList)
     ret=jsonify(d)
 
     return ret
 
+
 def getListCreateDeployment(server):
-    deploymentList=os.listdir('../yamldir/'+server)
+    deploymentList=os.listdir('./yamldir/'+server)
     d=dict()
     d['deployList']=deploymentList
     ret=jsonify(d)
 
     return ret
+
 
 def getPodLog(result):
     result = result.to_dict(flat=False)
@@ -389,10 +397,10 @@ def getPodLog(result):
     response=v1.read_namespaced_pod_log(name=pod,namespace=namespace)
     return str(response)
 
+
 def getServerListDB(cluster):
-    mycon = mysql.connector.connect(host='localhost', database='aieyeflow',
-                                    user='smarteye', password='softonnet',
-                                    )
+    mycon = get_db_connection()
+
     cursor = mycon.cursor()
     c = cursor.execute(f'select server_name from runningserver where cluster_name=\'{cluster}\'')
     d = dict()
@@ -401,6 +409,7 @@ def getServerListDB(cluster):
     ret=jsonify(d)
 
     return ret
+
 
 def getStatusDeploy(result):
     result = result.to_dict(flat=False)
