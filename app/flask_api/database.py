@@ -1,6 +1,8 @@
 import os
 import mysql.connector
 
+from flask_api.global_def import g_var
+
 
 def create_tables(dbcon=None):
     mycon = mysql.connector.connect(
@@ -25,3 +27,14 @@ def create_tables(dbcon=None):
     mycon.commit()
 
     return print("SUCCESS CREATE DATABASE")
+
+
+def get_db_connection():
+    if not g_var.mycon:
+        g_var.mycon = mysql.connector.connect(
+            host='localhost',
+            database='aieyeflow',
+            user='admin', 
+            password='admin',
+        )
+    return g_var.mycon
