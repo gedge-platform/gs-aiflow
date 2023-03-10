@@ -1,0 +1,11 @@
+FROM python:3.8-slim
+WORKDIR /flask
+COPY flask_api ./flask_api
+COPY runtime_data ./runtime_data
+COPY requirements.txt .
+COPY bin ./bin
+COPY yamldir ./yamldir
+EXPOSE 5500
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+CMD ["bin/server"]

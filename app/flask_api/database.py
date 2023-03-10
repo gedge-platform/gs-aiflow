@@ -1,14 +1,19 @@
 import os
 import mysql.connector
-
 from flask_api.global_def import g_var
 
 
+dbHost = os.getenv('DB_HOST', 'localhost')
+dbPort = os.getenv('DB_PORT', '3306')
+dbUser = os.getenv('DB_USER', 'admin')
+dbPass = os.getenv('DB_PASS', 'admin')
+
 def create_tables(dbcon=None):
     mycon = mysql.connector.connect(
-        host='localhost',
-        user='admin',
-        password='admin',
+        host=dbHost,
+        port=dbPort,
+        user=dbUser,
+        password=dbPass,
     )
 
     cursor = mycon.cursor()
@@ -32,9 +37,10 @@ def create_tables(dbcon=None):
 def get_db_connection():
     if not g_var.mycon:
         g_var.mycon = mysql.connector.connect(
-            host='localhost',
-            database='aieyeflow',
-            user='admin', 
-            password='admin',
+        host=dbHost,
+        port=dbPort,
+        user=dbUser,
+        database='aieyeflow',
+        password=dbPass,
         )
     return g_var.mycon
