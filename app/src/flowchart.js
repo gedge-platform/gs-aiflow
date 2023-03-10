@@ -10,7 +10,9 @@ function Flowchart(props){
     const [timeout_id,setTimeout_id] = useState('');
 
     const getData= async (name)=>{
-        const file=await require('./yamldirexplain/'+name+'.json')
+//        const file=await require('./yamldirexplain/'+name+'.json')
+
+        const file=await require('./yamldirexplain/sample_service1.json')
         const fileschema=createSchema(file);
         setSchema(fileschema);
     }

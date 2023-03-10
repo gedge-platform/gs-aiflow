@@ -37,3 +37,23 @@ $ npm install axios@^1.1.3
 $ npm install beautiful-react-diagrams@^0.5.1
 $ npm install react-hook-form@^7.39.2
 ```        
+
+## Make Docker image
+### React
+```shell
+$ sudo docker build -t react .
+```
+### Flask
+```shell
+$ sudo docker build -t flask -f DockerfilePython .
+```
+
+## Run Docker Container
+### React
+```shell
+$ sudo docker run -d -p 3000:3000 --name react_container react
+```
+### Flask
+```shell
+$ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e DB_PORT={DB port} -e DB_USER={DB user} -e DB_PASS={DB pass} flask
+```
