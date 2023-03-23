@@ -3,6 +3,7 @@ import mysql.connector
 import requests
 import json
 import os
+import yaml
 from flask import jsonify, request, make_response
 from flask_restful import reqparse, inputs
 
@@ -437,3 +438,11 @@ def getStatusDeploy(result):
     ret = jsonify(d)
 
     return ret
+
+def parseJsonToYaml(data):
+    kind = data['kind']
+    str = ''
+    if kind == 'Deployment':
+        str = yaml.dump(data,default_flow_style=False)
+
+    return str

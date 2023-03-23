@@ -13,6 +13,7 @@ function Sidemenu(props) {
             <Link to='/create'><h1>디플로이먼트 생성</h1></Link>
             <Link to='/delete'><h1>디플로이먼트 삭제</h1></Link>
             <Link to='/logviewer'><h1>파드 로그</h1></Link>
+            <Link to='/service_define'><h1>지능형 서비스 정의</h1></Link>
         </div>
     </>
     );

@@ -31,6 +31,15 @@ def index():
 	return "HELLO, AIEYEFLOW"
 
 
+@app.route('/api/makeData', methods=['POST'])
+def makeData():
+	if request.method=='POST':
+		result=request.json
+		return monitor_impl.parseJsonToYaml(result)
+	return "erwer"
+
+
+
 @app.route('/api/getListNodeAll/<string:clustername>')
 def getListNodeAll(clustername=None):
 	return monitor_impl.getListNodeAll(clustername)
@@ -137,6 +146,8 @@ def dummy():
 		result=request.form
 		return monitor_impl.dummy()
 	return monitor_impl.dummy()
+
+
 
 
 if __name__=="__main__":

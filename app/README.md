@@ -51,9 +51,9 @@ $ sudo docker build -t flask -f DockerfilePython .
 ## Run Docker Container
 ### React
 ```shell
-$ sudo docker run -d -p 3000:3000 --name react_container react
+$ sudo docker run -d -p 3000:3000 --name react_container react:버전
 ```
 ### Flask
 ```shell
-$ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e DB_PORT={DB port} -e DB_USER={DB user} -e DB_PASS={DB pass} flask
+$ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e DB_PORT={DB port} -e DB_USER={DB user} -e DB_PASS={DB pass} flask:버전
 ```

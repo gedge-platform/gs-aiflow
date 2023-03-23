@@ -33,18 +33,34 @@
 
     display: flex;
     width: 100%;
+    height: 100%;
     overflow-y:hidden;
 }
 #body_main{
     width: 100%;
+    overflow-y: auto;
 }
 #monitor_main{
     width:100%;
 }
-
-#side{
-
+#html{
+    width: 100%;
+    height: 100%;
 }
+
+html,body{
+    height: 100%;
+}
+
+#root{
+    height: 100%;
+}
+
+#main_wrap{
+    height: 100%;
+    overflow-y:hidden;
+}
+
 #image_aieyeflow{
     width:280px;
 
@@ -198,6 +214,11 @@
     flex:1;
 }
 
+#react_flow{
+    display:flex;
+    flex:1;
+}
+
 #deleteDeploymentContent select{
     width:100%;
     font-size:2em;
@@ -242,6 +263,10 @@
     text-align:right;
 }
 
+#reactflow_wrapper{
+    width: 100%;
+    height: 100%;
+}
 /* every */
 .formErrors{
     white-space:pre-wrap;
@@ -279,3 +304,22 @@
     height:20rem;
     pointer-events: none;
 }
+
+#newflowchart{
+    padding: 10px;
+    height:20rem;
+}
+
+#node_info_wrapper{
+    width: 100%;
+}
+
+#unchanged_textarea{
+    resize: none;
+    width: 100%;
+}
+
+path {
+    fill: none;
+    stroke: black;
+  }
