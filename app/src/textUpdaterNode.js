@@ -3,7 +3,7 @@ import { Handle, Position } from 'reactflow';
 
 const handleStyle = { left: 10 };
 
-function TextUpdaterNode({ data, isConnectable }) {
+function TextUpdaterNode({ id, data, isConnectable }) {
   const statPrefix = "success-btn--"
   const statPostfix = "_layout"
   const [stat, setStat] = useState("waiting")
@@ -17,8 +17,8 @@ function TextUpdaterNode({ data, isConnectable }) {
     if(status == 'pending'){
         setStat("pending")
     }
-    else if(status == 'success'){
-        setStat("success")
+    else if(status == 'Succeeded'){
+        setStat("Succeeded")
     }
     else if(status == 'failed'){
         setStat("failed")
@@ -31,8 +31,8 @@ function TextUpdaterNode({ data, isConnectable }) {
     <div className="text-updater-node">
       {/* <Handle type="target" position={Position.Top} isConnectable={isConnectable} /> */}
       <div>
-        <label htmlFor="text">Deployment</label>
-        <label htmlFor='text'>{data.label}</label>
+        <label htmlFor="text">{data.type}</label>
+        <label htmlFor='text'>{id}</label>
         {/* <input id="text" name="text" onChange={onChange} className="nodrag" /> */}
 
       </div>

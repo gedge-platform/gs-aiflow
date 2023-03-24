@@ -11,6 +11,7 @@ import ReactFlow, {
     Connection,
     PanOnScrollMode,
 } from 'reactflow';
+import { useQuery} from 'react-query';
 
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -18,7 +19,7 @@ import Sidebar from './service_define_sidebar';
 import NodeInfo from './service_define_node_info';
 import TextUpdaterNode from './textUpdaterNode';
 import './css/textUpdaterNode.scss'
-
+import axios from 'axios';
 const nodeTypes = { textUpdater: TextUpdaterNode };
 const rfStyle = {
     backgroundColor: '#B8CEFF',
@@ -32,6 +33,7 @@ const initialNodes = [
             y: 0
         },
         data: {
+            type:'deployment',
             label: '라벨1',
             origin:'22',
             status:'pending',
@@ -47,8 +49,10 @@ const initialNodes = [
         },
         type:'textUpdater',
         data: {
+            type:'service',
             label: '라벨2',
             status:'success',
+            yaml:"werwerqweqw,l,v;dkfopwekopqewqe",
         }
     }, {
         id: '3',
@@ -58,8 +62,10 @@ const initialNodes = [
         },
         type:'textUpdater',
         data: {
+            type:'job',
             label: '라벨3',
             status:'failed',
+            yaml:"werwerqweqw,l,v;dkfopwekopqewqeaskq x;pxlxl,x,xdkl;papq0",
         }
     }, {
         id: '4',
@@ -69,8 +75,10 @@ const initialNodes = [
         },
         type:'textUpdater',
         data: {
+            type:'gom',
             label: '라벨4',
             status:'waiting',
+            yaml:"eeewqkopw,oozxca",
         }
     }, {
         id: '5',
@@ -80,7 +88,10 @@ const initialNodes = [
         },
         type:'textUpdater',
         data: {
-            label: '라벨5'
+            type:'sadasd',
+            label: '라벨5',
+            status:'success',
+            yaml:"102185089065",
         }
     }
 ];
@@ -109,16 +120,34 @@ const initialEdges = [
 ];
 
 function Flow() {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [value, setValue] = useState(false);
     const [selectedNodeData, setSelectedNodeData] = useState(null);
     const [toggleFlag, setToggleFlag] = useState(false);
-
+    const id = 'e';
+    const {isLoading, error, data, isFetching} = useQuery(
+        [],()=>{
+            return axios.get(process.env.REACT_APP_API+'/api/getDAG/' + id)
+            .then((res) => {
+                setNodes((node) => {
+                    return res['data']['nodes'];
+                });
+                setEdges((edge) => {
+                    return res['data']['edges'];
+                });
+                return res['data']
+            })
+        },{
+            refetchInterval:5000
+        }
+    );
+    
     const onConnect = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
     );
+    
 
     //정렬
     useEffect(()=>{

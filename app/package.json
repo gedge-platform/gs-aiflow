@@ -17,6 +17,7 @@
     "react-cookie": "^4.1.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.39.2",
+    "react-query": "^3.39.3",
     "react-router-dom": "^6.9.0",
     "react-scripts": "5.0.1",
     "react-table": "^7.8.0",
