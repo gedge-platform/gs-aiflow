@@ -7,7 +7,6 @@ import flask
 from flask import request
 from flask_sockets import Sockets
 from flask_cors import CORS
-
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl
@@ -158,6 +157,7 @@ def test():
 @app.route('/api/dummy', methods=['POST', 'GET'])
 def dummy():
     if request.method == 'POST':
+        res = request.json
         result = request.form
         return monitor_impl.dummy()
     return monitor_impl.dummy()

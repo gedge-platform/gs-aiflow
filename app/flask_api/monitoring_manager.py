@@ -3,8 +3,8 @@ from kubernetes import client, utils
 
 from .database import get_db_connection
 from .workflow import WorkFlow, WorkFlowNode
+import flask_api.center_client
 from apscheduler.schedulers.background import BackgroundScheduler
-
 def apiClient(clustername):
     mycon = get_db_connection()
 
@@ -26,7 +26,7 @@ class MonitoringManager:
     def __init__(self):
         self.__monitoringList = {}
         self.scheduler = BackgroundScheduler()
-        self.scheduler.add_job(self.checkNodeNeededToStartWorkFlow, 'interval', seconds = 5, id='test')
+        self.scheduler.add_job(self.checkNodeNeededToStartWorkFlowFromServer, 'interval', seconds = 5, id='test')
         self.scheduler.start()
 
     def test(self):
@@ -86,10 +86,54 @@ class MonitoringManager:
 
             d[str(n)] = data
         return d
+    def getListNamespacePodFromCenter(self, workFlow : WorkFlow):
+        d = dict()
+        project='softonnet-test'
+        cluster='mec(ilsan)'
+        workspace='softonet'
+        ret = flask_api.center_client.getPods(workspace, cluster, project)
+        data = ret['data']
 
+        if data is None:
+            return d
+
+        for n, i in enumerate(data):
+            data = {}
+            data['workspace'] = i['workspace']
+            data['cluster'] = i['cluster']
+            data['meta_data_name'] = i['name']
+            data['user'] = i['user']
+            data['creationTimestamp'] = i['creationTimestamp']
+            data['project'] = i['project']
+            data['hostIP']= i['hostIP']
+            data['podIP'] = i['podIP']
+            data['node_name'] = i['node_name']
+            data['restart'] = i['restart']
+            data['events'] = i['events']
+            data['phase'] = i['status']
+
+            d[str(n)] = data
+        return d
     def monitoringWorkFlow(self):
         for workflow in self.__monitoringList.values():
             podList = self.getListNamespacePod(workflow)
+            for pod in podList.items():
+                podId = pod[0]
+                podData = pod[1]
+                node = workflow.nodes.get(podData.get('meta_data_name'))
+
+                if node is None:
+                    continue
+
+                node.data['status'] = podData['phase']
+
+                # #TODO:
+                # for temp in workflow.origin['nodes']:
+                #     temp[]
+                # workflow.origin['nodes'][]
+    def monitoringWorkFlowFromCenter(self):
+        for workflow in self.__monitoringList.values():
+            podList = self.getListNamespacePodFromCenter(workflow)
             for pod in podList.items():
                 podId = pod[0]
                 podData = pod[1]
@@ -153,3 +197,37 @@ class MonitoringManager:
                 res = utils.create_from_dict(aApiClient, node.data['yaml'], verbose=True)
                 node.data['status'] = 'pending'
 
+    def checkNodeNeededToStartWorkFlowFromServer(self):
+        self.monitoringWorkFlowFromCenter()
+
+        for data in self.__monitoringList.items():
+            id = data[0]
+            workflow: WorkFlow = data[1]
+
+            if workflow is None:
+                continue
+
+            for node in workflow.nodes.values():
+                if node.data['status'] != 'waiting':
+                    continue
+
+                preConditions = node.preConditions
+
+                readyToStart = True
+                for precondition in preConditions:
+                    preNode = workflow.nodes.get(precondition)
+                    if preNode is None:
+                        readyToStart = False
+                        break
+                    if preNode.data['status'] != 'Succeeded':
+                        readyToStart = False
+                        break
+
+                if not readyToStart:
+                    continue
+
+                # node 실행
+                # TODO: yaml 찾아야 함
+
+                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", "softonnet-test")
+                node.data['status'] = 'pending'
