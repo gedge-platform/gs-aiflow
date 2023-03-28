@@ -1,0 +1,22 @@
+api_host: None
+api_id: None
+api_pass: None
+api_jwt: "jwt"
+
+### loggin option
+# logging 모듈 이름
+module_name: AIFLOW_SERVER
+# 로그를 파일에 기록
+file_log_enable: True
+# 로그 파일 경로
+log_file_path: ./log
+# 로그 파일의 최대 개수
+log_backup_count: 10
+# 로그 파일을 날짜별로 생성 옵션 (file_log_max_mb 설정 무시)
+log_by_date: False
+# 로그 파일의 최대 크기(단위:MB)
+file_log_max_mb: 100
+# 로그를 console에 출력
+console_log_enable: True
+# 로그 레벨 DEBUG, INFO, WARNING, ERROR, CRITICAL (default : INFO)
+log_level: INFO
