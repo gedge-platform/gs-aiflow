@@ -1,6 +1,8 @@
 import requests
 from flask import json
-from flask_api.global_def import configHolder
+from flask_api.global_def import config
+
+
 class CenterClient:
     def __new__(cls, *args, **kwargs):
         """
@@ -17,44 +19,60 @@ class CenterClient:
             cls.instance = super(CenterClient, cls, *args, **kwargs).__new__(cls, *args, **kwargs)
         return cls.instance
 
-def send_api(path, method, params = None, body = None,):
-    url = configHolder['api_host'] + path
-    headers = {'Content-Type': 'application/json', 'charset': 'UTF-8', 'Accept': '*/*', 'Authorization': "Bearer " + configHolder['api_jwt']}
+
+def send_api(path, method, params=None, body=None, ):
+    if config == None:
+        return {}
+    url = config.api_host + path
+    headers = {'Content-Type': 'application/json', 'charset': 'UTF-8', 'Accept': '*/*',
+               'Authorization': "Bearer " + config.api_jwt}
     try:
-        if ( method == 'GET'):
+        if (method == 'GET'):
             response = requests.get(url, headers=headers, params=params, verify=False)
         elif method == 'POST':
-            response = requests.post(url, headers=headers, data=json.dumps(body, ensure_ascii=False, indent="\t"))
+            response = requests.post(url, headers=headers, params=params,
+                                     data=json.dumps(body, ensure_ascii=False, indent="\t"))
 
         if response.status_code == 401:
-            jwtBody = {"Id":configHolder['api_id'], "Password":configHolder['api_pass']}
-            jwtResponse = requests.post(configHolder['api_host'] + "/auth", headers=headers, data=json.dumps(body))
+            jwtBody = {"Id": config.api_id, "Password": config.api_pass}
+            jwtResponse = requests.post(config.api_host + "/auth", headers=headers, data=json.dumps(body))
             if jwtResponse.status_code == 200:
                 JWT = jwtResponse.json()['accessToken']
-                configHolder['api_jwt'] = JWT
+                config.api_jwt = JWT
 
             headers = {'Content-Type': 'application/json', 'charset': 'UTF-8', 'Accept': '*/*',
-                   'Authorization': "Bearer " + JWT}
+                       'Authorization': "Bearer " + JWT}
             if (method == 'GET'):
                 response = requests.get(url, headers=headers, params=params, verify=False)
             elif method == 'POST':
-                response = requests.post(url, headers=headers, data=json.dumps(body, ensure_ascii=False, indent="\t"))
+                response = requests.post(url, headers=headers, params=params,
+                                         data=json.dumps(body, ensure_ascii=False, indent="\t"))
 
         return response
 
-    except Exception as  ex:
+    except Exception as ex:
         print(ex)
 
-def getPods(workspace = None, cluster = None, project = None):
-    query=dict()
-    if workspace != None:
-        query['workspace'] = workspace
-    if cluster != None:
-        query['cluster'] = cluster
-    if project != None:
-        query['project'] = project
+
+def getPods(workspace: str, cluster: str, project: str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
 
     try:
         return send_api(path="/pods", method="GET", params=query).json()
+    except:
+        return {}
+
+
+def podsPost(body, workspace: str, cluster: str, project: str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    try:
+        return send_api(path="/pods", method="POST", params=query, body=body).json()
     except:
         return {}

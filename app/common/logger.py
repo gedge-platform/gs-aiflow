@@ -9,10 +9,13 @@ logger_name = ''
 log_initialize = False
 
 
-def initialize_logger(config=None):
+def initialize_logger(configClass=None):
     global logger_name
     global log_initialize
 
+    config = None
+    if configClass != None:
+        config = configClass.__dict__
     if log_initialize:
         return
 

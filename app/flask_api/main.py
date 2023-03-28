@@ -5,11 +5,11 @@ import argparse
 import yaml
 from gevent.pywsgi import WSGIServer
 
-from flask_api.global_def import g_var
 from flask_api.web_api import app
 
 from common.logger import initialize_logger, get_logger
-from global_def import configHolder
+from flask_api.global_def import config
+
 
 def main():
     if args.init_db:
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     conf_file = args.config
     if os.path.exists(conf_file):
         with open(conf_file, 'r', encoding='utf-8') as yamlfile:
-            configHolder.config = yaml.load(yamlfile, Loader=yaml.FullLoader)
-        initialize_logger(configHolder.config)
+            config.__dict__ = yaml.load(yamlfile, Loader=yaml.FullLoader)
+        initialize_logger(config)
         get_logger().info("Start AIFLOW Server")
         main()
     else:
