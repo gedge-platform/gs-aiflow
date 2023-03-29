@@ -76,12 +76,12 @@ def getPodDetail(podName : str, workspace: str, cluster: str, project: str):
         response, code = send_api(path="/pods/" + podName, method="GET", params=query)
         #없으면 패스
         if code == 404:
-            response = {'data':{"name" : podName, "status" : "waiting"}}
+            response = {'data':{"name" : podName, "status" : "Waiting"}}
         else:
             response = response.json()
 
     except:
-        return {'data':{"name" : podName, "status" : "waiting"}}
+        return {'data':{"name" : podName, "status" : "Waiting"}}
 
     return response
 

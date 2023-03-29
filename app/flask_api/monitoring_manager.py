@@ -185,7 +185,7 @@ class MonitoringManager:
                 continue
 
             for node in workflow.nodes.values():
-                if node.data['status'] != 'waiting':
+                if node.data['status'] != 'Waiting':
                     continue
 
                 postConditions = node.postConditions
@@ -224,7 +224,7 @@ class MonitoringManager:
                                 }
                                 }
                 res = utils.create_from_dict(aApiClient, node.data['yaml'], verbose=True)
-                node.data['status'] = 'pending'
+                node.data['status'] = 'Pending'
 
     def checkNodeNeededToStartWorkFlowFromServer(self):
         self.monitoringWorkFlowFromCenter()
@@ -237,7 +237,7 @@ class MonitoringManager:
                 continue
 
             for node in workflow.nodes.values():
-                if node.data['status'] != 'waiting':
+                if node.data['status'] != 'Waiting':
                     continue
 
                 postConditions = node.postConditions
@@ -264,4 +264,4 @@ class MonitoringManager:
                 # TODO: yaml 찾아야 함
 
                 res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", "softonnet-test")
-                node.data['status'] = 'pending'
+                node.data['status'] = 'Pending'

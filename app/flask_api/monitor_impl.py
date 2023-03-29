@@ -54,7 +54,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                               'type': 'Pod',
                                               'label': '라벨1',
                                               'origin': '22',
-                                              'status': 'waiting',
+                                              'status': 'Waiting',
                                               'erwerewr': 'rewr',
                                               'sdfwerwrq': "vcvcx",
                                               'yaml': {'apiVersion': 'v1',
@@ -66,7 +66,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                                            'restartPolicy': 'Never',
                                                            'containers': [{
                                                                'name': 'aiflow-test1',
-                                                               'image': 'aiflow/test1:v1.0.0.230324',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
                                                            }]
                                                        }
                                                        }
@@ -81,7 +81,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                           'data': {
                                               'type': 'Pod',
                                               'label': '라벨2',
-                                              'status': 'waiting',
+                                              'status': 'Waiting',
                                               'yaml': {'apiVersion': 'v1',
                                                        'kind': 'Pod',
                                                        'metadata': {
@@ -91,7 +91,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                                            'restartPolicy': 'Never',
                                                            'containers': [{
                                                                'name': 'aiflow-test1',
-                                                               'image': 'aiflow/test1:v1.0.0.230324',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
                                                            }]
                                                        }
                                                        },
@@ -106,7 +106,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                           'data': {
                                               'type': 'Pod',
                                               'label': '라벨3',
-                                              'status': 'waiting',
+                                              'status': 'Waiting',
                                               'yaml': {'apiVersion': 'v1',
                                                        'kind': 'Pod',
                                                        'metadata': {
@@ -116,7 +116,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                                            'restartPolicy': 'Never',
                                                            'containers': [{
                                                                'name': 'aiflow-test1',
-                                                               'image': 'aiflow/test1:v1.0.0.230324',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
                                                            }]
                                                        }
                                                        },
@@ -131,7 +131,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                           'data': {
                                               'type': 'Pod',
                                               'label': '라벨4',
-                                              'status': 'waiting',
+                                              'status': 'Waiting',
                                               'yaml': {'apiVersion': 'v1',
                                                        'kind': 'Pod',
                                                        'metadata': {
@@ -141,7 +141,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                                            'restartPolicy': 'Never',
                                                            'containers': [{
                                                                'name': 'aiflow-test1',
-                                                               'image': 'aiflow/test1:v1.0.0.230324',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
                                                            }]
                                                        }
                                                        },
@@ -156,7 +156,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                           'data': {
                                               'type': 'Pod',
                                               'label': '라벨5',
-                                              'status': 'waiting',
+                                              'status': 'Waiting',
                                               'yaml': {'apiVersion': 'v1',
                                                        'kind': 'Pod',
                                                        'metadata': {
@@ -166,7 +166,7 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                                            'restartPolicy': 'Never',
                                                            'containers': [{
                                                                'name': 'aiflow-test1',
-                                                               'image': 'aiflow/test1:v1.0.0.230324',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
                                                            }]
                                                        }
                                                        },
