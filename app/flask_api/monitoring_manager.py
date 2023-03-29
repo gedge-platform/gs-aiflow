@@ -47,9 +47,17 @@ class MonitoringManager:
             workFlowNode.id = node['id']
             workFlowNode.data = nodeData
 
+            #선행후행
             for edge in edges:
                 if edge['target'] == node['id']:
                     workFlowNode.preConditions.append(edge['source'])
+                if edge['source'] == node['id']:
+                    workFlowNode.postConditions.append(edge['target'])
+
+            #단말 노드 체크
+            if len(workFlowNode.postConditions) == 0:
+                workFlowNode.isExternal = True
+
 
             workFlow.nodes[node['id']] = workFlowNode
 
@@ -91,6 +99,9 @@ class MonitoringManager:
         project='softonnet-test'
         cluster='mec(ilsan)'
         workspace='softonet'
+
+        for node in workFlow.nodes:
+            node.isExternal is True
         ret = flask_api.center_client.getPods(workspace, cluster, project)
         data = ret['data']
 
@@ -163,17 +174,21 @@ class MonitoringManager:
                 if node.data['status'] != 'waiting':
                     continue
 
+                postConditions = node.postConditions
                 preConditions = node.preConditions
+                isExternal = node.isExternal
 
                 readyToStart = True
-                for precondition in preConditions:
-                    preNode = workflow.nodes.get(precondition)
-                    if preNode is None:
-                        readyToStart = False
-                        break
-                    if preNode.data['status'] != 'Succeeded':
-                        readyToStart = False
-                        break
+                #단말 노드면 무조건 실행
+                if isExternal is False:
+                    for precondition in preConditions:
+                        preNode = workflow.nodes.get(precondition)
+                        if preNode is None:
+                            readyToStart = False
+                            break
+                        if preNode.data['status'] != 'Succeeded':
+                            readyToStart = False
+                            break
 
                 if not readyToStart:
                     continue
@@ -211,17 +226,22 @@ class MonitoringManager:
                 if node.data['status'] != 'waiting':
                     continue
 
+                postConditions = node.postConditions
                 preConditions = node.preConditions
+                isExternal = node.isExternal
 
                 readyToStart = True
-                for precondition in preConditions:
-                    preNode = workflow.nodes.get(precondition)
-                    if preNode is None:
-                        readyToStart = False
-                        break
-                    if preNode.data['status'] != 'Succeeded':
-                        readyToStart = False
-                        break
+                #단말 노드면 무조건 실행
+                readyToStart = True
+                if isExternal is False:
+                    for precondition in preConditions:
+                        preNode = workflow.nodes.get(precondition)
+                        if preNode is None:
+                            readyToStart = False
+                            break
+                        if preNode.data['status'] != 'Succeeded':
+                            readyToStart = False
+                            break
 
                 if not readyToStart:
                     continue

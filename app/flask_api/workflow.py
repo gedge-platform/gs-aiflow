@@ -7,6 +7,8 @@ class WorkFlow:
 
 class WorkFlowNode:
     def __init__(self):
+        self.postConditions = []
         self.id = "id"
         self.preConditions = []
         self.data = {}
+        self.isExternal = False
