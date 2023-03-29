@@ -65,6 +65,25 @@ def getPods(workspace: str, cluster: str, project: str):
     except:
         return {}
 
+def getPodDetail(podName : str, workspace: str, cluster: str, project: str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    try:
+        response = send_api(path="/pods/" + podName, method="GET", params=query).json()
+        #없으면 패스
+        if response.status_code == 404:
+            response = {"name" : podName, "status" : "waiting"}
+    except:
+        return {"name" : podName, "status" : "waiting"}
+
+    return response
+
+
+
+
 
 def podsPost(body, workspace: str, cluster: str, project: str):
     query = dict()
