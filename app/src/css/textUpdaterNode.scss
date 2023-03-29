@@ -49,7 +49,7 @@ $circle-size : 40px;
       outline: none;
     }
     
-    &--pending_layout{
+    &--Pending_layout{
       background: orange;
       position: relative;
       display: inline-block;
@@ -60,8 +60,8 @@ $circle-size : 40px;
       box-shadow: 0px 0px 10px white inset;
       border-radius: 9px;
     }
-    &--Succeeded_layout{
-      background: #03a903;
+    &--Running_layout{
+      background: #23C723;
       position: relative;
       display: inline-block;
       width: 100%;
@@ -71,7 +71,18 @@ $circle-size : 40px;
       box-shadow: 0px 0px 10px white inset;
       border-radius: 9px;
     }
-    &--failed_layout{
+    &--Succeeded_layout{
+      background: #005200;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 24px;
+      box-shadow: 0px 0px 10px white inset;
+      border-radius: 9px;
+    }
+    &--Failed_layout{
       background: red;
       position: relative;
       display: inline-block;
@@ -82,7 +93,7 @@ $circle-size : 40px;
       box-shadow: 0px 0px 10px white inset;
       border-radius: 9px;
     }
-    &--waiting_layout{
+    &--Waiting_layout{
       background: #2196f3;
       position: relative;
       display: inline-block;
