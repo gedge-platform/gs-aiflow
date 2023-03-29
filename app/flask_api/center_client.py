@@ -48,7 +48,7 @@ def send_api(path, method, params=None, body=None, ):
                 response = requests.post(url, headers=headers, params=params,
                                          data=json.dumps(body, ensure_ascii=False, indent="\t"))
 
-        return response
+        return response, response.status_code
 
     except Exception as ex:
         print(ex)
@@ -60,8 +60,9 @@ def getPods(workspace: str, cluster: str, project: str):
     query['cluster'] = cluster
     query['project'] = project
 
+    response, code = send_api(path="/pods", method="GET", params=query)
     try:
-        return send_api(path="/pods", method="GET", params=query).json()
+        return response.json()
     except:
         return {}
 
@@ -72,12 +73,15 @@ def getPodDetail(podName : str, workspace: str, cluster: str, project: str):
     query['project'] = project
 
     try:
-        response = send_api(path="/pods/" + podName, method="GET", params=query).json()
+        response, code = send_api(path="/pods/" + podName, method="GET", params=query)
         #없으면 패스
-        if response.status_code == 404:
-            response = {"name" : podName, "status" : "waiting"}
+        if code == 404:
+            response = {'data':{"name" : podName, "status" : "waiting"}}
+        else:
+            response = response.json()
+
     except:
-        return {"name" : podName, "status" : "waiting"}
+        return {'data':{"name" : podName, "status" : "waiting"}}
 
     return response
 
@@ -91,7 +95,8 @@ def podsPost(body, workspace: str, cluster: str, project: str):
     query['cluster'] = cluster
     query['project'] = project
 
+    response, code = send_api(path="/pods", method="POST", params=query, body=body)
     try:
-        return send_api(path="/pods", method="POST", params=query, body=body).json()
+        return response.json()
     except:
         return {}

@@ -12,3 +12,4 @@ class WorkFlowNode:
         self.preConditions = []
         self.data = {}
         self.isExternal = False
+        self.needCheck = False

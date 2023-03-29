@@ -55,8 +55,9 @@ class MonitoringManager:
                     workFlowNode.postConditions.append(edge['target'])
 
             #단말 노드 체크
-            if len(workFlowNode.postConditions) == 0:
+            if len(workFlowNode.preConditions) == 0:
                 workFlowNode.isExternal = True
+                workFlowNode.needCheck = True
 
 
             workFlow.nodes[node['id']] = workFlowNode
@@ -125,6 +126,17 @@ class MonitoringManager:
 
             d[str(n)] = data
         return d
+
+    def getListNamespacePodDetailFromCenter(self, workFlow : WorkFlow, podID : str):
+        d = dict()
+        project='softonnet-test'
+        cluster='mec(ilsan)'
+        workspace='softonet'
+
+        ret = flask_api.center_client.getPodDetail(podID, workspace, cluster, project)
+        data = ret['data']
+
+        return data['status']
     def monitoringWorkFlow(self):
         for workflow in self.__monitoringList.values():
             podList = self.getListNamespacePod(workflow)
@@ -144,21 +156,23 @@ class MonitoringManager:
                 # workflow.origin['nodes'][]
     def monitoringWorkFlowFromCenter(self):
         for workflow in self.__monitoringList.values():
-            podList = self.getListNamespacePodFromCenter(workflow)
-            for pod in podList.items():
-                podId = pod[0]
-                podData = pod[1]
-                node = workflow.nodes.get(podData.get('meta_data_name'))
+            for id, node in workflow.nodes.items():
+                #필요한 것만 상태 체크
+                if node.needCheck is True:
+                    statusData = self.getListNamespacePodDetailFromCenter(workflow, id)
+                    #update
+                    node.data['status'] = statusData
 
-                if node is None:
-                    continue
+                    # 파드 완료 시
+                    if node.data['status'] == 'Succeeded' or node.data['status'] == 'Failed':
+                        node.needCheck = False
+                        # 후속노드체크활성화
+                        postConditions = node.postConditions
+                        for postNodeId in postConditions:
+                            postNode = workflow.nodes.get(postNodeId)
+                            if postNode is not None:
+                                postNode.needCheck = True
 
-                node.data['status'] = podData['phase']
-
-                # #TODO:
-                # for temp in workflow.origin['nodes']:
-                #     temp[]
-                # workflow.origin['nodes'][]
 
     def checkNodeNeededToStartWorkFlow(self):
         self.monitoringWorkFlow()
