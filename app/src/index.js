@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import {BrowserRouter,Route,Routes} from 'react-router-dom';
 
 import './css/index.css';
@@ -12,6 +12,7 @@ import {Delete} from './delete.js';
 import {LogIn} from './login.js';
 import {Test} from './test.js';
 import {LogViewer} from './logviewer.js';
+import { ServiceDefine } from './service_define';
 
 
 class Main extends React.Component {
@@ -20,6 +21,9 @@ class Main extends React.Component {
       <>
         <BrowserRouter>
             <section id='main_wrap'>
+
+            <Routes>
+            <Route path='/login' element={<LogIn />}></Route></Routes>
                 <div id='side'>
                     <Sidemenu />
                 </div>
@@ -30,9 +34,9 @@ class Main extends React.Component {
                             <Route path='/enroll' element={<EnrollClusterMonitoring />}></Route>
                             <Route path='/create' element={<Create />}></Route>
                             <Route path='/delete' element={<Delete />}></Route>
-                            <Route path='/login' element={<LogIn />}></Route>
                             <Route path='/test' element={<Test />}></Route>
                             <Route path='/logviewer' element={<LogViewer />}></Route>
+                            <Route path='/service_define' element={<ServiceDefine />}></Route>
 
                             <Route path='/*' element={<NotFound />}></Route>
                         </Routes>

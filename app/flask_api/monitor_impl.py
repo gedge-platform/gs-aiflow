@@ -3,6 +3,7 @@ import mysql.connector
 import requests
 import json
 import os
+import yaml
 from flask import jsonify, request, make_response
 from flask_restful import reqparse, inputs
 
@@ -12,9 +13,167 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from flask_api.global_def import g_var
 from flask_api.database import get_db_connection
+from flask_api.monitoring_manager import MonitoringManager
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+
+monitoringManager = MonitoringManager()
+monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'default',
+                                  'edges': [
+                                      {
+                                          'id': 'e1-2',
+                                          'source': 'aiflow-test1',
+                                          'target': 'aiflow-test2'
+                                      },
+                                      {
+                                          'id': 'e1-3',
+                                          'source': 'aiflow-test2',
+                                          'target': 'aiflow-test3'
+                                      },
+                                      {
+                                          'id': 'e1-4',
+                                          'source': 'aiflow-test3',
+                                          'target': 'aiflow-test4'
+                                      },
+                                      {
+                                          'id': 'e1-5',
+                                          'source': 'aiflow-test4',
+                                          'target': 'aiflow-test5'
+                                      }
+                                  ],
+                                  'nodes': [
+                                      {
+                                          'id': 'aiflow-test1',
+                                          'type': 'textUpdater',
+                                          'position': {
+                                              'x': 0,
+                                              'y': 0
+                                          },
+                                          'data': {
+                                              'type': 'Pod',
+                                              'label': '라벨1',
+                                              'origin': '22',
+                                              'status': 'Waiting',
+                                              'erwerewr': 'rewr',
+                                              'sdfwerwrq': "vcvcx",
+                                              'yaml': {'apiVersion': 'v1',
+                                                       'kind': 'Pod',
+                                                       'metadata': {
+                                                           'name': 'aiflow-test1'
+                                                       },
+                                                       'spec': {
+                                                           'restartPolicy': 'Never',
+                                                           'containers': [{
+                                                               'name': 'aiflow-test1',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
+                                                           }]
+                                                       }
+                                                       }
+                                          }
+                                      }, {
+                                          'id': 'aiflow-test2',
+                                          'position': {
+                                              'x': 500,
+                                              'y': 0
+                                          },
+                                          'type': 'textUpdater',
+                                          'data': {
+                                              'type': 'Pod',
+                                              'label': '라벨2',
+                                              'status': 'Waiting',
+                                              'yaml': {'apiVersion': 'v1',
+                                                       'kind': 'Pod',
+                                                       'metadata': {
+                                                           'name': 'aiflow-test2'
+                                                       },
+                                                       'spec': {
+                                                           'restartPolicy': 'Never',
+                                                           'containers': [{
+                                                               'name': 'aiflow-test1',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
+                                                           }]
+                                                       }
+                                                       },
+                                          }
+                                      }, {
+                                          'id': 'aiflow-test3',
+                                          'position': {
+                                              'x': 1000,
+                                              'y': 0
+                                          },
+                                          'type': 'textUpdater',
+                                          'data': {
+                                              'type': 'Pod',
+                                              'label': '라벨3',
+                                              'status': 'Waiting',
+                                              'yaml': {'apiVersion': 'v1',
+                                                       'kind': 'Pod',
+                                                       'metadata': {
+                                                           'name': 'aiflow-test3'
+                                                       },
+                                                       'spec': {
+                                                           'restartPolicy': 'Never',
+                                                           'containers': [{
+                                                               'name': 'aiflow-test1',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
+                                                           }]
+                                                       }
+                                                       },
+                                          }
+                                      }, {
+                                          'id': 'aiflow-test4',
+                                          'position': {
+                                              'x': 1500,
+                                              'y': 0
+                                          },
+                                          'type': 'textUpdater',
+                                          'data': {
+                                              'type': 'Pod',
+                                              'label': '라벨4',
+                                              'status': 'Waiting',
+                                              'yaml': {'apiVersion': 'v1',
+                                                       'kind': 'Pod',
+                                                       'metadata': {
+                                                           'name': 'aiflow-test4'
+                                                       },
+                                                       'spec': {
+                                                           'restartPolicy': 'Never',
+                                                           'containers': [{
+                                                               'name': 'aiflow-test1',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
+                                                           }]
+                                                       }
+                                                       },
+                                          }
+                                      }, {
+                                          'id': 'aiflow-test5',
+                                          'position': {
+                                              'x': 2000,
+                                              'y': 0
+                                          },
+                                          'type': 'textUpdater',
+                                          'data': {
+                                              'type': 'Pod',
+                                              'label': '라벨5',
+                                              'status': 'Waiting',
+                                              'yaml': {'apiVersion': 'v1',
+                                                       'kind': 'Pod',
+                                                       'metadata': {
+                                                           'name': 'aiflow-test5'
+                                                       },
+                                                       'spec': {
+                                                           'restartPolicy': 'Never',
+                                                           'containers': [{
+                                                               'name': 'aiflow-test1',
+                                                               'image': 'aiflow/test1:v1.0.1.230329',
+                                                           }]
+                                                       }
+                                                       },
+                                          }
+                                      }
+                                  ]
+                                  })))
 
 def getDBConnection():
     if not g_var.mycon:
@@ -437,3 +596,56 @@ def getStatusDeploy(result):
     ret = jsonify(d)
 
     return ret
+
+def parseJsonToYaml(data):
+    kind = data['kind']
+    str = ''
+    if kind == 'Deployment':
+        str = yaml.dump(data,default_flow_style=False)
+
+    return str
+
+def getTest():
+
+    aApiClient = apiClient('cluster_test1')
+    v1=client.CoreV1Api(aApiClient)
+    response=v1.list_namespace()
+    d = dict()
+    for n, i in enumerate(v1.list_namespace().items):
+        data = []
+        data.append(i.metadata.name)
+
+        d[str(n)] = data
+    ret = jsonify(d)
+
+    example_dict = \
+        {'apiVersion': 'v1',
+         'kind': 'Pod',
+         'metadata': {
+             'name': 'aiflow-test'
+         },
+         'spec':{
+             'restartPolicy': 'Never',
+             'containers':[{
+                 'name': 'aiflow-test1',
+                 'image': 'aiflow/test1:v1.0.0.230324',
+             }]
+         }
+         }
+    res=utils.create_from_dict(aApiClient, example_dict, verbose=True)
+    # print(res['status'])
+    return ret
+
+def getPodStatus(result):
+    result = result.to_dict(flat=False)
+    result = json.loads(list(result.keys())[0])
+    cluster=result['cluster']
+    namespace=result['namespace']
+    pod=result['pod']
+
+    aApiClient = apiClient(cluster)
+    v1 = client.CoreV1Api(aApiClient)
+    response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
+    return str(response.status.phase)
+def getDag(dagId):
+    return monitoringManager.test()
