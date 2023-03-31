@@ -47,9 +47,18 @@ class MonitoringManager:
             workFlowNode.id = node['id']
             workFlowNode.data = nodeData
 
+            #선행후행
             for edge in edges:
                 if edge['target'] == node['id']:
                     workFlowNode.preConditions.append(edge['source'])
+                if edge['source'] == node['id']:
+                    workFlowNode.postConditions.append(edge['target'])
+
+            #단말 노드 체크
+            if len(workFlowNode.preConditions) == 0:
+                workFlowNode.isExternal = True
+                workFlowNode.needCheck = True
+
 
             workFlow.nodes[node['id']] = workFlowNode
 
@@ -91,6 +100,9 @@ class MonitoringManager:
         project='softonnet-test'
         cluster='mec(ilsan)'
         workspace='softonet'
+
+        for node in workFlow.nodes:
+            node.isExternal is True
         ret = flask_api.center_client.getPods(workspace, cluster, project)
         data = ret['data']
 
@@ -114,6 +126,17 @@ class MonitoringManager:
 
             d[str(n)] = data
         return d
+
+    def getListNamespacePodDetailFromCenter(self, workFlow : WorkFlow, podID : str):
+        d = dict()
+        project='softonnet-test'
+        cluster='mec(ilsan)'
+        workspace='softonet'
+
+        ret = flask_api.center_client.getPodDetail(podID, workspace, cluster, project)
+        data = ret['data']
+
+        return data['status']
     def monitoringWorkFlow(self):
         for workflow in self.__monitoringList.values():
             podList = self.getListNamespacePod(workflow)
@@ -133,21 +156,23 @@ class MonitoringManager:
                 # workflow.origin['nodes'][]
     def monitoringWorkFlowFromCenter(self):
         for workflow in self.__monitoringList.values():
-            podList = self.getListNamespacePodFromCenter(workflow)
-            for pod in podList.items():
-                podId = pod[0]
-                podData = pod[1]
-                node = workflow.nodes.get(podData.get('meta_data_name'))
+            for id, node in workflow.nodes.items():
+                #필요한 것만 상태 체크
+                if node.needCheck is True:
+                    statusData = self.getListNamespacePodDetailFromCenter(workflow, id)
+                    #update
+                    node.data['status'] = statusData
 
-                if node is None:
-                    continue
+                    # 파드 완료 시
+                    if node.data['status'] == 'Succeeded' or node.data['status'] == 'Failed':
+                        node.needCheck = False
+                        # 후속노드체크활성화
+                        postConditions = node.postConditions
+                        for postNodeId in postConditions:
+                            postNode = workflow.nodes.get(postNodeId)
+                            if postNode is not None:
+                                postNode.needCheck = True
 
-                node.data['status'] = podData['phase']
-
-                # #TODO:
-                # for temp in workflow.origin['nodes']:
-                #     temp[]
-                # workflow.origin['nodes'][]
 
     def checkNodeNeededToStartWorkFlow(self):
         self.monitoringWorkFlow()
@@ -160,20 +185,24 @@ class MonitoringManager:
                 continue
 
             for node in workflow.nodes.values():
-                if node.data['status'] != 'waiting':
+                if node.data['status'] != 'Waiting':
                     continue
 
+                postConditions = node.postConditions
                 preConditions = node.preConditions
+                isExternal = node.isExternal
 
                 readyToStart = True
-                for precondition in preConditions:
-                    preNode = workflow.nodes.get(precondition)
-                    if preNode is None:
-                        readyToStart = False
-                        break
-                    if preNode.data['status'] != 'Succeeded':
-                        readyToStart = False
-                        break
+                #단말 노드면 무조건 실행
+                if isExternal is False:
+                    for precondition in preConditions:
+                        preNode = workflow.nodes.get(precondition)
+                        if preNode is None:
+                            readyToStart = False
+                            break
+                        if preNode.data['status'] != 'Succeeded':
+                            readyToStart = False
+                            break
 
                 if not readyToStart:
                     continue
@@ -195,7 +224,7 @@ class MonitoringManager:
                                 }
                                 }
                 res = utils.create_from_dict(aApiClient, node.data['yaml'], verbose=True)
-                node.data['status'] = 'pending'
+                node.data['status'] = 'Pending'
 
     def checkNodeNeededToStartWorkFlowFromServer(self):
         self.monitoringWorkFlowFromCenter()
@@ -208,20 +237,25 @@ class MonitoringManager:
                 continue
 
             for node in workflow.nodes.values():
-                if node.data['status'] != 'waiting':
+                if node.data['status'] != 'Waiting':
                     continue
 
+                postConditions = node.postConditions
                 preConditions = node.preConditions
+                isExternal = node.isExternal
 
                 readyToStart = True
-                for precondition in preConditions:
-                    preNode = workflow.nodes.get(precondition)
-                    if preNode is None:
-                        readyToStart = False
-                        break
-                    if preNode.data['status'] != 'Succeeded':
-                        readyToStart = False
-                        break
+                #단말 노드면 무조건 실행
+                readyToStart = True
+                if isExternal is False:
+                    for precondition in preConditions:
+                        preNode = workflow.nodes.get(precondition)
+                        if preNode is None:
+                            readyToStart = False
+                            break
+                        if preNode.data['status'] != 'Succeeded':
+                            readyToStart = False
+                            break
 
                 if not readyToStart:
                     continue
@@ -230,4 +264,4 @@ class MonitoringManager:
                 # TODO: yaml 찾아야 함
 
                 res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", "softonnet-test")
-                node.data['status'] = 'pending'
+                node.data['status'] = 'Pending'

@@ -14,17 +14,20 @@ function TextUpdaterNode({ id, data, isConnectable }) {
     setStatus(data.status)
   }, [data]);
   const setStatus = (status) => {
-    if(status == 'pending'){
-        setStat("pending")
+    if(status == 'Pending'){
+        setStat("Pending")
     }
     else if(status == 'Succeeded'){
         setStat("Succeeded")
     }
-    else if(status == 'failed'){
-        setStat("failed")
+    else if(status == 'Failed'){
+        setStat("Failed")
+    }
+    else if(status == 'Running'){
+        setStat("Running")
     }
     else{
-        setStat("waiting")
+        setStat("Waiting")
     }
   }
   return (
