@@ -271,6 +271,11 @@ def getPodStatus\
     if request.method == 'POST':
         result = request.form
         return monitor_impl.getPodStatus(result)
+@app.route('/api/getPodDetail/<string:podID>', methods=['GET'])
+def getPodDetail(podID):
+    if request.method == 'GET':
+        result = request.form
+        return monitor_impl.getPodDetail(podID)
 
 
 if __name__ == "__main__":

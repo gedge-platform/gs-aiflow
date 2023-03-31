@@ -649,3 +649,8 @@ def getPodStatus(result):
     return str(response.status.phase)
 def getDag(dagId):
     return monitoringManager.test()
+
+
+def getPodDetail(podID):
+    from flask_api import center_client
+    return center_client.getPodDetail(podID, "softonet","mec(ilsan)","softonnet-test")
