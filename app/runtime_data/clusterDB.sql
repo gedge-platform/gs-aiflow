@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_access_time TIMESTAMP
   )
   CHARACTER SET 'utf8';
+
 INSERT INTO users (login_id, login_pass, name, is_admin)
- SELECT * FROM (select 'admin', 'softonnet', '기본관리자', 1) AS admin
- WHERE NOT EXISTS (SELECT id FROM users) LIMIT 1;
+ SELECT * FROM (SELECT 'admin', 'softonnet', '기본관리자', 1) AS admin
+ WHERE NOT EXISTS (SELECT login_id FROM users WHERE login_id = 'admin') LIMIT 1;

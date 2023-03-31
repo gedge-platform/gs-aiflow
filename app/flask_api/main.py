@@ -6,17 +6,14 @@ import yaml
 from gevent.pywsgi import WSGIServer
 
 from flask_api.web_api import app
-
 from common.logger import initialize_logger, get_logger
 from flask_api.global_def import config
+from flask_api import database
 
 
 def main():
-    if args.init_db:
-        from flask_api import database
-        print("Create Database tables")
-        database.create_tables()
-        sys.exit(0)
+    get_logger().info("Database tables check")
+    database.create_tables()
 
     # g_var.apiHost = args.api_host
     # g_var.apiId = args.api_id

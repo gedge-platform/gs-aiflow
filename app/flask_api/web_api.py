@@ -10,10 +10,12 @@ from flask_cors import CORS
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl
+from flask_api.global_def import g_var
 
-app = flask.Flask(import_name='client_web', static_folder=os.path.join('../web_root', 'static'),
-                  static_url_path='',
-                  root_path='')
+app = flask.Flask(import_name='client_web',
+				  static_folder=os.path.join('../web_root','static'),
+				  static_url_path='',
+				  root_path='')
 app.config['JSON_AS_ASCII'] = False
 
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
