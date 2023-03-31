@@ -4,15 +4,12 @@ from gevent.pywsgi import WSGIServer
 
 from flask_api.global_def import g_var
 from flask_api.web_api import app
-
+from flask_api import database
 
 def main():
-    if args.init_db:
-        from flask_api import database
-        print("Create Database tables")
-        database.create_tables()
-        sys.exit(0)
-
+    print("Database tables check")
+    database.create_tables()
+    exit()
     print("Start Server")
     try:
         import subprocess as sp
