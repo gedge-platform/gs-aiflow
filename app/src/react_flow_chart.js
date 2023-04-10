@@ -20,6 +20,10 @@ import NodeInfo from './service_define_node_info';
 import TextUpdaterNode from './textUpdaterNode';
 import './css/textUpdaterNode.scss'
 import axios from 'axios';
+import Modal from 'react-modal';
+import "./css/dagModal.css";
+import DagModal from './dag_modal';
+
 const nodeTypes = { textUpdater: TextUpdaterNode };
 const rfStyle = {
     backgroundColor: '#B8CEFF',
@@ -203,7 +207,9 @@ function Flow() {
 
     const onNodeClick = (target, node) => {
         setSelectedNodeData(node);
-        setToggleFlag(true);
+        // setToggleFlag(true);
+        setTitle(node.id);
+        openModal();
     };
 
     const onPaneClick = (e) => {
@@ -230,6 +236,25 @@ function Flow() {
         });
         console.log(edges)
     }
+
+
+    let subtitle;
+    const [modalIsOpen, setIsOpen] = useState(false); 
+    function openModal() {
+      setIsOpen(true);
+    }
+  
+    const [title, setTitle] = useState("hello")
+
+    function afterOpenModal() {
+      // references are now sync'd and can be accessed.
+      subtitle.text = selectedNodeData.id;
+    }
+  
+    function closeModal() {
+      setIsOpen(false);
+    }
+
     return (
         <div id='reactflow_wrapper'>
             <ReactFlow
@@ -252,12 +277,28 @@ function Flow() {
                 nodesDraggable={false}
                 style={rfStyle}>
                 {/* <MiniMap/> */}
-                <Controls/>
+                {/* <Controls/> */}
                 <Background/>
 
                 <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
                 </Sidebar>
             </ReactFlow>
+
+      <div>
+      <button onClick={openModal}>Open Modal</button>
+      <Modal
+        isOpen={modalIsOpen}
+        onAfterOpen={afterOpenModal}
+        onRequestClose={closeModal}
+        contentLabel="Example Modal"
+        className="layer_event"
+        ariaHideApp={false}
+      >
+        <h3 ref={(_subtitle) => (subtitle = _subtitle)}>{title}</h3>
+        <button onClick={closeModal}>close</button>
+        <DagModal nodeType={"Pod"} data={selectedNodeData}/>
+      </Modal>
+    </div>
         </div>
 
     );
