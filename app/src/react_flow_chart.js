@@ -243,7 +243,12 @@ function Flow() {
     function openModal() {
       setIsOpen(true);
     }
-  
+  function launchProject() {
+    axios.post(process.env.REACT_APP_API + '/api/project/launch', 
+        {launchId: "ss"})
+        .then(response => console.log(response))
+    }
+
     const [title, setTitle] = useState("hello")
 
     function afterOpenModal() {
@@ -257,6 +262,8 @@ function Flow() {
 
     return (
         <div id='reactflow_wrapper'>
+            <h1>지능형 서비스 정의</h1>
+        <button onClick={launchProject}>Launch Project</button>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -283,9 +290,7 @@ function Flow() {
                 <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
                 </Sidebar>
             </ReactFlow>
-
       <div>
-      <button onClick={openModal}>Open Modal</button>
       <Modal
         isOpen={modalIsOpen}
         onAfterOpen={afterOpenModal}

@@ -36,8 +36,7 @@ class Main extends React.Component {
                             <Route path='/delete' element={<Delete />}></Route>
                             <Route path='/test' element={<Test />}></Route>
                             <Route path='/logviewer' element={<LogViewer />}></Route>
-                            <Route path='/service_define' element={<ServiceDefine />}></Route>
-
+                            <Route path='/service_define/*' element={<ServiceDefine />}></Route>
                             <Route path='/*' element={<NotFound />}></Route>
                         </Routes>
                     </div>
