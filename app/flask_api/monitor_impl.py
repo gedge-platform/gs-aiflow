@@ -11,6 +11,7 @@ import kubernetes.client
 from kubernetes import client, config, utils
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+import common.logger
 from flask_api.global_def import g_var
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -654,3 +655,21 @@ def getDag(dagId):
 def getPodDetail(podID):
     from flask_api import center_client
     return center_client.getPodDetail(podID, "softonet","mec(ilsan)","softonnet-test")
+
+def getProjectList(userID):
+    mycon = get_db_connection()
+
+    cursor=mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_name from TB_PROJECT where user_id={userID}')
+    rows= cursor.fetchall()
+
+    if rows is not None:
+        projectList = list()
+        for row in rows:
+            data = dict()
+            data['project_name'] = row['project_name']
+            projectList.append(data)
+        return jsonify(project_list=projectList), 200
+    else:
+        common.logger.get_logger().debug('[monitor_impl.getProjectList] failed to get from db')
+        return jsonify(msg='Internal Server Error'), 500

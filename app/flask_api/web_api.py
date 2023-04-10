@@ -10,7 +10,6 @@ from flask_cors import CORS
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl
-from flask_api.global_def import g_var
 
 app = flask.Flask(import_name='client_web',
 				  static_folder=os.path.join('../web_root','static'),
@@ -278,6 +277,20 @@ def getPodDetail(podID):
     if request.method == 'GET':
         result = request.form
         return monitor_impl.getPodDetail(podID)
+
+
+@app.route('/api/project/launch', methods=['POST'])
+def launchProject():
+    if request.method == 'POST':
+        result = request.form
+        result = request.json
+        print(result)
+        return "data"
+
+@app.route('/api/getProjectList/<string:userID>', methods=['GET'])
+def getProjectList(userID):
+    if request.method == 'GET':
+        return monitor_impl.getProjectList(userID)
 
 
 if __name__ == "__main__":
