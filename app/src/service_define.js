@@ -33,7 +33,7 @@ function ServiceDefine() {
     </div>
     <QueryClientProvider client={queryClient}>
         <Routes>
-            <Route path="" element={<ProjectList/>}></Route>
+            <Route path="" element={<ProjectList id='1'/>}></Route>
             <Route path="detail/:projectID" element={<Flow/>}></Route>
         </Routes>
       </QueryClientProvider>

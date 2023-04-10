@@ -287,8 +287,8 @@ function Flow() {
                 {/* <Controls/> */}
                 <Background/>
 
-                <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
-                </Sidebar>
+                {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
+                </Sidebar> */}
             </ReactFlow>
       <div>
       <Modal
