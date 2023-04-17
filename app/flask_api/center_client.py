@@ -122,3 +122,30 @@ def userProjectsNameGet(projectName: str):
         return response.json()
     except:
         return {}
+
+body = {"projectName":"softonnet-test2",
+        "projectDescription":"softonnet-test2",
+        "projectType":"user",
+        "clusterName":["onpremise(dongjak)","mec(ilsan)"],
+        "workspaceName":"softonet",
+        "memberName":"softonet",
+        "istioCheck":"disabled"
+        }
+def projectsPost(workspaceName: str, memberName:str , projectname: str, projectDescription: str,  projectType: str = 'user', clusterName:list = [], istioCheck: str = 'disabled'):
+    body = {"projectName": projectname,
+        "projectDescription": projectDescription,
+        "projectType": projectType,
+        "clusterName": clusterName,
+        "workspaceName": workspaceName,
+        "memberName": memberName,
+        "istioCheck": istioCheck
+        }
+
+    response, code = send_api('/projects', 'POST', params={}, body=body)
+    if code != 201 and code != 200:
+        return {'status' : 'failed'}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : 'failed'}
