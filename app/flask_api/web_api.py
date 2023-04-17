@@ -167,6 +167,8 @@ def dummy():
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
 def getDAG(dagId):
     return monitor_impl.getDag(dagId)
+
+
     # return {'data': 'data1',
     #         'edges': [
     #             {
@@ -282,15 +284,20 @@ def getPodDetail(podID):
 @app.route('/api/project/launch', methods=['POST'])
 def launchProject():
     if request.method == 'POST':
-        result = request.form
-        result = request.json
-        print(result)
-        return "data"
+        jsonData = request.json
+        return monitor_impl.launchProject(jsonData['projectID'])
 
 @app.route('/api/getProjectList/<string:userID>', methods=['GET'])
 def getProjectList(userID):
     if request.method == 'GET':
         return monitor_impl.getProjectList(userID)
+
+
+@app.route('/api/project/init', methods=['POST'])
+def initProject():
+    if request.method == 'POST':
+        jsonData = request.json
+        return monitor_impl.initProject(jsonData['projectID'])
 
 
 if __name__ == "__main__":

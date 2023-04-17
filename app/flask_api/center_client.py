@@ -32,10 +32,13 @@ def send_api(path, method, params=None, body=None, ):
         elif method == 'POST':
             response = requests.post(url, headers=headers, params=params,
                                      data=json.dumps(body, ensure_ascii=False, indent="\t"))
+        elif method == 'DELETE':
+            response = requests.delete(url, headers=headers, params=params,
+                                     data=json.dumps(body, ensure_ascii=False, indent="\t"))
 
         if response.status_code == 401:
             jwtBody = {"Id": config.api_id, "Password": config.api_pass}
-            jwtResponse = requests.post(config.api_host + "/auth", headers=headers, data=json.dumps(body))
+            jwtResponse = requests.post(config.api_host + "/auth", headers=headers, data=json.dumps(jwtBody))
             if jwtResponse.status_code == 200:
                 JWT = jwtResponse.json()['accessToken']
                 config.api_jwt = JWT
@@ -96,6 +99,25 @@ def podsPost(body, workspace: str, cluster: str, project: str):
     query['project'] = project
 
     response, code = send_api(path="/pods", method="POST", params=query, body=body)
+    try:
+        return response.json()
+    except:
+        return {}
+
+def podsNameDelete(podName: str, workspace: str, cluster: str, project: str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/pods/" + podName, method="DELETE", params=query, body={})
+    try:
+        return response.json()
+    except:
+        return {}
+
+def userProjectsNameGet(projectName: str):
+    response, code = send_api(path="/userProjects/" + projectName, method="GET", params={}, body={})
     try:
         return response.json()
     except:
