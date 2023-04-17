@@ -4,7 +4,9 @@ COPY flask_api ./flask_api
 COPY runtime_data ./runtime_data
 COPY requirements.txt .
 COPY bin ./bin
+COPY common ./common
 COPY yamldir ./yamldir
+COPY .env .
 EXPOSE 5500
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt

@@ -55,7 +55,7 @@ INSERT INTO TB_USER (user_id, login_id, login_pass, user_name, is_admin)
 
 INSERT INTO TB_PROJECT (project_id, project_name, user_id, pv_name)
  VALUES ('1_pj1', 'pj1', 'user_1', "testPV"),
- ('1_pj2', 'pj2', 'user_1', "testPV")
+ ('1_pj2', 'pj2', 'user_1', "testPV"),
  ('softonnet-test', 'softonnet-test', 'user_1', "testPV");
 
 INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list)
