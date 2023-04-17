@@ -1,6 +1,9 @@
 import React from "react";
 import Flow, {ExampleBasic, Flowchart} from "./react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
+import {Route,Routes,Router} from 'react-router-dom';
+import Switch from "switch";
+import { ProjectList } from "./project_list";
 const queryClient = new QueryClient();
 // const customStyles = {
 //   content: {
@@ -26,10 +29,13 @@ const queryClient = new QueryClient();
 
 function ServiceDefine() {
     return (
-        <> < div id = 'service_define_main' > <h1>지능형 서비스 정의</h1>
+        <> < div id = 'service_define_main' > 
     </div>
     <QueryClientProvider client={queryClient}>
-    <Flow/>
+        <Routes>
+            <Route path="" element={<ProjectList id='user_1'/>}></Route>
+            <Route path="detail/:projectID" element={<Flow/>}></Route>
+        </Routes>
       </QueryClientProvider>
 
 

@@ -12,8 +12,8 @@ import ReactFlow, {
     PanOnScrollMode,
 } from 'reactflow';
 import { useQuery} from 'react-query';
+import {useParams} from 'react-router-dom';
 
-import dagre from 'dagre';
 import 'reactflow/dist/style.css';
 import Sidebar from './service_define_sidebar';
 import NodeInfo from './service_define_node_info';
@@ -23,105 +23,50 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
+import dagre from 'dagre';
 
 const nodeTypes = { textUpdater: TextUpdaterNode };
 const rfStyle = {
     backgroundColor: '#B8CEFF',
   };
-const initialNodes = [
-    {
-        id: '1',
-        type:'textUpdater',
-        position: {
-            x: 0,
-            y: 0
-        },
-        data: {
-            type:'deployment',
-            label: '라벨1',
-            origin:'22',
-            status:'pending',
-            erwerewr:'rewr',
-            sdfwerwrq:"vcvcx",
-            yaml:"apiVersion: apps/v1\nkind: Deployment\nmetadata:\n name: nignx-deployment"
-        }
-    }, {
-        id: '2',
-        position: {
-            x: 500,
-            y: 0
-        },
-        type:'textUpdater',
-        data: {
-            type:'service',
-            label: '라벨2',
-            status:'success',
-            yaml:"werwerqweqw,l,v;dkfopwekopqewqe",
-        }
-    }, {
-        id: '3',
-        position: {
-            x: 1000,
-            y: 0
-        },
-        type:'textUpdater',
-        data: {
-            type:'job',
-            label: '라벨3',
-            status:'failed',
-            yaml:"werwerqweqw,l,v;dkfopwekopqewqeaskq x;pxlxl,x,xdkl;papq0",
-        }
-    }, {
-        id: '4',
-        position: {
-            x: 1500,
-            y: 0
-        },
-        type:'textUpdater',
-        data: {
-            type:'gom',
-            label: '라벨4',
-            status:'waiting',
-            yaml:"eeewqkopw,oozxca",
-        }
-    }, {
-        id: '5',
-        position: {
-            x: 2000,
-            y: 0
-        },
-        type:'textUpdater',
-        data: {
-            type:'sadasd',
-            label: '라벨5',
-            status:'success',
-            yaml:"102185089065",
-        }
-    }
-];
 
-const initialEdges = [
-    {
-        id: 'e1-2',
-        source: '1',
-        target: '2'
-    },
-    {
-        id: 'e1-3',
-        source: '2',
-        target: '3'
-    },
-    {
-        id: 'e1-4',
-        source: '3',
-        target: '4'
-    },
-    {
-        id: 'e1-5',
-        source: '4',
-        target: '5'
-    }
-];
+const dagreGraph = new dagre.graphlib.Graph();
+dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+const nodeWidth = 252;
+const nodeHeight = 142;
+
+const getLayoutedElements = (nodes, edges, direction = 'LR') => {
+    const isHorizontal = direction === 'LR';
+    dagreGraph.setGraph({ rankdir: direction });
+  
+    nodes.forEach((node) => {
+      dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    });
+  
+    edges.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
+  
+    dagre.layout(dagreGraph);
+  
+    nodes.forEach((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id);
+      node.targetPosition = isHorizontal ? 'left' : 'top';
+      node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+  
+      // We are shifting the dagre node position (anchor=center center) to the top left
+      // so it matches the React Flow node anchor point (top left).
+      node.position = {
+        x: nodeWithPosition.x - nodeWidth / 2,
+        y: nodeWithPosition.y - nodeHeight / 2,
+      };
+  
+      return node;
+    });
+  
+    return { nodes, edges };
+  };
 
 function Flow() {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -129,16 +74,22 @@ function Flow() {
     const [value, setValue] = useState(false);
     const [selectedNodeData, setSelectedNodeData] = useState(null);
     const [toggleFlag, setToggleFlag] = useState(false);
-    const id = 'e';
+    const id = useParams().projectID;
     const {isLoading, error, data, isFetching} = useQuery(
         [],()=>{
             return axios.get(process.env.REACT_APP_API+'/api/getDAG/' + id)
             .then((res) => {
+                var nodes = res['data']['nodes'];
+                var edges = res['data']['edges'];
+                var layoutedElems = getLayoutedElements(
+                    nodes,
+                    edges
+                  );
                 setNodes((node) => {
-                    return res['data']['nodes'];
+                    return layoutedElems.nodes
                 });
                 setEdges((edge) => {
-                    return res['data']['edges'];
+                    return layoutedElems.edges
                 });
                 return res['data']
             })
@@ -152,30 +103,6 @@ function Flow() {
         [setEdges]
     );
     
-
-    //정렬
-    useEffect(()=>{
-        var g = new dagre.graphlib.Graph();
-        //nodesep 위아래
-        //ranksep 옆
-        g.setGraph({rankdir:'LR', align:'UL', marginx:0,marginy:0,ranksep:100});
-        g.setDefaultEdgeLabel(function() { return {}; });
-        g.setNode("kspacey",    { label: "Kevin Spacey",  width: 144, height: 100 });
-        g.setNode("swilliams",  { label: "Saul Williams", width: 160, height: 100 });
-        g.setNode("bpitt",      { label: "Brad Pitt",     width: 108, height: 100 });
-        g.setNode("hford",      { label: "Harrison Ford", width: 168, height: 100 });
-        g.setNode("lwilson",    { label: "Luke Wilson",   width: 144, height: 100 });
-        g.setNode("kbacon",     { label: "Kevin Bacon",   width: 121, height: 100 });
-        
-        // Add edges to the graph.
-        g.setEdge("kspacey",   "swilliams");
-        g.setEdge("swilliams", "kbacon");
-        g.setEdge("bpitt",     "kbacon");
-        g.setEdge("hford",     "lwilson");
-        g.setEdge("lwilson",   "kbacon");
-        dagre.layout(g);
-        console.log(g);
-    },[]);
     
     useEffect(() => {
         if (value == true) {
@@ -183,6 +110,7 @@ function Flow() {
             addNode();
         }
     }, [value])
+
     const addNode = useCallback(() => {
         setNodes((nodes) => {
             return [
@@ -240,23 +168,64 @@ function Flow() {
 
     let subtitle;
     const [modalIsOpen, setIsOpen] = useState(false); 
+    const [popUpModalIsOpen, setPopUpIsOpen] = useState(false); 
     function openModal() {
       setIsOpen(true);
     }
-  
+
+    function openPopUpModal() {
+      setPopUpIsOpen(true);
+    }
     const [title, setTitle] = useState("hello")
 
     function afterOpenModal() {
       // references are now sync'd and can be accessed.
       subtitle.text = selectedNodeData.id;
     }
+
+    function afterPopUpOpenModal() {
+      // references are now sync'd and can be accessed.
+      subtitle.text = "실패했습니다."
+    }
   
     function closeModal() {
       setIsOpen(false);
     }
 
+    function closePopUp(){
+        setPopUpIsOpen(false);
+    }
+
+
+    function launchProject() {
+        axios.post(process.env.REACT_APP_API + '/api/project/launch', 
+        {projectID: "ss"})
+        .then(response => {
+            if(response.data['status'] == 'success'){
+                setTitle("실행에 성공했습니다.")
+            }
+            else{
+                setTitle("실행에 실패했습니다. 워크플로를 초기화 해주십시오.")
+            }
+            openPopUpModal()
+        })
+
+    }
+
+    function InitProject() {
+        axios.post(process.env.REACT_APP_API + '/api/project/init', 
+        {projectID: "ss"})
+        .then(response => {
+            console.log(response)
+        })
+    }
+
+
     return (
         <div id='reactflow_wrapper'>
+            <h1>지능형 서비스 정의</h1>
+        <button onClick={launchProject}>Launch Project</button>
+        <button onClick={InitProject}>Init Project</button>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -280,12 +249,10 @@ function Flow() {
                 {/* <Controls/> */}
                 <Background/>
 
-                <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
-                </Sidebar>
+                {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
+                </Sidebar> */}
             </ReactFlow>
-
       <div>
-      <button onClick={openModal}>Open Modal</button>
       <Modal
         isOpen={modalIsOpen}
         onAfterOpen={afterOpenModal}
@@ -297,6 +264,17 @@ function Flow() {
         <h3 ref={(_subtitle) => (subtitle = _subtitle)}>{title}</h3>
         <button onClick={closeModal}>close</button>
         <DagModal nodeType={"Pod"} data={selectedNodeData}/>
+      </Modal>
+      <Modal
+        isOpen={popUpModalIsOpen}
+        onAfterOpen={afterPopUpOpenModal}
+        onRequestClose={closePopUp}
+        contentLabel="Example Modal"
+        className="layer_event"
+        ariaHideApp={false}
+      >
+        <h3 ref={(_subtitle) => (subtitle = _subtitle)}>{title}</h3>
+        <button onClick={closePopUp}>close</button>
       </Modal>
     </div>
         </div>

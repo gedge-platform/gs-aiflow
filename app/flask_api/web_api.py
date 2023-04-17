@@ -10,7 +10,6 @@ from flask_cors import CORS
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl
-from flask_api.global_def import g_var
 
 app = flask.Flask(import_name='client_web',
 				  static_folder=os.path.join('../web_root','static'),
@@ -168,6 +167,8 @@ def dummy():
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
 def getDAG(dagId):
     return monitor_impl.getDag(dagId)
+
+
     # return {'data': 'data1',
     #         'edges': [
     #             {
@@ -278,6 +279,25 @@ def getPodDetail(podID):
     if request.method == 'GET':
         result = request.form
         return monitor_impl.getPodDetail(podID)
+
+
+@app.route('/api/project/launch', methods=['POST'])
+def launchProject():
+    if request.method == 'POST':
+        jsonData = request.json
+        return monitor_impl.launchProject(jsonData['projectID'])
+
+@app.route('/api/getProjectList/<string:userID>', methods=['GET'])
+def getProjectList(userID):
+    if request.method == 'GET':
+        return monitor_impl.getProjectList(userID)
+
+
+@app.route('/api/project/init', methods=['POST'])
+def initProject():
+    if request.method == 'POST':
+        jsonData = request.json
+        return monitor_impl.initProject(jsonData['projectID'])
 
 
 if __name__ == "__main__":

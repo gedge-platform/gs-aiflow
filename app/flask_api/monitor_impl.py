@@ -1,3 +1,5 @@
+import ast
+
 import yaml
 import mysql.connector
 import requests
@@ -11,6 +13,8 @@ import kubernetes.client
 from kubernetes import client, config, utils
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+import common.logger
+import flask_api.center_client
 from flask_api.global_def import g_var
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -19,7 +23,15 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 monitoringManager = MonitoringManager()
-monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'default',
+
+def initTest():
+    list = ['aiflow-test1', 'aiflow-test2', 'aiflow-test3', 'aiflow-test4', 'aiflow-test5']
+    monitoringManager.deleteWorkFlow('default')
+    for item in list:
+        flask_api.center_client.podsNameDelete(item, 'softonet', 'mec(ilsan)', 'softonnet-test')
+    return jsonify(status = 'success'), 200
+def launchTest():
+    result = monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'default',
                                   'edges': [
                                       {
                                           'id': 'e1-2',
@@ -174,6 +186,10 @@ monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': '
                                       }
                                   ]
                                   })))
+    if result is False:
+        return jsonify(status = 'failed'), 200
+    else:
+        return  jsonify(status = 'success'), 200
 
 def getDBConnection():
     if not g_var.mycon:
@@ -647,10 +663,73 @@ def getPodStatus(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
     return str(response.status.phase)
-def getDag(dagId):
-    return monitoringManager.test()
+def getDag(projectID):
+    conn = flask_api.database.get_db_connection();
+    cursor = conn.cursor()
+    c = cursor.execute(f'select node_id, node_type, precondition_list from TB_NODE where project_id = "{projectID}"')
+    rows = cursor.fetchall()
+
+    d = dict()
+    d['id'] = projectID
+    d['edges'] = []
+    d['nodes'] = []
+    s: tuple
+
+    data = flask_api.center_client.getPods('softonet', 'mec(ilsan)', projectID)
+
+    for row in rows:
+        nodeID = row[0]
+        nodeType = row[1]
+        preConds = row[2]
+        preCondsList = ast.literal_eval(preConds)
+
+        for preCond in preCondsList:
+            d['edges'].append({'id': nodeID + "_" + preCond,
+                               'source': preCond,
+                               'target': nodeID})
+
+        node = {
+            'id': nodeID,
+            'type': 'textUpdater',
+            'data': {'type': 'Pod',
+                     'status': 'Waiting'}
+        }
+
+        if data['data'] is not None:
+            for task in data['data']:
+                if task['name'] == nodeID:
+                    node['data']['status'] = task['status']
+        d['nodes'].append(node)
+
+    return d
 
 
 def getPodDetail(podID):
     from flask_api import center_client
     return center_client.getPodDetail(podID, "softonet","mec(ilsan)","softonnet-test")
+
+def getProjectList(userID):
+    mycon = get_db_connection()
+
+    cursor=mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_name from TB_PROJECT where user_id="{userID}"')
+    rows= cursor.fetchall()
+
+    if rows is not None:
+        projectList = list()
+        for row in rows:
+            data = dict()
+            data['project_name'] = row['project_name']
+            projectList.append(data)
+        return jsonify(project_list=projectList), 200
+    else:
+        common.logger.get_logger().debug('[monitor_impl.getProjectList] failed to get from db')
+        return jsonify(msg='Internal Server Error'), 500
+
+def launchProject(projectID):
+    #TODO: DB처리및 유효성체크
+
+    return launchTest()
+# return None
+def initProject(param):
+    return initTest()

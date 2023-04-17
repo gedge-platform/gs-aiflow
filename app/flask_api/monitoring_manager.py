@@ -29,8 +29,6 @@ class MonitoringManager:
         self.scheduler.add_job(self.checkNodeNeededToStartWorkFlowFromServer, 'interval', seconds = 5, id='test')
         self.scheduler.start()
 
-    def test(self):
-        return self.__monitoringList.get('default').origin
     def parseFromDAGToWorkFlow(self, dag):
         nodes = dag['nodes']
         edges = dag['edges']
@@ -68,10 +66,22 @@ class MonitoringManager:
         if not isinstance(data, WorkFlow):
             return False
         # TODO: 무결성 체크 및 파싱
+        project = flask_api.center_client.userProjectsNameGet('softonnet-test')
+        if project['data'] is not None:
+            detailInfoList = project['data']['DetailInfo']
+            for detailInfo in detailInfoList:
+                resourceData : dict = detailInfo['resource']
+                for res in resourceData.items():
+                    if res[0] != 'namespace_count' and res[1] != 0:
+                        return False
 
-        self.__monitoringList[data.id] = data
-        return True
-
+            self.__monitoringList[data.id] = data
+            return True
+        else:
+            return False
+    def deleteWorkFlow(self, workflowID):
+        if self.__monitoringList.get(workflowID) is not None:
+            self.__monitoringList.pop(workflowID)
     def getListNamespacePod(self, workFlow : WorkFlow):
         cluster = 'cluster_test1'
         namespace = workFlow.id

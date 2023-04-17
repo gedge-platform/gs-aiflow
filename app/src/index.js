@@ -10,7 +10,6 @@ import {NotFound} from './notfound';
 import {Create} from './create.js';
 import {Delete} from './delete.js';
 import {LogIn} from './login.js';
-import {Test} from './test.js';
 import {LogViewer} from './logviewer.js';
 import { ServiceDefine } from './service_define';
 
@@ -34,10 +33,8 @@ class Main extends React.Component {
                             <Route path='/enroll' element={<EnrollClusterMonitoring />}></Route>
                             <Route path='/create' element={<Create />}></Route>
                             <Route path='/delete' element={<Delete />}></Route>
-                            <Route path='/test' element={<Test />}></Route>
                             <Route path='/logviewer' element={<LogViewer />}></Route>
-                            <Route path='/service_define' element={<ServiceDefine />}></Route>
-
+                            <Route path='/service_define/*' element={<ServiceDefine />}></Route>
                             <Route path='/*' element={<NotFound />}></Route>
                         </Routes>
                     </div>

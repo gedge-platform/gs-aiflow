@@ -44,7 +44,7 @@ def create_tables(dbcon=None):
 
 
 def get_db_connection():
-    if not g_var.mycon:
+    if not g_var.mycon or not g_var.mycon.is_connected():
         g_var.mycon = mysql.connector.connect(
             host=dbHost,
             port=dbPort,
@@ -52,4 +52,5 @@ def get_db_connection():
             database='aiflow',
             password=dbPass,
         )
+
     return g_var.mycon
