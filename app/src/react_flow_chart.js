@@ -12,6 +12,7 @@ import ReactFlow, {
     PanOnScrollMode,
 } from 'reactflow';
 import { useQuery} from 'react-query';
+import {useParams} from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
 import Sidebar from './service_define_sidebar';
@@ -73,7 +74,7 @@ function Flow() {
     const [value, setValue] = useState(false);
     const [selectedNodeData, setSelectedNodeData] = useState(null);
     const [toggleFlag, setToggleFlag] = useState(false);
-    const id = 'e';
+    const id = useParams().projectID;
     const {isLoading, error, data, isFetching} = useQuery(
         [],()=>{
             return axios.get(process.env.REACT_APP_API+'/api/getDAG/' + id)
