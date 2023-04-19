@@ -356,3 +356,12 @@ html,body{
 /* #sidemenu h1:hover {
     color: #0c5df4;
 } */
+.ant-table-tbody > tr.ant-table-row:hover > td {
+    background: lightgrey !important;
+}
+
+/* 필수별표 label class required */
+  .required:after {
+    content:" *";
+    color: red;
+  }

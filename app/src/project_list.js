@@ -1,12 +1,11 @@
 import React from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
-import Test from "./test";
-import { Space, Table, Tag, Button, Layout } from 'antd';
+import { useState} from 'react';
+import { Space, Table, Tag, Button, Modal } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";
-import { Content } from "antd/es/layout/layout";
-
+import CreateProjectModal from './create_project_modal';
 const getProjectList = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
     var list = data.project_list;
@@ -41,12 +40,25 @@ const getProjectList = async ( id ) => {
 function ProjectList(props) {
     var id = props.id;
     const setPage = props.setPage;
+    const [nameValidation, setNameValidation] = useState(false);
+    const [projectName, setProjectName] = useState("");
+    const [projectDesc, setProjectDesc] = useState("");
+    const [clusterList, setClusterList] = useState([]);
+
+
     const navigate = useNavigate();
     const { isLoading, isError, data, error } = useQuery(["projectList"], () => {return getProjectList(id)}, {
         refetchOnWindowFocus:false,
         retry:0,
     });
 
+    const initCreateProjectData = () =>{
+      setNameValidation(false);
+      setProjectName("");
+      setProjectDesc("");
+      setClusterList([]);
+    }
+    
     const onRow = (record, rowIndex) => {
         return {
           onClick: (event) => {
@@ -61,8 +73,71 @@ function ProjectList(props) {
       };
 
     const createProject = () => {
-
+      initCreateProjectData();
+      showModal();
     }
+
+    const [open, setOpen] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [modalText, setModalText] = useState('Content of the modal');
+  
+    const showModal = () => {
+      setOpen(true);
+    };
+
+
+    var specialNameRegex = /^[A-Za-z0-9\-]+$/;
+    var specialDescRegex = /^[ㄱ-ㅎ가-힣A-Za-z0-9\s]+$/;
+
+    const validateProjectName = (name) => {
+      if(name == ''){
+        return false;
+      }
+      else{
+        return specialNameRegex.test(name);
+      }
+    }
+
+    const validateProjectDesc = (desc) => {
+      return specialDescRegex.test(desc);
+    }
+
+    const validateClusterList = (desc) => {
+      if(desc.length == 0){
+        return false;
+      }
+      return true;
+    }
+  
+    const handleOk = () => {
+      if(!nameValidation){
+        console.log("val")
+      }
+      else if(!validateProjectName(projectName)){
+        console.log("name")
+      }
+      else if(!validateProjectDesc(projectDesc)){
+        console.log("desc")
+      }
+      else if(!validateClusterList(clusterList)){
+        console.log("cluster")
+      }
+      else{
+        setModalText('The modal will be closed after two seconds');
+        setConfirmLoading(true);
+        setTimeout(() => {
+          setOpen(false);
+          setConfirmLoading(false);
+        }, 2000);
+      }
+      
+    };
+  
+    const handleCancel = () => {
+      console.log('Clicked cancel button');
+      setOpen(false);
+    };
+
     return (
         <> < div id = 'service_define_main' > 
         <div style={{display:'flex'}} >
@@ -82,7 +157,23 @@ function ProjectList(props) {
         )
 
     }
-    {/* <Test/> */}
+    
+    <Modal
+        title="프로젝트 생성"
+        open={open}
+        onOk={handleOk}
+        confirmLoading={confirmLoading}
+        onCancel={handleCancel}
+        destroyOnClose={true}
+      >
+        <div style={{height:'10px'}}/>
+        <CreateProjectModal id={id} validation={{
+          nameValidation:[nameValidation, setNameValidation],
+          projectName:[projectName, setProjectName],
+          projectDesc:[projectDesc, setProjectDesc],
+          clusterList:[clusterList, setClusterList]
+          }} />
+      </Modal>
     </div>
     </>
     

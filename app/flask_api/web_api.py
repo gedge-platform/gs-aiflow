@@ -298,7 +298,10 @@ def initProject():
     if request.method == 'POST':
         jsonData = request.json
         return monitor_impl.initProject(jsonData['projectID'])
-
+@app.route('/api/clusters/<string:userID>', methods=['GET'])
+def getClusterList(userID):
+    if request.method == 'GET':
+        return monitor_impl.getClusterList(userID)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

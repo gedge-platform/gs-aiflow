@@ -733,3 +733,15 @@ def launchProject(projectID):
 # return None
 def initProject(param):
     return initTest()
+
+
+def getClusterList(userID):
+    data = [{
+            'name' : 'onpremise(dongjakk)',
+            'type' : 'edge'
+        },
+        {
+            'name' : 'mec(ilsan)',
+            'type' : 'edge'
+        }]
+    return jsonify(cluster_list=data), 200
