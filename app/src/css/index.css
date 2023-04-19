@@ -6,7 +6,7 @@
 #sidemenu{
     width: 300px;
     height: 100%;
-    background-color:#5e5555
+    background-color:#404040
 }
 
 #sidemenu a{
@@ -22,15 +22,32 @@
 #sidemenu a:active{
     color:#ffffff
 }
+.nav__link {
+    grid-template-columns: max-content max-content;
+    align-items: center;
+    column-gap: .75rem;
+    /* padding: .75rem; */
+    color: #FFFFFF;
+    border-radius: .5rem;
+    margin-bottom: 1rem;
+    transition: .3s;
+    width: 100%;
+    cursor: pointer;
+}
+
+.nav__link:hover {
+    background-color: #0c5df4;
+}
+
+
 
 #image_aieyeflow{
-    display:block;
-    margin-left:auto;
-    margin-right:auto;
+    height: auto;
 }
 
 #body{
-    margin-left: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
     display: flex;
     width: 100%;
     height: 100%;
@@ -38,7 +55,6 @@
 }
 #body_main{
     width: 100%;
-    overflow-y: auto;
 }
 #monitor_main{
     width:100%;
@@ -61,10 +77,6 @@ html,body{
     overflow-y:hidden;
 }
 
-#image_aieyeflow{
-    width:280px;
-
-}
 
 .tableStyle{
     border: 1px solid black;
@@ -265,7 +277,7 @@ html,body{
 
 #reactflow_wrapper{
     width: 100%;
-    height: 100%;
+    height: 85%;
 }
 /* every */
 .formErrors{
@@ -319,16 +331,28 @@ html,body{
     width: 100%;
 }
 
-path {
+/* path {
     fill: none;
     stroke: black;
-  }
+  } */
 
 #sidemenu h1 {
     padding-left: 24px;
     border-bottom: 1px solid;
 }
 
-#sidemenu h1:hover {
-    color: #0000ff;
-}
+#components-layout-demo-top-side-2 .logo {
+    float: left;
+    width: 120px;
+    height: 31px;
+    margin: 16px 24px 16px 0;
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .ant-row-rtl #components-layout-demo-top-side-2 .logo {
+    float: right;
+    margin: 16px 0 16px 24px;
+  }
+/* #sidemenu h1:hover {
+    color: #0c5df4;
+} */

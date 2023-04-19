@@ -28,6 +28,7 @@ import dagre from 'dagre';
 const nodeTypes = { textUpdater: TextUpdaterNode };
 const rfStyle = {
     backgroundColor: '#B8CEFF',
+    height:'500px'
   };
 
 const dagreGraph = new dagre.graphlib.Graph();
@@ -220,12 +221,12 @@ function Flow() {
         })
     }
 
-
     return (
         <div id='reactflow_wrapper'>
-            <h1>지능형 서비스 정의</h1>
+            <h2>{id}</h2>
         <button onClick={launchProject}>Launch Project</button>
         <button onClick={InitProject}>Init Project</button>
+        <div style={{width:'100%', height:'500px'}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -251,7 +252,8 @@ function Flow() {
 
                 {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
                 </Sidebar> */}
-            </ReactFlow>
+            </ReactFlow></div>
+            
       <div>
       <Modal
         isOpen={modalIsOpen}

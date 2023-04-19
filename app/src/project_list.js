@@ -38,6 +38,7 @@ const getProjectList = async ( id ) => {
 
 function ProjectList(props) {
     var id = props.id;
+    const setPage = props.setPage;
     const navigate = useNavigate();
     const { isLoading, isError, data, error } = useQuery(["projectList"], () => {return getProjectList(id)}, {
         refetchOnWindowFocus:false,
@@ -51,14 +52,20 @@ function ProjectList(props) {
               // rowIndex: row의 index
               // event: event prototype
             console.log(record, rowIndex, event);
-            navigate('detail/' + record.project_name)
+            navigate('/monitoring/' + record.project_name)
+            setPage('monitoring')
           },
         };
       };
 
+    const createProject = () => {
+
+    }
     return (
-        <> < div id = 'service_define_main' > <h1>프로젝트 목록</h1>
-{
+        <> < div id = 'service_define_main' > <h2>프로젝트 목록</h2>
+
+    <button onClick={createProject}>Create Project</button>
+    {
         !isLoading && (
             <Table rowKey={"project_name"} columns={columns} dataSource={data} onRow={onRow} pagination={{ pageSize: 5, showSizeChanger:false}}/>
             // <h1>{data}</h1>

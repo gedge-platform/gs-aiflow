@@ -27,13 +27,15 @@ const queryClient = new QueryClient();
 //   },
 // };
 
-function ServiceDefine() {
+function ServiceDefine(props) {
+    const setPage = props.setPage
+
     return (
         <> < div id = 'service_define_main' > 
     </div>
     <QueryClientProvider client={queryClient}>
         <Routes>
-            <Route path="" element={<ProjectList id='user_1'/>}></Route>
+            <Route path="" element={<ProjectList id='user_1' setPage={setPage}/>}></Route>
             <Route path="detail/:projectID" element={<Flow/>}></Route>
         </Routes>
       </QueryClientProvider>
