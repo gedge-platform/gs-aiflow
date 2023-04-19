@@ -2,8 +2,10 @@ import React from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
 import Test from "./test";
-import { Space, Table, Tag } from 'antd';
+import { Space, Table, Tag, Button, Layout } from 'antd';
 import { useNavigate } from "react-router-dom";
+import { PlusOutlined } from "@ant-design/icons";
+import { Content } from "antd/es/layout/layout";
 
 const getProjectList = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
@@ -62,9 +64,17 @@ function ProjectList(props) {
 
     }
     return (
-        <> < div id = 'service_define_main' > <h2>프로젝트 목록</h2>
+        <> < div id = 'service_define_main' > 
+        <div style={{display:'flex'}} >
+          <h2>목록</h2>
+        <div align='right' style={{flex:1, display:'flex', justifyContent:'flex-end'}}> 
+          {/* <h2 >프로젝트 목록</h2>  */}
+          <Button style={{margin:'auto 0'}} type="primary" icon={<PlusOutlined />} onClick={createProject}>
+            New Project
+          </Button>
+        </div>
+        </div>
 
-    <button onClick={createProject}>Create Project</button>
     {
         !isLoading && (
             <Table rowKey={"project_name"} columns={columns} dataSource={data} onRow={onRow} pagination={{ pageSize: 5, showSizeChanger:false}}/>
