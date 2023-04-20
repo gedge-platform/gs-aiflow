@@ -123,14 +123,6 @@ def userProjectsNameGet(projectName: str):
     except:
         return {}
 
-body = {"projectName":"softonnet-test2",
-        "projectDescription":"softonnet-test2",
-        "projectType":"user",
-        "clusterName":["onpremise(dongjak)","mec(ilsan)"],
-        "workspaceName":"softonet",
-        "memberName":"softonet",
-        "istioCheck":"disabled"
-        }
 def projectsPost(workspaceName: str, memberName:str , projectname: str, projectDescription: str,  projectType: str = 'user', clusterName:list = [], istioCheck: str = 'disabled'):
     body = {"projectName": projectname,
         "projectDescription": projectDescription,
@@ -149,3 +141,14 @@ def projectsPost(workspaceName: str, memberName:str , projectname: str, projectD
         return response.json()
     except:
         return {'status' : 'failed'}
+
+def workspacesNameGet(workspace: str):
+    response, code = send_api('/workspaces/' + workspace, 'GET', params={}, body={})
+
+    if code != 201 and code != 200:
+        return {'selectCluster' : []}
+
+    try:
+        return response.json()
+    except:
+        return {'selectCluster' : []}

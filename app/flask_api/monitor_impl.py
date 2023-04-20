@@ -736,12 +736,34 @@ def initProject(param):
 
 
 def getClusterList(userID):
-    data = [{
-            'name' : 'onpremise(dongjakk)',
-            'type' : 'edge'
-        },
-        {
-            'name' : 'mec(ilsan)',
-            'type' : 'edge'
-        }]
-    return jsonify(cluster_list=data), 200
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+    rows = cursor.fetchall()
+
+    if rows is not None:
+        workspaceName = None
+        for row in rows:
+            workspaceName = row['workspace_name']
+            break
+
+        if workspaceName is not None:
+            data = flask_api.center_client.workspacesNameGet(workspaceName)
+            clusterList = []
+            if data['selectCluster'] is not None:
+                for cluster in data['selectCluster']:
+                    clusterList.append({
+                        'name' : cluster['clusterName'],
+                        'type' : cluster['clusterType']
+                    })
+
+                return jsonify(cluster_list=clusterList)
+            else:
+                return jsonify(msg='Cluster not Found'), 400
+
+
+        return jsonify(msg='Cluster not Found'), 400
+    else:
+        common.logger.get_logger().debug('[monitor_impl.getClusterList] failed to get from db')
+        return jsonify(msg='Internal Server Error'), 500
