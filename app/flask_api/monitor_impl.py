@@ -767,3 +767,29 @@ def getClusterList(userID):
     else:
         common.logger.get_logger().debug('[monitor_impl.getClusterList] failed to get from db')
         return jsonify(msg='Internal Server Error'), 500
+
+
+def createProject(userID, projectName, projectDesc, clusterName):
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+    rows = cursor.fetchall()
+
+    if rows is not None:
+        workspaceName = None
+        for row in rows:
+            workspaceName = row['workspace_name']
+            break
+
+        if workspaceName is not None:
+            status = flask_api.center_client.projectsPost(workspaceName, "softonet", projectName, projectDesc,
+                                             clusterName=clusterName)
+
+            if status['status'] != 'failed':
+                cursor.execute(f'insert into TB_PROJECT (project_id, project_name, user_id, pv_name) value ("{projectName}", "{projectName}", "{userID}", "testPV");')
+                mycon.commit()
+                return jsonify(status='success'), 200
+            else:
+                return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 200

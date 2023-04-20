@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
 import { useState} from 'react';
-import { Space, Table, Tag, Button, Modal } from 'antd';
+import { Space, Table, Tag, Button, Modal, notification } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";
 import CreateProjectModal from './create_project_modal';
@@ -123,15 +123,54 @@ function ProjectList(props) {
         console.log("cluster")
       }
       else{
-        setModalText('The modal will be closed after two seconds');
-        setConfirmLoading(true);
-        setTimeout(() => {
-          setOpen(false);
-          setConfirmLoading(false);
-        }, 2000);
+        sendCreateProject();
+        // setModalText('The modal will be closed after two seconds');
+        // setConfirmLoading(true);
+        // setTimeout(() => {
+        //   setOpen(false);
+        //   setConfirmLoading(false);
+        // }, 2000);
       }
       
     };
+
+    function sendCreateProject() {
+      setConfirmLoading(true);
+
+      const cL = []
+      clusterList.forEach(elem => cL.push(elem.name))
+      axios.post(process.env.REACT_APP_API + '/api/project', 
+      {projectName: projectName, projectDesc: projectDesc, clusterName: cL})
+      .then(response => {
+
+          if(response.data['status'] == 'success'){
+            notificationData.message = '프로젝트 생성 성공';
+            notificationData.description ='프로젝트 생성에 성공했습니다.';
+            openNotification();
+          }
+          else{
+            notificationData.message = '프로젝트 생성 실패';
+            notificationData.description ='프로젝트 생성에 실패했습니다.';
+            openNotification();
+          }
+
+          setOpen(false);
+          setConfirmLoading(false);
+      })
+
+  }
+
+  var notificationData = {message:"", description:""}
+
+  const openNotification = () => {
+    notification.open({
+      message: notificationData.message,
+      description:
+      notificationData.description,
+      onClick: () => {
+      },
+    });
+  };
   
     const handleCancel = () => {
       console.log('Clicked cancel button');
