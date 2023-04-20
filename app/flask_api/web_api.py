@@ -309,5 +309,11 @@ def createProject():
         jsonData = request.json
         return monitor_impl.createProject("user_1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
+
+@app.route('/api/project/<string:projectName>', methods=['DELETE'])
+def deleteProject(projectName):
+    if request.method == 'DELETE':
+        return monitor_impl.deleteProject("user_1", projectName)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

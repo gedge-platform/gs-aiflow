@@ -6,6 +6,7 @@ import { Space, Table, Tag, Button, Modal, notification } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";
 import CreateProjectModal from './create_project_modal';
+import DeleteProjectModal from './delete_project_modal';
 const getProjectList = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
     var list = data.project_list;
@@ -19,6 +20,9 @@ const getProjectList = async ( id ) => {
     
   };
 
+ 
+
+function ProjectList(props) {
   const columns = [
     {
       title: '프로젝트 이름',
@@ -31,13 +35,19 @@ const getProjectList = async ( id ) => {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <a>Delete</a>
+          <a onClick={(event)=>{
+            event.stopPropagation();
+            deleteProject(record)
+          }} >Delete</a>
         </Space>
       ),
     },
   ];
 
-function ProjectList(props) {
+  function deleteProject(record){
+    setDeleteProjectName(record.project_name);
+    showDeleteModal();
+  }
     var id = props.id;
     const setPage = props.setPage;
     const [nameValidation, setNameValidation] = useState(false);
@@ -47,7 +57,7 @@ function ProjectList(props) {
 
 
     const navigate = useNavigate();
-    const { isLoading, isError, data, error } = useQuery(["projectList"], () => {return getProjectList(id)}, {
+    const { isLoading, isError, data, error, refetch } = useQuery(["projectList"], () => {return getProjectList(id)}, {
         refetchOnWindowFocus:false,
         retry:0,
     });
@@ -58,6 +68,7 @@ function ProjectList(props) {
       setProjectDesc("");
       setClusterList([]);
     }
+
     
     const onRow = (record, rowIndex) => {
         return {
@@ -79,10 +90,17 @@ function ProjectList(props) {
 
     const [open, setOpen] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
-    const [modalText, setModalText] = useState('Content of the modal');
+
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [confirmDeleteLoading, setConfirmDeleteLoading] = useState(false);
+    const [deleteProjectName, setDeleteProjectName] = useState("");
   
     const showModal = () => {
       setOpen(true);
+    };
+
+    const showDeleteModal = () => {
+      setDeleteOpen(true);
     };
 
 
@@ -134,6 +152,14 @@ function ProjectList(props) {
       
     };
 
+    const handleDeleteOk = () => {
+      sendDeleteProject();
+    }
+
+    const handleDeleteCancel = () => {
+      setDeleteOpen(false);
+    }
+
     function sendCreateProject() {
       setConfirmLoading(true);
 
@@ -156,9 +182,36 @@ function ProjectList(props) {
 
           setOpen(false);
           setConfirmLoading(false);
+          refetch();
       })
 
   }
+
+
+
+  function sendDeleteProject() {
+    setConfirmDeleteLoading(true);
+
+    axios.delete(process.env.REACT_APP_API + '/api/project/' + deleteProjectName,{})
+    .then(response => {
+
+        if(response.data['status'] == 'success'){
+          notificationData.message = '프로젝트 삭제 성공';
+          notificationData.description ='프로젝트 삭제에 성공했습니다.';
+          openNotification();
+        }
+        else{
+          notificationData.message = '프로젝트 삭제 실패';
+          notificationData.description ='프로젝트 삭제에 실패했습니다.';
+          openNotification();
+        }
+
+        setDeleteOpen(false);
+        setConfirmDeleteLoading(false);
+        refetch();
+    })
+
+}
 
   var notificationData = {message:"", description:""}
 
@@ -212,6 +265,17 @@ function ProjectList(props) {
           projectDesc:[projectDesc, setProjectDesc],
           clusterList:[clusterList, setClusterList]
           }} />
+      </Modal>
+      <Modal
+        title="프로젝트 삭제"
+        open={deleteOpen}
+        onOk={handleDeleteOk}
+        confirmLoading={confirmDeleteLoading}
+        onCancel={handleDeleteCancel}
+        destroyOnClose={true}
+      >
+        <div style={{height:'10px'}}/>
+        <DeleteProjectModal project_name={deleteProjectName} />
       </Modal>
     </div>
     </>

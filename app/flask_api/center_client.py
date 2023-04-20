@@ -50,7 +50,9 @@ def send_api(path, method, params=None, body=None, ):
             elif method == 'POST':
                 response = requests.post(url, headers=headers, params=params,
                                          data=json.dumps(body, ensure_ascii=False, indent="\t"))
-
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers, params=params,
+                                           data=json.dumps(body, ensure_ascii=False, indent="\t"))
         return response, response.status_code
 
     except Exception as ex:
@@ -152,3 +154,14 @@ def workspacesNameGet(workspace: str):
         return response.json()
     except:
         return {'selectCluster' : []}
+
+def projectsDelete(projectName : str):
+    response, code = send_api('/projects/' + projectName, 'DELETE', params={}, body={})
+
+    if code != 201 and code != 200:
+        return {'status' : 'failed'}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : 'failed'}

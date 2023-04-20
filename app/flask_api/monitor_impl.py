@@ -793,3 +793,16 @@ def createProject(userID, projectName, projectDesc, clusterName):
             else:
                 return jsonify(status='failed'), 200
     return jsonify(status='failed'), 200
+
+
+def deleteProject(userID, projectName):
+    status = flask_api.center_client.projectsDelete(projectName)
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+
+    if status['status'] != 'failed':
+        cursor.execute(
+            f'delete from TB_PROJECT where project_id = "{projectName}";')
+        mycon.commit()
+        return jsonify(status='success'), 200
+    return jsonify(status='failed'), 200
