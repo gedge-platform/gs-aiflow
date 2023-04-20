@@ -104,7 +104,7 @@ const App = () => {
                      <div id='body_main'>
                       <Content className="body-layout">
                       <h2>{changeTitle(selectedKey)}</h2>
-                      <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000'}}>
+                      {/* <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000'}}> */}
                       <Routes>
                              <Route path='/' element={<Monitor />}></Route>
                              <Route path='/enroll' element={<EnrollClusterMonitoring />}></Route>
@@ -115,7 +115,7 @@ const App = () => {
                              <Route path='/monitoring/:projectID' element={<Flow />}></Route>
                              <Route path='/*' element={<NotFound />}></Route>
                          </Routes>
-                      </div>
+                      {/* </div> */}
                       </Content>
                       
                          

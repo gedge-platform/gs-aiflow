@@ -818,7 +818,15 @@ def getProject(userID, projectName):
             pid = rows[0]['project_id']
             response = flask_api.center_client.userProjectsNameGet(pid)
             if response['data'] is not None:
-                return response, 200
+                returnResponse = {}
+                returnResponse['projectName'] = response['data']['projectName']
+                returnResponse['projectDescription'] = response['data']['projectDescription']
+                returnResponse['userId'] = userID
+                returnResponse['created_at'] = response['data']['created_at']
+                returnResponse['clusterList'] = []
+                for cluster in response['data']['selectCluster']:
+                    returnResponse['clusterList'].append(cluster['clusterName'])
+                return returnResponse, 200
             else:
                 #TODO: db 동기화 필요
                 return jsonify(msg='no data'), 200

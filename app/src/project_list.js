@@ -4,7 +4,7 @@ import axios from "axios";
 import { useState} from 'react';
 import { Space, Table, Tag, Button, Modal, notification } from 'antd';
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@ant-design/icons";
 import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
 const getProjectList = async ( id ) => {
@@ -35,10 +35,28 @@ function ProjectList(props) {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <a onClick={(event)=>{
+          <Button type="primary" icon={<DesktopOutlined />} style={{backgroundColor: '#00CC00'}} onClick={(event)=>{
+            event.stopPropagation();
+            navigate('/monitoring/' + record.project_name)
+            setPage('monitoring')
+          }}>
+              Monitoring
+          </Button>
+
+          <Button type="primary" icon={<FormOutlined />} style={{backgroundColor: '#CC8800'}} onClick={(event)=>{
+            event.stopPropagation();
+            navigate('/editing/' + record.project_name)
+            setPage('editing')
+          }}>
+              Editing
+          </Button>
+
+          <Button type="primary" icon={<DeleteOutlined />} style={{backgroundColor: '#CC0000'}} onClick={(event)=>{
             event.stopPropagation();
             deleteProject(record)
-          }} >Delete</a>
+          }}>
+              Delete
+          </Button>
         </Space>
       ),
     },
@@ -54,6 +72,7 @@ function ProjectList(props) {
     const [projectName, setProjectName] = useState("");
     const [projectDesc, setProjectDesc] = useState("");
     const [clusterList, setClusterList] = useState([]);
+    const [selectedProject, setSelectedProject] = props.setSelectedProject;
 
 
     const navigate = useNavigate();
@@ -76,9 +95,9 @@ function ProjectList(props) {
               // record: row의 data
               // rowIndex: row의 index
               // event: event prototype
-            console.log(record, rowIndex, event);
-            navigate('/monitoring/' + record.project_name)
-            setPage('monitoring')
+              setSelectedProject(record.project_name);
+            // navigate('/monitoring/' + record.project_name)
+            // setPage('monitoring')
           },
         };
       };

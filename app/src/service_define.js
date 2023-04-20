@@ -1,9 +1,10 @@
-import React from "react";
+import {React, useState} from "react";
 import Flow, {ExampleBasic, Flowchart} from "./react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route,Routes,Router} from 'react-router-dom';
 import Switch from "switch";
 import { ProjectList } from "./project_list";
+import { ProjectDetail } from "./project_detail";
 const queryClient = new QueryClient();
 // const customStyles = {
 //   content: {
@@ -29,18 +30,25 @@ const queryClient = new QueryClient();
 
 function ServiceDefine(props) {
     const setPage = props.setPage
+    const [selectedProject, setSelectedProject] = useState("");
 
     return (
         <> < div id = 'service_define_main' > 
     </div>
+
     <QueryClientProvider client={queryClient}>
+                      <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000'}}>
         <Routes>
-            <Route path="" element={<ProjectList id='user_1' setPage={setPage}/>}></Route>
-            <Route path="detail/:projectID" element={<Flow/>}></Route>
+            <Route path="" element={<ProjectList id='user_1' setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
-      </QueryClientProvider>
+        </div>
+        <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000', marginTop:'20px'}}>
+        <Routes>
+            <Route path="" element={<ProjectDetail id='user_1' setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
+        </Routes>
+        </div>
 
-
+        </QueryClientProvider>
     </>
     
     );

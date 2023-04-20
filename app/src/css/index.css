@@ -360,8 +360,39 @@ html,body{
     background: lightgrey !important;
 }
 
+.ant-table-tbody > tr.ant-table-row > td {
+    padding: 8px;
+}
+
 /* 필수별표 label class required */
   .required:after {
     content:" *";
     color: red;
   }
+
+.project_detail_row{
+    min-height: 30px;
+}
+
+.project_detail_row .ant-col{
+    vertical-align: middle;
+    padding-left: 15px;
+    border: 1px solid lightgrey;
+}
+
+.project_detail_row h4{
+    margin: 5px 0;
+}
+
+
+.project_detail_col.head{
+    background-color: #DADADA;
+}
+
+.project_detail_col.data{
+    background-color: #FFFFFF;
+}
+
+#project_detail{
+  border: 1px solid black;
+}
