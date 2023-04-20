@@ -315,5 +315,11 @@ def deleteProject(projectName):
     if request.method == 'DELETE':
         return monitor_impl.deleteProject("user_1", projectName)
 
+
+@app.route('/api/project/<string:projectName>', methods=['GET'])
+def getProject(projectName):
+    if request.method == 'GET':
+        return monitor_impl.getProject("user_1", projectName)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

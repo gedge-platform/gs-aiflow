@@ -64,14 +64,14 @@ const enterLoading = (index) => {
     newLoadings[index] = true;
     return newLoadings;
   });
-  setTimeout(() => {
-    setLoadings((prevLoadings) => {
-      const newLoadings = [...prevLoadings];
-      newLoadings[index] = false;
-      setValidation(true)
-      return newLoadings;
-    });
-  }, 6000);
+  // setTimeout(() => {
+  //   setLoadings((prevLoadings) => {
+  //     const newLoadings = [...prevLoadings];
+  //     newLoadings[index] = false;
+  //     setValidation(true)
+  //     return newLoadings;
+  //   });
+  // }, 6000);
 };
 
 
@@ -84,6 +84,27 @@ const validateProjectName = (name) => {
   else{
     return specialNameRegex.test(name);
   }
+}
+
+const validateProjectFromServer = (name) => {
+  enterLoading(0);
+  axios.get(process.env.REACT_APP_API+'/api/project/' + name)
+  .then(response => {
+    if(response['data']['data'] != undefined){
+        setValidation(false);
+        console.log(response['data']['data']);
+    }
+    else{
+        setValidation(true);
+        console.log(response['data']['data']);
+    }
+    
+    setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[0] = false;
+      return newLoadings;
+    });
+  });
 }
 
 // loading={loadings[0]} onClick={() => enterLoading(0)}
@@ -108,7 +129,7 @@ const validateProjectName = (name) => {
           :
             <Button type="primary" loading={loadings[0]} onClick={() => {
                 if(validateProjectName(projectName)){
-                  enterLoading(0)
+                  validateProjectFromServer(projectName)
                 }
               }}>
               중복확인

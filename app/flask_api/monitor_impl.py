@@ -806,3 +806,24 @@ def deleteProject(userID, projectName):
         mycon.commit()
         return jsonify(status='success'), 200
     return jsonify(status='failed'), 200
+
+
+def getProject(userID, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_id from TB_PROJECT where project_name="{projectName}" and user_id="{userID}"')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) != 0:
+            pid = rows[0]['project_id']
+            response = flask_api.center_client.userProjectsNameGet(pid)
+            if response['data'] is not None:
+                return response, 200
+            else:
+                #TODO: db 동기화 필요
+                return jsonify(msg='no data'), 200
+        #db에 없음
+        else:
+            return jsonify(msg='no data'), 200
+
+    return jsonify(msg='error'), 404
