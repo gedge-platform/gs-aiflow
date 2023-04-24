@@ -396,3 +396,11 @@ html,body{
 #project_detail{
   border: 1px solid black;
 }
+
+.content_box{
+    border-radius:20px;
+    background-color: #ffeeee;
+    padding:15px; 
+    color : #000000;
+    margin-top:20px;
+}

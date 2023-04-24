@@ -37,12 +37,12 @@ function ServiceDefine(props) {
     </div>
 
     <QueryClientProvider client={queryClient}>
-                      <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000'}}>
+        <div className="content_box" >
         <Routes>
             <Route path="" element={<ProjectList id='user_1' setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
         </div>
-        <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000', marginTop:'20px'}}>
+        <div className="content_box">
         <Routes>
             <Route path="" element={<ProjectDetail id='user_1' setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
