@@ -20,3 +20,6 @@ file_log_max_mb: 100
 console_log_enable: True
 # 로그 레벨 DEBUG, INFO, WARNING, ERROR, CRITICAL (default : INFO)
 log_level: INFO
+
+#node_type
+node_type : ['pod', 'cron_job', 'deployment', 'service', 'daemon_set', 'stateful_set']

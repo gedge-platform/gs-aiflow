@@ -15,7 +15,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import common.logger
 import flask_api.center_client
-from flask_api.global_def import g_var
+from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
 
@@ -826,6 +826,25 @@ def getProject(userID, projectName):
                 returnResponse['clusterList'] = []
                 for cluster in response['data']['selectCluster']:
                     returnResponse['clusterList'].append(cluster['clusterName'])
+
+                #node db
+                returnResponse['nodes'] = {}
+                c = flask_api.global_def.config
+                for node_type in c.node_type:
+                    returnResponse['nodes'][node_type] = 0
+                returnResponse['nodes']['total'] = 0
+
+                cursor.execute(
+                    f'select node_type, count(node_uuid) as cnt from TB_NODE where project_id = "{pid}" group by node_type')
+                nodeRows = cursor.fetchall()
+                if nodeRows is not None:
+                    for nodeRow in nodeRows:
+                        node_type = nodeRow['node_type']
+                        if node_type < len(c.node_type):
+                            returnResponse['nodes'][c.node_type[node_type]] = nodeRow['cnt']
+                            returnResponse['nodes']['total'] += nodeRow['cnt']
+
+
                 return returnResponse, 200
             else:
                 #TODO: db 동기화 필요
