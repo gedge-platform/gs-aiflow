@@ -24,10 +24,13 @@ import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
+import {  Button  } from 'antd';
+import { CaretRightOutlined , CloseOutlined } from "@ant-design/icons";
 
 const nodeTypes = { textUpdater: TextUpdaterNode };
 const rfStyle = {
     backgroundColor: '#B8CEFF',
+    height:'500px'
   };
 
 const dagreGraph = new dagre.graphlib.Graph();
@@ -220,12 +223,23 @@ function Flow() {
         })
     }
 
-
     return (
         <div id='reactflow_wrapper'>
-            <h1>지능형 서비스 정의</h1>
-        <button onClick={launchProject}>Launch Project</button>
-        <button onClick={InitProject}>Init Project</button>
+
+        <div style={{display:'flex'}} >
+            <h2>{id}</h2>
+        <div align='right' style={{flex:1, display:'flex', justifyContent:'flex-end'}}> 
+          {/* <h2 >프로젝트 목록</h2>  */}
+          <Button style={{backgroundColor: '#00CC00', margin:'auto 0'}} type="primary" icon={<CaretRightOutlined />} onClick={launchProject}>
+          Launch Project
+          </Button>
+          <div style={{width:'15px'}}/>
+          <Button style={{backgroundColor: '#CC0000', margin:'auto 0'}} type="primary" icon={<CloseOutlined />} onClick={InitProject}>
+          Init Project
+          </Button>
+        </div>
+        </div>
+        <div style={{width:'100%', height:'500px'}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -252,6 +266,8 @@ function Flow() {
                 {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
                 </Sidebar> */}
             </ReactFlow>
+        </div>
+            
       <div>
       <Modal
         isOpen={modalIsOpen}

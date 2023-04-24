@@ -298,7 +298,28 @@ def initProject():
     if request.method == 'POST':
         jsonData = request.json
         return monitor_impl.initProject(jsonData['projectID'])
+@app.route('/api/clusters/<string:userID>', methods=['GET'])
+def getClusterList(userID):
+    if request.method == 'GET':
+        return monitor_impl.getClusterList(userID)
 
+@app.route('/api/project', methods=['POST'])
+def createProject():
+    if request.method == 'POST':
+        jsonData = request.json
+        return monitor_impl.createProject("user_1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+
+
+@app.route('/api/project/<string:projectName>', methods=['DELETE'])
+def deleteProject(projectName):
+    if request.method == 'DELETE':
+        return monitor_impl.deleteProject("user_1", projectName)
+
+
+@app.route('/api/project/<string:projectName>', methods=['GET'])
+def getProject(projectName):
+    if request.method == 'GET':
+        return monitor_impl.getProject("user_1", projectName)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

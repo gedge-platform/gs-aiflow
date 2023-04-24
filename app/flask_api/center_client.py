@@ -50,7 +50,9 @@ def send_api(path, method, params=None, body=None, ):
             elif method == 'POST':
                 response = requests.post(url, headers=headers, params=params,
                                          data=json.dumps(body, ensure_ascii=False, indent="\t"))
-
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers, params=params,
+                                           data=json.dumps(body, ensure_ascii=False, indent="\t"))
         return response, response.status_code
 
     except Exception as ex:
@@ -122,3 +124,44 @@ def userProjectsNameGet(projectName: str):
         return response.json()
     except:
         return {}
+
+def projectsPost(workspaceName: str, memberName:str , projectname: str, projectDescription: str,  projectType: str = 'user', clusterName:list = [], istioCheck: str = 'disabled'):
+    body = {"projectName": projectname,
+        "projectDescription": projectDescription,
+        "projectType": projectType,
+        "clusterName": clusterName,
+        "workspaceName": workspaceName,
+        "memberName": memberName,
+        "istioCheck": istioCheck
+        }
+
+    response, code = send_api('/projects', 'POST', params={}, body=body)
+    if code != 201 and code != 200:
+        return {'status' : 'failed'}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : 'failed'}
+
+def workspacesNameGet(workspace: str):
+    response, code = send_api('/workspaces/' + workspace, 'GET', params={}, body={})
+
+    if code != 201 and code != 200:
+        return {'selectCluster' : []}
+
+    try:
+        return response.json()
+    except:
+        return {'selectCluster' : []}
+
+def projectsDelete(projectName : str):
+    response, code = send_api('/projects/' + projectName, 'DELETE', params={}, body={})
+
+    if code != 201 and code != 200:
+        return {'status' : 'failed'}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : 'failed'}

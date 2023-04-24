@@ -15,7 +15,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import common.logger
 import flask_api.center_client
-from flask_api.global_def import g_var
+from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
 
@@ -733,3 +733,124 @@ def launchProject(projectID):
 # return None
 def initProject(param):
     return initTest()
+
+
+def getClusterList(userID):
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+    rows = cursor.fetchall()
+
+    if rows is not None:
+        workspaceName = None
+        for row in rows:
+            workspaceName = row['workspace_name']
+            break
+
+        if workspaceName is not None:
+            data = flask_api.center_client.workspacesNameGet(workspaceName)
+            clusterList = []
+            if data['selectCluster'] is not None:
+                for cluster in data['selectCluster']:
+                    clusterList.append({
+                        'name' : cluster['clusterName'],
+                        'type' : cluster['clusterType']
+                    })
+
+                return jsonify(cluster_list=clusterList)
+            else:
+                return jsonify(msg='Cluster not Found'), 400
+
+
+        return jsonify(msg='Cluster not Found'), 400
+    else:
+        common.logger.get_logger().debug('[monitor_impl.getClusterList] failed to get from db')
+        return jsonify(msg='Internal Server Error'), 500
+
+
+def createProject(userID, projectName, projectDesc, clusterName):
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+    rows = cursor.fetchall()
+
+    if rows is not None:
+        workspaceName = None
+        for row in rows:
+            workspaceName = row['workspace_name']
+            break
+
+        if workspaceName is not None:
+            status = flask_api.center_client.projectsPost(workspaceName, "softonet", projectName, projectDesc,
+                                             clusterName=clusterName)
+
+            if status['status'] != 'failed':
+                cursor.execute(f'insert into TB_PROJECT (project_id, project_name, user_id, pv_name) value ("{projectName}", "{projectName}", "{userID}", "testPV");')
+                mycon.commit()
+                return jsonify(status='success'), 200
+            else:
+                return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 200
+
+
+def deleteProject(userID, projectName):
+    status = flask_api.center_client.projectsDelete(projectName)
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+
+    if status['status'] != 'failed':
+        cursor.execute(
+            f'delete from TB_PROJECT where project_id = "{projectName}";')
+        mycon.commit()
+        return jsonify(status='success'), 200
+    return jsonify(status='failed'), 200
+
+
+def getProject(userID, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_id from TB_PROJECT where project_name="{projectName}" and user_id="{userID}"')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) != 0:
+            pid = rows[0]['project_id']
+            response = flask_api.center_client.userProjectsNameGet(pid)
+            if response['data'] is not None:
+                returnResponse = {}
+                returnResponse['projectName'] = response['data']['projectName']
+                returnResponse['projectDescription'] = response['data']['projectDescription']
+                returnResponse['userId'] = userID
+                returnResponse['created_at'] = response['data']['created_at']
+                returnResponse['clusterList'] = []
+                for cluster in response['data']['selectCluster']:
+                    returnResponse['clusterList'].append(cluster['clusterName'])
+
+                #node db
+                returnResponse['nodes'] = {}
+                c = flask_api.global_def.config
+                for node_type in c.node_type:
+                    returnResponse['nodes'][node_type] = 0
+                returnResponse['nodes']['total'] = 0
+
+                cursor.execute(
+                    f'select node_type, count(node_uuid) as cnt from TB_NODE where project_id = "{pid}" group by node_type')
+                nodeRows = cursor.fetchall()
+                if nodeRows is not None:
+                    for nodeRow in nodeRows:
+                        node_type = nodeRow['node_type']
+                        if node_type < len(c.node_type):
+                            returnResponse['nodes'][c.node_type[node_type]] = nodeRow['cnt']
+                            returnResponse['nodes']['total'] += nodeRow['cnt']
+
+
+                return returnResponse, 200
+            else:
+                #TODO: db 동기화 필요
+                return jsonify(msg='no data'), 200
+        #db에 없음
+        else:
+            return jsonify(msg='no data'), 200
+
+    return jsonify(msg='error'), 404

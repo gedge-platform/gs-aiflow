@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS TB_USER (
   login_id VARCHAR(30) NOT NULL UNIQUE,
   login_pass VARCHAR(30),
   user_name VARCHAR(30),
+  workspace_name VARCHAR(30),
   is_admin BOOL NOT NULL DEFAULT 0,
   last_access_time TIMESTAMP
   )
@@ -49,13 +50,13 @@ CREATE TABLE IF NOT EXISTS TB_NODE (
     INDEX FK_TB_NODE_TB_PROJECT (project_id), CONSTRAINT FK_TB_NODE_TB_PROJECT FOREIGN KEY (project_id) REFERENCES TB_PROJECT (project_id) ON DELETE CASCADE
 )CHARACTER SET 'utf8';
 
-INSERT INTO TB_USER (user_id, login_id, login_pass, user_name, is_admin)
+INSERT INTO TB_USER (user_id, login_id, login_pass, user_name, workspace_name , is_admin)
  SELECT * FROM (select 'user_1', 'admin', 'softonnet', '기본관리자', 1) AS admin
  WHERE NOT EXISTS (SELECT user_id FROM TB_USER) LIMIT 1;
 
 INSERT INTO TB_PROJECT (project_id, project_name, user_id, pv_name)
  VALUES ('1_pj1', 'pj1', 'user_1', "testPV"),
- ('1_pj2', 'pj2', 'user_1', "testPV")
+ ('1_pj2', 'pj2', 'user_1', "testPV"),
  ('softonnet-test', 'softonnet-test', 'user_1', "testPV");
 
 INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list)

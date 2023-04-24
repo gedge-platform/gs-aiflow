@@ -8,12 +8,12 @@ function Sidemenu(props) {
             <div id='mainlogo'>
                 <img id='image_aieyeflow' src='/images/logo_aieye.png' alt='image_aieyeflow' />
             </div>
-            <Link to='/'><h1>모니터링</h1></Link>
-            <Link to='/enroll'><h1>모니터링 등록</h1></Link>
-            <Link to='/create'><h1>디플로이먼트 생성</h1></Link>
-            <Link to='/delete'><h1>디플로이먼트 삭제</h1></Link>
-            <Link to='/logviewer'><h1>파드 로그</h1></Link>
-            <Link to='/service_define'><h1>지능형 서비스 정의</h1></Link>
+            <Link to='/'><div className='nav__link'><h1>모니터링</h1></div></Link>
+            <Link to='/enroll'><div className='nav__link'><h1>모니터링 등록</h1></div></Link>
+            <Link to='/create'><div className='nav__link'><h1>디플로이먼트 생성</h1></div></Link>
+            <Link to='/delete'><div className='nav__link'><h1>디플로이먼트 삭제</h1></div></Link>
+            <Link to='/logviewer'><div className='nav__link'><h1>파드 로그</h1></div></Link>
+            <Link to='/service_define'><div className='nav__link'><h1>프로젝트 모니터링</h1></div></Link>
         </div>
     </>
     );
