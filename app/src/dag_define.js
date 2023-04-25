@@ -1,7 +1,7 @@
 import {React, useState,  useRef, useCallback, useEffect} from "react";
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route,Routes,Router, useParams} from 'react-router-dom';
-import { Row, Col, Divider } from "antd";
+import { Row, Col, Modal } from "antd";
 import ReactFlow, {
     ReactFlowProvider,
     MiniMap,
@@ -14,12 +14,15 @@ import ReactFlow, {
     updateEdge,
     Connection,
     PanOnScrollMode,
+    getIncomers,
+    getOutgoers,
+    getConnectedEdges,
+    deleteElements,
 } from 'reactflow';
+
 import './css/textUpdaterNode.scss'
 import axios from 'axios';
-import Modal from 'react-modal';
 import "./css/dagModal.css";
-import DagModal from './dag_modal';
 import dagre from 'dagre';
 import {  Button  } from 'antd';
 import { UndoOutlined, DeleteOutlined, DashOutlined } from "@ant-design/icons";
@@ -43,6 +46,7 @@ function DagDefine(props) {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
+    const [selectedNode, setSelectedNode] = useState(null);
     const {isLoading, error, data, isFetching, refetch} = useQuery(
         [],()=>{
             return axios.get(process.env.REACT_APP_API+'/api/getDAG/' + projectID)
@@ -100,6 +104,10 @@ function DagDefine(props) {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
       }, []);
+
+      const onNodeClick = ((target, node) => {
+        setSelectedNode(node);
+      })
     
       const onDrop = useCallback(
         (event) => {
@@ -123,11 +131,33 @@ function DagDefine(props) {
             position,
             data: { label: `${type} node` },
           };
+
+          if(!checkNodeType(type)){
+            setModalText('현재 이 기능은 사용할 수 없습니다.');
+            showModal(true);
+            return;
+          }
+
+          addNewNodeData(type, newNode);
     
-          setNodes((nds) => nds.concat(newNode));
         },
         [reactFlowInstance]
       );
+
+    function addNewNodeData(type, node){
+        setTaskType(type);
+        setTaskCreating(node);
+        setTaskOpen(true);
+        
+    }
+    
+    function checkNodeType(type){
+        //일단 파드만 TODO:
+        if(type == 'Pod')   
+           return true;
+        else
+            return false;
+    }
 
     const [refresh, setRefresh] = useState(false);
     function sortGraph(nodes, edges){
@@ -153,8 +183,65 @@ function DagDefine(props) {
       })
     );
     
-  }, [refresh, setNodes]); const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  }, [refresh, setNodes]);
+  
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
+  const onNodesDelete = useCallback(
+    (deleted) => {
+        console.log(deleted)
+      setEdges(
+        deleted.reduce((acc, node) => {
+          const incomers = getIncomers(node, nodes, edges);
+          const outgoers = getOutgoers(node, nodes, edges);
+          const connectedEdges = getConnectedEdges([node], edges);
+
+          const remainingEdges = acc.filter((edge) => !connectedEdges.includes(edge));
+
+          const createdEdges = incomers.flatMap(({ id: source }) =>
+            outgoers.map(({ id: target }) => ({ id: `${source}->${target}`, source, target }))
+          );
+
+          return [...remainingEdges, ...createdEdges];
+        }, edges)
+      );
+    },
+    [nodes, edges]
+  );
+
+  function onNodeDeleteClick(){
+    if(selectedNode){
+        const deleteNode = [selectedNode];
+        reactFlowInstance.deleteElements({nodes: deleteNode, edges:[]});
+        setSelectedNode(null);
+    }
+  }
+
+  //modal
+  const [open, setOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [modalText, setModalText] = useState('Content of the modal');
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [taskConfirmLoading, setTaskConfirmLoading] = useState(false);
+  const [taskType, setTaskType] = useState(null);
+  const [taskCreating, setTaskCreating] = useState(null);
+
+  const showModal = () => {
+    setOpen(true);
+  };
+
+  const handleOk = () => {
+    setModalText('The modal will be closed after two seconds');
+    setConfirmLoading(true);
+    setTimeout(() => {
+      setOpen(false);
+      setConfirmLoading(false);
+    }, 2000);
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+  };
 
     return (
         <>
@@ -175,7 +262,7 @@ function DagDefine(props) {
       <Col flex="auto">
         <div className="content_box" style={{width:'100%', height:'400px'}} ref={reactFlowWrapper}>
             <div style={{width:'100%', height:'40px'}}>
-                <Button style={{float: 'right', backgroundColor: '#CC0000'}} type="primary" icon={<DeleteOutlined />}>Delete</Button>
+                <Button style={{float: 'right', backgroundColor: '#CC0000'}} type="primary" icon={<DeleteOutlined />} onClick={onNodeDeleteClick}>Delete</Button>
                 <Button style={{float: 'right', marginRight:'15px', }} type="primary" icon={<DashOutlined />} onClick={() => {sortGraph(nodes, edges)}}>Sort Graph</Button>
                 <Button style={{float: 'right', marginRight:'15px', backgroundColor: '#00CC00'}} icon={<UndoOutlined />} onClick={refetch} type="primary">Reset Graph</Button>
             </div>
@@ -191,6 +278,9 @@ function DagDefine(props) {
                 onDragOver={onDragOver}
                 onInit={setReactFlowInstance}
                 onConnect={onConnect}
+                onNodeClick={onNodeClick}
+                deleteKeyCode={["Backspace", "Delete"]}
+                onNodesDelete={onNodesDelete}
                 style={rfStyle}>
                 <Background/>
 
@@ -202,6 +292,35 @@ function DagDefine(props) {
 
       </ReactFlowProvider>
     </Row>
+    <Modal
+        title="생성 불가"
+        open={open}
+        onOk={handleCancel}
+        onCancel={()=>{setOpen(false);}}
+        confirmLoading={confirmLoading} 
+        footer={
+            <div>
+              <Button type="primary" onClick={() => {setOpen(false);}}>
+                확인
+              </Button>
+            </div>
+          }
+        // onCancel={handleCancel}
+      >
+        <p>{modalText}</p>
+      </Modal>
+
+      <Modal
+        title="Task 생성"
+        open={taskOpen}
+        onOk={()=>{
+            setNodes((nds) => nds.concat(taskCreating));
+            setTaskOpen(false);}}
+        confirmLoading={taskConfirmLoading} 
+        onCancel={()=>{setTaskOpen(false);}}
+      >
+        <p>{taskType}</p>
+      </Modal>
         </QueryClientProvider>
     </>
     
