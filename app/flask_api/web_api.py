@@ -321,5 +321,10 @@ def getProject(projectName):
     if request.method == 'GET':
         return monitor_impl.getProject("user_1", projectName)
 
+@app.route('/api/pod/env', methods=['GET'])
+def getPodEnv():
+    if request.method == 'GET':
+        return monitor_impl.getPodEnv()
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

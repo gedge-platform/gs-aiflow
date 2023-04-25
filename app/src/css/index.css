@@ -397,6 +397,34 @@ html,body{
   border: 1px solid black;
 }
 
+
+.dag_define_detail_row{
+    min-height: 30px;
+}
+
+.dag_define_detail_row .ant-col{
+    vertical-align: middle;
+    padding-left: 15px;
+    border: 1px solid lightgrey;
+}
+
+.dag_define_detail_row h4{
+    margin: 5px 0;
+}
+
+
+.dag_define_detail_col.head{
+    background-color: #DADADA;
+}
+
+.dag_define_detail_col.data{
+    background-color: #FFFFFF;
+}
+
+#dag_define_detail{
+  border: 1px solid black;
+}
+
 .content_box{
     border-radius:20px;
     background-color: #ffeeee;

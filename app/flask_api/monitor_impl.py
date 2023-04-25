@@ -854,3 +854,26 @@ def getProject(userID, projectName):
             return jsonify(msg='no data'), 200
 
     return jsonify(msg='error'), 404
+
+
+def getPodEnv():
+    mycon = get_db_connection()
+    cursor = mycon.cursor()
+    data = {'runtime': [], 'cuda': [], 'tensorrt': []}
+
+    cursor.execute(f'select runtime_name from TB_RUNTIME')
+    rows = cursor.fetchall()
+    for row in rows:
+        data['runtime'].append(row[0])
+
+    cursor.execute(f'select cuda_name from TB_CUDA')
+    rows = cursor.fetchall()
+    for row in rows:
+        data['cuda'].append(row[0])
+
+    cursor.execute(f'select tensorrt_name from TB_TENSORRT')
+    rows = cursor.fetchall()
+    for row in rows:
+        data['tensorrt'].append(row[0])
+
+    return data, 200
