@@ -25,7 +25,7 @@ import axios from 'axios';
 import "./css/dagModal.css";
 import dagre from 'dagre';
 import { Button } from 'antd';
-import { UndoOutlined, DeleteOutlined, DashOutlined } from "@ant-design/icons";
+import { UndoOutlined, DeleteOutlined, DashOutlined, SaveOutlined} from "@ant-design/icons";
 import TextUpdaterNode from './textUpdaterNode';
 import './css/textUpdaterNode.scss'
 import { DagDefineSideBar } from "./dag_define_sidebar";
@@ -312,11 +312,6 @@ function DagDefine(props) {
 
             <QueryClientProvider client={queryClient}>
                 <Row>
-                    <div className="content_box" style={{ width: '100%', height: '300px' }}>
-                        <DagDefineDetail data={selectedNode} edges={edges} projectID={projectID}/>
-                    </div>
-                </Row>
-                <Row>
                     <ReactFlowProvider>
                         <Col flex="200px">
                             <div className="content_box" style={{ width: '100%', height: '400px' }}>
@@ -328,8 +323,9 @@ function DagDefine(props) {
                             <div className="content_box" style={{ width: '100%', height: '400px' }} ref={reactFlowWrapper}>
                                 <div style={{ width: '100%', height: '40px' }}>
                                     <Button style={{ float: 'right', backgroundColor: '#CC0000' }} type="primary" icon={<DeleteOutlined />} onClick={onNodeDeleteClick}>Delete</Button>
+                                    <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#00CC00' }} icon={<SaveOutlined />} onClick={()=>{}} type="primary">Save</Button>
                                     <Button style={{ float: 'right', marginRight: '15px', }} type="primary" icon={<DashOutlined />} onClick={() => { sortGraph(nodes, edges) }}>Sort Graph</Button>
-                                    <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#00CC00' }} icon={<UndoOutlined />} onClick={refetch} type="primary">Reset Graph</Button>
+                                    <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#CC9900' }} icon={<UndoOutlined />} onClick={refetch} type="primary">Reset Graph</Button>
                                 </div>
                                 <div style={{ width: '100%', height: '320px' }}>
                                     <ReactFlow
@@ -386,6 +382,12 @@ function DagDefine(props) {
                     <DagDefineModal type={taskType} form={form} nodes={nodes} />
                 </Modal>
             </QueryClientProvider>
+
+            <Row>
+                <div className="content_box" style={{ width: '100%', height: '300px' }}>
+                    <DagDefineDetail data={selectedNode} edges={edges} projectID={projectID} />
+                </div>
+            </Row>
         </>
 
     );

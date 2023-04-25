@@ -4,9 +4,10 @@ import time
 import ssl
 import flask_restful
 import flask
-from flask import request
+from flask import request, redirect
 from flask_sockets import Sockets
 from flask_cors import CORS
+
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl
@@ -325,6 +326,11 @@ def getProject(projectName):
 def getPodEnv():
     if request.method == 'GET':
         return monitor_impl.getPodEnv()
+
+@app.route('/api/storage', methods=['GET'])
+def getStorageSite():
+    if request.method == 'GET':
+        return redirect ('http://127.0.0.1:8888/?token=9acfb1f896d95c4b5522063cd5c0157af3bba8f417a54130')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

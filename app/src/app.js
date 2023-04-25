@@ -33,7 +33,7 @@ const items = [
     getItem(<Link to ='monitoring/default'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
     getItem(<Link to ='editing/default'>DAG Editing</Link>, 'editing', <FormOutlined />)
   ]),
-  getItem(<Link to ='storage'>MY Storage</Link>, 'my_storage', <FileSearchOutlined />),
+  getItem(<a href={process.env.REACT_APP_API+'/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
   // getItem('Option 2', '2', <DesktopOutlined />),
   // getItem('User', 'sub1', <UserOutlined />, [
   //   getItem('Tom', '3'),
