@@ -40,14 +40,36 @@ CREATE TABLE IF NOT EXISTS TB_PROJECT (
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_NODE (
-    node_uuid VARCHAR(30) NOT NULL PRIMARY KEY,
+    node_uuid VARCHAR(100) NOT NULL PRIMARY KEY,
     node_id VARCHAR(30) NOT NULL,
     project_id VARCHAR(36) NOT NULL,
     node_type INT NOT NULL,
     yaml TEXT NOT NULL,
     create_date TIMESTAMP,
     precondition_list TEXT NOT NULL,
+    data TEXT DEFAULT '{}',
     INDEX FK_TB_NODE_TB_PROJECT (project_id), CONSTRAINT FK_TB_NODE_TB_PROJECT FOREIGN KEY (project_id) REFERENCES TB_PROJECT (project_id) ON DELETE CASCADE
+)CHARACTER SET 'utf8';
+
+CREATE TABLE IF NOT EXISTS TB_RUNTIME (
+    runtime_name VARCHAR(30) NOT NULL PRIMARY KEY,
+    framework VARCHAR(30) NOT NULL,
+    version VARCHAR(30) NOT NULL,
+    python_version VARCHAR(30) NOT NULL,
+    path VARCHAR(30) NOT NULL
+)CHARACTER SET 'utf8';
+
+CREATE TABLE IF NOT EXISTS TB_CUDA (
+    cuda_name VARCHAR(30) NOT NULL PRIMARY KEY,
+    cuda_version VARCHAR(30) NOT NULL,
+    cudnn_version VARCHAR(30) NOT NULL,
+    path VARCHAR(30) NOT NULL
+)CHARACTER SET 'utf8';
+
+CREATE TABLE IF NOT EXISTS TB_TENSORRT (
+    tensorrt_name VARCHAR(30) NOT NULL PRIMARY KEY,
+    tensorrt_version VARCHAR(30) NOT NULL,
+    path VARCHAR(30) NOT NULL
 )CHARACTER SET 'utf8';
 
 INSERT INTO TB_USER (user_id, login_id, login_pass, user_name, workspace_name , is_admin)
@@ -59,9 +81,18 @@ INSERT INTO TB_PROJECT (project_id, project_name, user_id, pv_name)
  ('1_pj2', 'pj2', 'user_1', "testPV"),
  ('softonnet-test', 'softonnet-test', 'user_1', "testPV");
 
-INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list)
-VALUES ('node_1', 'aiflow-test1', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test1'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test1','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", '[]'),
-('node_2', 'aiflow-test2', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test2'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test2','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test1']"),
-('node_3', 'aiflow-test3', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test3'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test3','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test2']"),
-('node_4', 'aiflow-test4', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test4'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test4','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test3']"),
-('node_5', 'aiflow-test5', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test5'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test5','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test4']");
+INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data)
+VALUES ('user_1_softonnet-test_aiflow-test1', 'aiflow-test1', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test1'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test1','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", '[]', "{'label': 'aiflow-test1', 'task': 'Train', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user_1_softonnet-test_aiflow-test2', 'aiflow-test2', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test2'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test2','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test1']", "{'label': 'aiflow-test2', 'task': 'Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user_1_softonnet-test_aiflow-test3', 'aiflow-test3', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test3'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test3','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test2']", "{'label': 'aiflow-test3', 'task': 'Optimization', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user_1_softonnet-test_aiflow-test4', 'aiflow-test4', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test4'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test4','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test3']", "{'label': 'aiflow-test4', 'task': 'Opt_Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user_1_softonnet-test_aiflow-test5', 'aiflow-test5', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test5'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test5','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test4']", "{'label': 'aiflow-test5', 'task': 'Opt_Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}");
+
+INSERT INTO TB_RUNTIME (runtime_name, framework, version, python_version, path)
+ VALUES ('pt121_py38', 'PyTorch', '1.2.1', '3.8', '.');
+
+INSERT INTO TB_CUDA (cuda_name, cuda_version, cudnn_version, path)
+ VALUES ('cuda11.2-cudnn8.2.1', '11.2', '8.2.1', '.');
+
+ INSERT INTO TB_TENSORRT (tensorrt_name, tensorrt_version, path)
+ VALUES ('tensorRT8.2.5.1', '8.2.5.1', '.');

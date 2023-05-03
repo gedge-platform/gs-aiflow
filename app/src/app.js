@@ -15,6 +15,7 @@ import {LogViewer} from './logviewer.js';
 import { ServiceDefine } from './service_define';
 import Flow from "./react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
+import { DagDefine } from './dag_define';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -32,7 +33,7 @@ const items = [
     getItem(<Link to ='monitoring/default'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
     getItem(<Link to ='editing/default'>DAG Editing</Link>, 'editing', <FormOutlined />)
   ]),
-  getItem(<Link to ='storage'>MY Storage</Link>, 'my_storage', <FileSearchOutlined />),
+  getItem(<a href={process.env.REACT_APP_API+'/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
   // getItem('Option 2', '2', <DesktopOutlined />),
   // getItem('User', 'sub1', <UserOutlined />, [
   //   getItem('Tom', '3'),
@@ -104,7 +105,6 @@ const App = () => {
                      <div id='body_main'>
                       <Content className="body-layout">
                       <h2>{changeTitle(selectedKey)}</h2>
-                      {/* <div style={{borderRadius:'20px', backgroundColor: '#ffeeee', padding:'15px', color : '#000000'}}> */}
                       <Routes>
                              <Route path='/' element={<Monitor />}></Route>
                              <Route path='/enroll' element={<EnrollClusterMonitoring />}></Route>
@@ -113,6 +113,7 @@ const App = () => {
                              <Route path='/logviewer' element={<LogViewer />}></Route>
                              <Route path='/project_list/*' element={<ServiceDefine setPage={setSelectedKey}/>}></Route>
                              <Route path='/monitoring/:projectID' element={<Flow />}></Route>
+                             <Route path='/editing/:projectID' element={<DagDefine />}></Route>
                              <Route path='/*' element={<NotFound />}></Route>
                          </Routes>
                       {/* </div> */}
