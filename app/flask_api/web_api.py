@@ -332,5 +332,10 @@ def getStorageSite():
     if request.method == 'GET':
         return redirect ('http://127.0.0.1:8888/?token=9acfb1f896d95c4b5522063cd5c0157af3bba8f417a54130')
 
+@app.route('/api/project/dag', methods=['POST'])
+def postDag():
+    if request.method == 'POST':
+        return monitor_impl.postDag()
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

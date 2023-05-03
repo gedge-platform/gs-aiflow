@@ -666,7 +666,7 @@ def getPodStatus(result):
 def getDag(projectID):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    c = cursor.execute(f'select node_id, node_type, precondition_list from TB_NODE where project_id = "{projectID}"')
+    c = cursor.execute(f'select node_id, node_type, precondition_list, data from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
 
     d = dict()
@@ -682,18 +682,23 @@ def getDag(projectID):
         nodeType = row[1]
         preConds = row[2]
         preCondsList = ast.literal_eval(preConds)
+        rowData = ast.literal_eval(row[3])
 
         for preCond in preCondsList:
             d['edges'].append({'id': nodeID + "_" + preCond,
                                'source': preCond,
                                'target': nodeID})
+        nodeTypeStr = "Pod"
+        if nodeType == 0:
+            nodeTypeStr = "Pod"
 
         node = {
             'id': nodeID,
-            'type': 'textUpdater',
-            'data': {'type': 'Pod',
-                     'status': 'Waiting'}
+            # 'type': 'textUpdater',
+            'type' : nodeTypeStr,
+            'data': rowData
         }
+        node['data']['status'] = 'Waiting'
 
         if data['data'] is not None:
             for task in data['data']:
@@ -877,3 +882,58 @@ def getPodEnv():
         data['tensorrt'].append(row[0])
 
     return data, 200
+
+
+def postDag():
+    data = request.json
+    projectID = data['projectID']
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+
+    #precondition
+    preCondition = {}
+    if data['edges'] != None:
+        for edge in data['edges']:
+            if preCondition.get(edge['target']) == None:
+                preCondition[edge['target']] = [edge['source']]
+            else:
+                preCondition[edge['target']].append([edge['source']])
+    #TODO: 유효성체크
+
+    #delete
+    cursor.execute(f'select node_uuid from TB_NODE')
+    rows = cursor.fetchall()
+    nodeList = {}
+    for row in rows:
+        nodeList[row['node_uuid']] = row['node_uuid']
+    #add
+    if data['nodes'] != None:
+        for node in data['nodes']:
+            uid = 'softonnet' + '_' + projectID + '_' + node['id']
+            nodeType = 0
+            if node['type'] == 'Pod':
+                nodeType = 0
+
+            preCond = preCondition.get(node['id'])
+            if(preCond == None):
+                preCond = []
+            preCond = preCond.__str__()
+
+            d = node['data'].__str__()
+            #TODO: yaml 생성
+
+
+            cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
+                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{""}", "{preCond}",  "{d}")' +
+                           f'on duplicate key update yaml = "{""}", precondition_list = "{preCond}", data = "{d}";')
+            mycon.commit()
+
+            if nodeList.get(uid) != None:
+                del nodeList[uid]
+
+    for n in nodeList.keys():
+        cursor.execute(
+            f'delete from TB_NODE where node_uuid = "{n}";');
+        mycon.commit()
+
+    return jsonify(status="success"), 200

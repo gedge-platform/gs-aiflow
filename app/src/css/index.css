@@ -41,17 +41,28 @@
 
 
 
-#image_aieyeflow{
+#image_aieyeflow {
     height: auto;
 }
 
-#body{
+#body {
     padding-left: 30px;
     padding-right: 30px;
     display: flex;
     width: 100%;
     height: 100%;
-    overflow-y:hidden;
+    overflow-y: hidden;
+
+    /* 색 */
+    --waiting_status: #2196f3;
+    --running_status: #23C723;
+    --succeeded_status: #005200;
+    --pending_status: orange;
+    --failed_status: red;
+    --train_task: #F5C9B2;
+    --validate_task: #9AC8F5;
+    --optimization_task: #CBF5DC;
+    --opt_validate_task: #BBBBBB;
 }
 #body_main{
     width: 100%;
@@ -431,4 +442,63 @@ html,body{
     padding:15px; 
     color : #000000;
     margin-top:20px;
+}
+
+.pod_node_border{
+    border-radius: 20px;
+    background-color: #FFFFFF;
+
+    padding: 6px;
+}
+.pod_node{
+    border-radius: 20px;
+    text-align: center;
+    vertical-align: middle;
+    min-height: 50px;
+    min-width: 130px;
+    font-weight: bold;
+}
+
+.dag_status_color, .dag_task_color{
+    width:20px;
+    height:20px; 
+    border-radius:20px;
+    margin: 0 3px;
+}
+.dag_task_color{
+    border: #000000 solid 2px;
+}
+
+.dag_status_color.waiting{
+    background-color:var(--waiting_status); 
+}
+.dag_status_color.pending{
+    background-color:var(--pending_status); 
+}
+.dag_status_color.running{
+    background-color:var(--running_status); 
+}
+.dag_status_color.succeeded{
+    background-color:var(--succeeded_status); 
+}
+.dag_status_color.failed{
+    background-color:var(--failed_status); 
+}
+
+.dag_status_span{
+    margin: 0 3px;
+    font-weight:bold;
+}
+
+.dag_task_color.train{
+    background-color:var(--train_task); 
+}
+.dag_task_color.validate{
+    background-color:var(--validate_task); 
+}
+.dag_task_color.optimization{
+    background-color:var(--optimization_task); 
+}
+.dag_task_color.opt_validate{
+    background-color:var(--opt_validate_task); 
 }
