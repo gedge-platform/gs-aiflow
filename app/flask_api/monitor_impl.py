@@ -746,8 +746,17 @@ def launchProject(projectID):
     else:
         return jsonify(status="failed"), 200
 # return None
-def initProject(param):
-    return initTest()
+def initProject(projectID):
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select node_id from TB_NODE where project_id="{projectID}"')
+    rows = cursor.fetchall()
+
+    monitoringManager.deleteWorkFlow(projectID)
+    for item in rows:
+        flask_api.center_client.podsNameDelete(item['node_id'], 'softonet', 'mec(ilsan)', projectID)
+    return jsonify(status = 'success'), 200
 
 
 def getClusterList(userID):
