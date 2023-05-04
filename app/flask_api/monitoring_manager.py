@@ -66,7 +66,7 @@ class MonitoringManager:
         if not isinstance(data, WorkFlow):
             return False
         # TODO: 무결성 체크 및 파싱
-        project = flask_api.center_client.userProjectsNameGet('softonnet-test')
+        project = flask_api.center_client.userProjectsNameGet(data.id)
         if project['data'] is not None:
             detailInfoList = project['data']['DetailInfo']
             for detailInfo in detailInfoList:
@@ -107,7 +107,7 @@ class MonitoringManager:
         return d
     def getListNamespacePodFromCenter(self, workFlow : WorkFlow):
         d = dict()
-        project='softonnet-test'
+        project=workFlow.id
         cluster='mec(ilsan)'
         workspace='softonet'
 
@@ -139,7 +139,7 @@ class MonitoringManager:
 
     def getListNamespacePodDetailFromCenter(self, workFlow : WorkFlow, podID : str):
         d = dict()
-        project='softonnet-test'
+        project=workFlow.id
         cluster='mec(ilsan)'
         workspace='softonet'
 
@@ -273,5 +273,5 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
 
-                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", "softonnet-test")
+                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", id)
                 node.data['status'] = 'Pending'

@@ -211,19 +211,19 @@ def getClusterList(userID):
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.createProject("user_1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+        return monitor_impl.createProject("user1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
 def deleteProject(projectName):
     if request.method == 'DELETE':
-        return monitor_impl.deleteProject("user_1", projectName)
+        return monitor_impl.deleteProject("user1", projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
 def getProject(projectName):
     if request.method == 'GET':
-        return monitor_impl.getProject("user_1", projectName)
+        return monitor_impl.getProject("user1", projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
 def getPodEnv():

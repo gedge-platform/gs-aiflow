@@ -15,6 +15,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import common.logger
 import flask_api.center_client
+import flask_api.runtime_helper
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -801,6 +802,18 @@ def createProject(userID, projectName, projectDesc, clusterName):
                                              clusterName=clusterName)
 
             if status['status'] != 'failed':
+                # pv 부터 pvc는 프로젝트 생성후
+                status = flask_api.center_client.pvCreate(userID, workspaceName, clusterName, projectName)
+                if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+                    flask_api.center_client.projectsDelete(projectName)
+                    return jsonify(status='failed', msg='pv make failed'), 200
+
+                status = flask_api.center_client.pvcCreate(userID, workspaceName, clusterName, projectName)
+                if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+                    flask_api.center_client.projectsDelete(projectName)
+                    #TODO: PV 제거
+                    return jsonify(status='failed', msg='pvc make failed'), 200
+
                 cursor.execute(f'insert into TB_PROJECT (project_id, project_name, user_id, pv_name) value ("{projectName}", "{projectName}", "{userID}", "testPV");')
                 mycon.commit()
                 return jsonify(status='success'), 200
@@ -918,7 +931,7 @@ def postDag():
     #add
     if data['nodes'] != None:
         for node in data['nodes']:
-            uid = 'softonnet' + '_' + projectID + '_' + node['id']
+            uid = 'user1' + '.' + projectID + '.' + node['id']
             nodeType = 0
             if node['type'] == 'Pod':
                 nodeType = 0
@@ -927,14 +940,25 @@ def postDag():
             if(preCond == None):
                 preCond = []
             preCond = preCond.__str__()
+            task = node['data']['task']
+            yaml = {}
+            if task == 'Train':
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif task == 'Validate':
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif(task == 'Optimization'):
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif(task == 'Opt_Validate'):
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
 
+            yaml = yaml.__str__()
             d = node['data'].__str__()
             #TODO: yaml 생성
 
 
             cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
-                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{{}}", "{preCond}",  "{d}")' +
-                           f'on duplicate key update yaml = "{{}}", precondition_list = "{preCond}", data = "{d}";')
+                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")' +
+                           f'on duplicate key update yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}";')
             mycon.commit()
 
             if nodeList.get(uid) != None:
