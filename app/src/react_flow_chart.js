@@ -225,7 +225,7 @@ function Flow() {
 
   function launchProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/launch',
-      { projectID: "ss" })
+      { projectID: id })
       .then(response => {
         if (response.data['status'] == 'success') {
           setTitle("실행에 성공했습니다.")
@@ -240,7 +240,7 @@ function Flow() {
 
   function InitProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/init',
-      { projectID: "ss" })
+      { projectID: id })
       .then(response => {
         console.log(response)
       })

@@ -26,12 +26,12 @@ monitoringManager = MonitoringManager()
 
 def initTest():
     list = ['aiflow-test1', 'aiflow-test2', 'aiflow-test3', 'aiflow-test4', 'aiflow-test5']
-    monitoringManager.deleteWorkFlow('default')
+    monitoringManager.deleteWorkFlow('softonnet-test')
     for item in list:
         flask_api.center_client.podsNameDelete(item, 'softonet', 'mec(ilsan)', 'softonnet-test')
     return jsonify(status = 'success'), 200
 def launchTest():
-    result = monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'default',
+    result = monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'softonnet-test',
                                   'edges': [
                                       {
                                           'id': 'e1-2',
@@ -663,10 +663,10 @@ def getPodStatus(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
     return str(response.status.phase)
-def getDag(projectID):
+def getDag(projectID, needYaml = False):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    c = cursor.execute(f'select node_id, node_type, precondition_list, data from TB_NODE where project_id = "{projectID}"')
+    c = cursor.execute(f'select node_id, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
 
     d = dict()
@@ -683,6 +683,7 @@ def getDag(projectID):
         preConds = row[2]
         preCondsList = ast.literal_eval(preConds)
         rowData = ast.literal_eval(row[3])
+        yaml = ast.literal_eval(row[4])
 
         for preCond in preCondsList:
             d['edges'].append({'id': nodeID + "_" + preCond,
@@ -698,6 +699,9 @@ def getDag(projectID):
             'type' : nodeTypeStr,
             'data': rowData
         }
+        if needYaml:
+            node['data']['yaml'] = yaml
+
         node['data']['status'] = 'Waiting'
 
         if data['data'] is not None:
@@ -733,8 +737,13 @@ def getProjectList(userID):
 
 def launchProject(projectID):
     #TODO: DB처리및 유효성체크
-
-    return launchTest()
+    dag = getDag(projectID, True)
+    # return launchTest()
+    res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(dag))
+    if res is True:
+        return jsonify(status="success"), 200
+    else:
+        return jsonify(status="failed"), 200
 # return None
 def initProject(param):
     return initTest()
@@ -901,7 +910,7 @@ def postDag():
     #TODO: 유효성체크
 
     #delete
-    cursor.execute(f'select node_uuid from TB_NODE')
+    cursor.execute(f'select node_uuid from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
     nodeList = {}
     for row in rows:
@@ -924,8 +933,8 @@ def postDag():
 
 
             cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
-                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{""}", "{preCond}",  "{d}")' +
-                           f'on duplicate key update yaml = "{""}", precondition_list = "{preCond}", data = "{d}";')
+                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{{}}", "{preCond}",  "{d}")' +
+                           f'on duplicate key update yaml = "{{}}", precondition_list = "{preCond}", data = "{d}";')
             mycon.commit()
 
             if nodeList.get(uid) != None:
