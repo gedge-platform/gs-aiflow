@@ -133,6 +133,7 @@ function DagDefine(props) {
     })
 
     const onChangeProjectSelect = (data) =>{
+        setSelectedNode(null);
         navigate('/editing/' + data)
       } 
     

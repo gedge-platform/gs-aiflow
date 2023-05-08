@@ -269,13 +269,14 @@ const getProjectList = async ( id ) => {
 
   const onChangeProjectSelect = (data) =>{
     setProjectID(data);
+    setSelectedNodeData(null);
     navigate('/monitoring/' + data)
   } 
 
 
   return (
     <div id='reactflow_wrapper'>
-      <Select style={{width : "180px"}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
+      <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
       options={pjList}></Select>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
