@@ -32,7 +32,7 @@ import { DagDefineSideBar } from "./dag_define_sidebar";
 import { useQuery } from 'react-query';
 import DagDefineModal from "./dag_define_modal";
 import DagDefineDetail from "./dag_define_detail";
-import PodNode from "./pod_node";
+import PodNode from "./pod_node_small";
 const queryClient = new QueryClient();
 
 let id = 0;

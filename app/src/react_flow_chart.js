@@ -18,7 +18,7 @@ import 'reactflow/dist/style.css';
 import Sidebar from './service_define_sidebar';
 import NodeInfo from './service_define_node_info';
 import TextUpdaterNode from './textUpdaterNode';
-import PodNode from './pod_node';
+import PodNode from './pod_node_small';
 import './css/textUpdaterNode.scss'
 import axios from 'axios';
 import Modal from 'react-modal';
