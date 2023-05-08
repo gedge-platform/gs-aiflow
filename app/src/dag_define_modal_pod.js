@@ -79,11 +79,17 @@ const DagDefineModalPod = (props) => {
   }
 
 
+  var specialNameRegex = /^[A-Za-z0-9\-]+$/;
+
   function checkName(data) {
     var status = "";
     if (ids.includes(data.target.value)) {
       status = "error";
       setNameStatus({ status: "error", help: "name is duplicated" })
+    }
+    else if(!specialNameRegex.test(data.target.value)){
+      status = "error";
+      setNameStatus({ status: "error", help: "name is wrong" })
     }
     else {
       status = "success";
@@ -128,6 +134,7 @@ const DagDefineModalPod = (props) => {
         <Form.Item label="Name" validateStatus={nameStatus.status}
           help={nameStatus.help} hasFeedback>
           <Input placeholder='Task Name' onChange={checkName} />
+          <label>알파벳과 숫자, 특수문자 - 만 가능합니다.</label>
         </Form.Item>
         <Form.Item label="Task">
           <Select onChange={onChangeTask}>
