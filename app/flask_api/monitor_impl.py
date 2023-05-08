@@ -932,11 +932,11 @@ def postDag():
     #TODO: 유효성체크
 
     #delete
-    cursor.execute(f'select node_uuid from TB_NODE where project_id = "{projectID}"')
+    cursor.execute(f'select node_uuid, node_id from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
     nodeList = {}
     for row in rows:
-        nodeList[row['node_uuid']] = row['node_uuid']
+        nodeList[row['node_uuid']] = row['node_id']
     #add
     if data['nodes'] != None:
         for node in data['nodes']:
@@ -973,9 +973,13 @@ def postDag():
             if nodeList.get(uid) != None:
                 del nodeList[uid]
 
-    for n in nodeList.keys():
+    for n in nodeList.items():
         cursor.execute(
-            f'delete from TB_NODE where node_uuid = "{n}";');
+            f'delete from TB_NODE where node_uuid = "{n[0]}";');
         mycon.commit()
+
+        #delete from k8s
+        flask_api.center_client.podsNameDelete(n[1], 'softonet', 'mec(ilsan)', projectID)
+
 
     return jsonify(status="success"), 200
