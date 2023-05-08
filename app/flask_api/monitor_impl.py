@@ -928,7 +928,7 @@ def postDag():
             if preCondition.get(edge['target']) == None:
                 preCondition[edge['target']] = [edge['source']]
             else:
-                preCondition[edge['target']].append([edge['source']])
+                preCondition[edge['target']].append(edge['source'])
     #TODO: 유효성체크
 
     #delete
