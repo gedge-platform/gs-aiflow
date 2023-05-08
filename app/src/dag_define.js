@@ -50,6 +50,7 @@ function DagDefine(props) {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
+    const [needFitView, setNeedFitView]=useState(true);
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID], () => {
             return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID)
@@ -84,43 +85,43 @@ function DagDefine(props) {
     refetchOnWindowFocus:false,
     retry:0,
   });  
-      
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
 
     const nodeWidth = 252;
     const nodeHeight = 142;
 
     const getLayoutedElements = (nodes, edges, direction = 'LR') => {
+        var dagreGraph = new dagre.graphlib.Graph();
+        dagreGraph.setDefaultEdgeLabel(() => ({}));
         const isHorizontal = direction === 'LR';
-        dagreGraph.setGraph({ rankdir: direction });
-
+        dagreGraph.setGraph({ rankdir: direction, width: 0, height:0 });
+      
         nodes.forEach((node) => {
-            dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+          dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
         });
-
+      
         edges.forEach((edge) => {
-            dagreGraph.setEdge(edge.source, edge.target);
+          dagreGraph.setEdge(edge.source, edge.target);
         });
-
+      
         dagre.layout(dagreGraph);
-
+        var label = dagreGraph._label;
+      
         nodes.forEach((node) => {
-            const nodeWithPosition = dagreGraph.node(node.id);
-            node.targetPosition = isHorizontal ? 'left' : 'top';
-            node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-
-            // We are shifting the dagre node position (anchor=center center) to the top left
-            // so it matches the React Flow node anchor point (top left).
-            node.position = {
-                x: nodeWithPosition.x - nodeWidth / 2,
-                y: nodeWithPosition.y - nodeHeight / 2,
-            };
-
-            return node;
+          const nodeWithPosition = dagreGraph.node(node.id);
+          node.targetPosition = isHorizontal ? 'left' : 'top';
+          node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+      
+          // We are shifting the dagre node position (anchor=center center) to the top left
+          // so it matches the React Flow node anchor point (top left).
+          node.position = {
+            x: nodeWithPosition.x - nodeWidth / 2,
+            y: nodeWithPosition.y - nodeHeight / 2,
+          };
+      
+          return node;
         });
-
-        return { nodes, edges };
+      
+        return { nodes, edges, label };
     };
 
     const onDragOver = useCallback((event) => {
@@ -133,6 +134,7 @@ function DagDefine(props) {
     })
 
     const onChangeProjectSelect = (data) =>{
+        setNeedFitView(true)
         setSelectedNode(null);
         navigate('/editing/' + data)
       } 
@@ -201,6 +203,13 @@ function DagDefine(props) {
         setEdges((edge) => {
             return layoutedElems.edges
         });
+
+        if(needFitView){
+            setNeedFitView(false);
+            if(reactFlowInstance){
+              reactFlowInstance.fitBounds({x:0,y:0, width: layoutedElems.label.width, height : layoutedElems.label.height})
+            }
+          }
         setRefresh(!refresh);
 
     }
@@ -348,6 +357,29 @@ function DagDefine(props) {
             })
     }
 
+    const nodeColor = (node) =>{
+        if(node){
+          if(node.data){
+            if(node.data.task){
+              var task = node.data.task;
+              if(task == "Train"){
+                  return '#F5C9B2'
+              }
+              else if(task == "Validate"){
+                return '#9AC8F5';
+              }
+              else if(task == "Optimization"){
+                return '#CBF5DC';
+              }
+              else if(task == "Opt_Validate"){
+                return '#BBBBBB';
+              }
+            }
+          }
+        }
+        return '#666666'
+      }
+    
     return (
         <>
 
@@ -389,6 +421,8 @@ function DagDefine(props) {
                                         style={rfStyle}>
                                         <Background />
 
+                                        <MiniMap nodeColor={nodeColor} nodeStrokeWidth={5} nodeStrokeColor={'black'} />
+                                        <Controls/>
                                         {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
                 </Sidebar> */}
                                     </ReactFlow></div>

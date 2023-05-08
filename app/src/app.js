@@ -16,6 +16,8 @@ import { ServiceDefine } from './service_define';
 import Flow from "./react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
 import { DagDefine } from './dag_define';
+import { ReactFlowProvider } from 'reactflow';
+import { DagMonitoring } from './dag_monitoring';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -101,6 +103,7 @@ const App = () => {
             color:'#ffffff'
           }}
         >
+        <ReactFlowProvider>
         <QueryClientProvider client={queryClient}>
                 <div id='body' >
                      <div id='body_main'>
@@ -113,9 +116,9 @@ const App = () => {
                              <Route path='/delete' element={<Delete />}></Route>
                              <Route path='/logviewer' element={<LogViewer />}></Route>
                              <Route path='/project_list/*' element={<ServiceDefine setPage={setSelectedKey}/>}></Route>
-                             <Route path='/monitoring/:projectID' element={<Flow setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/monitoring/:projectID' element={<DagMonitoring setProjectID={setMainProjectID}/>}></Route>
                              <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
-                             <Route path='/monitoring/' element={<Flow setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID}/>}></Route>
                              <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
                              <Route path='/*' element={<NotFound />}></Route>
                          </Routes>
@@ -126,6 +129,7 @@ const App = () => {
                      </div>
                  </div>
           </QueryClientProvider>
+          </ReactFlowProvider>
           {/* <Breadcrumb
             style={{
               margin: '16px 0',
