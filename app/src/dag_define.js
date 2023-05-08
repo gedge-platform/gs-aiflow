@@ -1,6 +1,6 @@
 import { React, useState, useRef, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { Route, Routes, Router, useParams } from 'react-router-dom';
+import { Route, Routes, Router, useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Modal, Form } from "antd";
 import ReactFlow, {
     ReactFlowProvider,
@@ -24,7 +24,7 @@ import './css/textUpdaterNode.scss'
 import axios from 'axios';
 import "./css/dagModal.css";
 import dagre from 'dagre';
-import { Button } from 'antd';
+import { Button, Select } from 'antd';
 import { UndoOutlined, DeleteOutlined, DashOutlined, SaveOutlined } from "@ant-design/icons";
 import TextUpdaterNode from './textUpdaterNode';
 import './css/textUpdaterNode.scss'
@@ -51,7 +51,7 @@ function DagDefine(props) {
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const { isLoading, error, data, isFetching, refetch } = useQuery(
-        [], () => {
+        ['editingDAG' + projectID], () => {
             return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID)
                 .then((res) => {
                     var nodes = res['data']['nodes'];
@@ -64,7 +64,27 @@ function DagDefine(props) {
         retry: 0,
     }
     );
+    const [pjList, setPjList] = useState([]);
+    const navigate = useNavigate();
 
+    const getProjectList = async ( id ) => {
+        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+        var list = data.project_list;
+        list.forEach(function(item){
+            item.value = item.project_name;
+            item.label = item.project_name;
+        })
+        setPjList(list)
+        return list;
+      };
+    
+  const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
+    return getProjectList('user1')
+  }, {
+    refetchOnWindowFocus:false,
+    retry:0,
+  });  
+      
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -112,6 +132,10 @@ function DagDefine(props) {
         setSelectedNode(node);
     })
 
+    const onChangeProjectSelect = (data) =>{
+        navigate('/editing/' + data)
+      } 
+    
     const onDrop = useCallback(
         (event) => {
             event.preventDefault();
@@ -326,6 +350,8 @@ function DagDefine(props) {
     return (
         <>
 
+            <Select style={{width : "180px"}} defaultValue={projectID} onChange={onChangeProjectSelect} placeholder='select project'
+                options={pjList}></Select>
             <QueryClientProvider client={queryClient}>
                 <Row>
                     <ReactFlowProvider>

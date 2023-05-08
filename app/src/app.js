@@ -1,5 +1,5 @@
 import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined} from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, MenuProps, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {Link, Route,Routes} from 'react-router-dom';
 
@@ -30,8 +30,8 @@ function getItem(label, key, icon, children) {
 const items = [
   getItem('AI-Project', '1',<PieChartOutlined />, [
     getItem(<Link to ='project_list'>Project</Link>, 'project_list', <BarsOutlined />),
-    getItem(<Link to ='monitoring/default'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
-    getItem(<Link to ='editing/default'>DAG Editing</Link>, 'editing', <FormOutlined />)
+    getItem(<Link to ='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
+    getItem(<Link to ='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
   ]),
   getItem(<a href={process.env.REACT_APP_API+'/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
   // getItem('Option 2', '2', <DesktopOutlined />),
@@ -48,13 +48,14 @@ const items = [
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState('1')
+  const [mainProjectID, setMainProjectID] = useState(null); 
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
   const changeTitle = (data) => {
     if(data == 'project_list')
-      return '프로젝트'
+      return '프로젝트 목록'
     else if(data == 'monitoring')
       return '모니터링'
     else if(data == 'editing')
@@ -112,8 +113,10 @@ const App = () => {
                              <Route path='/delete' element={<Delete />}></Route>
                              <Route path='/logviewer' element={<LogViewer />}></Route>
                              <Route path='/project_list/*' element={<ServiceDefine setPage={setSelectedKey}/>}></Route>
-                             <Route path='/monitoring/:projectID' element={<Flow />}></Route>
-                             <Route path='/editing/:projectID' element={<DagDefine />}></Route>
+                             <Route path='/monitoring/:projectID' element={<Flow setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/monitoring/' element={<Flow setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
                              <Route path='/*' element={<NotFound />}></Route>
                          </Routes>
                       {/* </div> */}

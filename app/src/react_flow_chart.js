@@ -12,7 +12,7 @@ import ReactFlow, {
   PanOnScrollMode,
 } from 'reactflow';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
 import Sidebar from './service_define_sidebar';
@@ -25,7 +25,7 @@ import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
-import { Button, Row, Col, Divider } from 'antd';
+import { Button, Row, Col, Divider, Select } from 'antd';
 import { CaretRightOutlined, CloseOutlined } from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
@@ -74,15 +74,18 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
   return { nodes, edges };
 };
 
-function Flow() {
+function Flow(props) {
+  const setProjectID = props.setProjectID;
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [value, setValue] = useState(false);
   const [selectedNodeData, setSelectedNodeData] = useState(null);
   const [toggleFlag, setToggleFlag] = useState(false);
+  const [pjList, setPjList] = useState([]);
   const id = useParams().projectID;
-  const { isLoading, error, data, isFetching } = useQuery(
-    [], () => {
+  const navigate = useNavigate();
+  const { isLoading, error, data, isFetching, refetch} = useQuery(
+    ["dag" + id], () => {
       return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id)
         .then((res) => {
           var nodes = res['data']['nodes'];
@@ -119,6 +122,18 @@ function Flow() {
     refetchInterval: 5000
   }
   );
+
+
+const getProjectList = async ( id ) => {
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+  var list = data.project_list;
+  list.forEach(function(item){
+      item.value = item.project_name;
+      item.label = item.project_name;
+  })
+  setPjList(list)
+  return list;
+};
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -245,9 +260,23 @@ function Flow() {
         console.log(response)
       })
   }
+  const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
+    return getProjectList('user1')
+  }, {
+    refetchOnWindowFocus:false,
+    retry:0,
+  });
+
+  const onChangeProjectSelect = (data) =>{
+    setProjectID(data);
+    navigate('/monitoring/' + data)
+  } 
+
 
   return (
     <div id='reactflow_wrapper'>
+      <Select style={{width : "180px"}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
+      options={pjList}></Select>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
       </div>
