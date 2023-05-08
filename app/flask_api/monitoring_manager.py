@@ -1,6 +1,7 @@
 from flask import jsonify
 from kubernetes import client, utils
 
+import common.logger
 from .database import get_db_connection
 from .workflow import WorkFlow, WorkFlowNode
 import flask_api.center_client
@@ -239,6 +240,7 @@ class MonitoringManager:
     def checkNodeNeededToStartWorkFlowFromServer(self):
         self.monitoringWorkFlowFromCenter()
 
+        willDeleteIDList = []
         for data in self.__monitoringList.items():
             id = data[0]
             workflow: WorkFlow = data[1]
@@ -246,8 +248,11 @@ class MonitoringManager:
             if workflow is None:
                 continue
 
+            #check node all launched count
+            count = 0
             for node in workflow.nodes.values():
                 if node.data['status'] != 'Waiting':
+                    count += 1
                     continue
 
                 postConditions = node.postConditions
@@ -275,3 +280,16 @@ class MonitoringManager:
 
                 res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", id)
                 node.data['status'] = 'Pending'
+
+            #check all node launched
+            if count == len(workflow.nodes.keys()):
+                willDeleteIDList.append(id)
+
+        #delete list after check
+        for id in willDeleteIDList:
+            try:
+                del self.__monitoringList[id]
+            except:
+                common.logger.get_logger().error("del monitoring key error")
+
+
