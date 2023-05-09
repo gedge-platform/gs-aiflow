@@ -12,4 +12,7 @@ class WorkFlowNode:
         self.preConditions = []
         self.data = {}
         self.isExternal = False
-        self.needCheck = False
+        #needCheck -1 는 failed로 인한 값 -> 불변
+        #0은 False 추후 True 예정
+        #1은 True
+        self.needCheck = 0

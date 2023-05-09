@@ -56,7 +56,7 @@ class MonitoringManager:
             #단말 노드 체크
             if len(workFlowNode.preConditions) == 0:
                 workFlowNode.isExternal = True
-                workFlowNode.needCheck = True
+                workFlowNode.needCheck = 1
 
 
             workFlow.nodes[node['id']] = workFlowNode
@@ -169,20 +169,25 @@ class MonitoringManager:
         for workflow in self.__monitoringList.values():
             for id, node in workflow.nodes.items():
                 #필요한 것만 상태 체크
-                if node.needCheck is True:
+                if node.needCheck == 1:
                     statusData = self.getListNamespacePodDetailFromCenter(workflow, id)
                     #update
                     node.data['status'] = statusData
 
                     # 파드 완료 시
                     if node.data['status'] == 'Succeeded' or node.data['status'] == 'Failed':
-                        node.needCheck = False
+                        node.needCheck = 0
+
                         # 후속노드체크활성화
                         postConditions = node.postConditions
                         for postNodeId in postConditions:
                             postNode = workflow.nodes.get(postNodeId)
                             if postNode is not None:
-                                postNode.needCheck = True
+                                if node.data['status'] == 'Succeeded':
+                                    if postNode.needCheck != -1:
+                                        postNode.needCheck = 1
+                                else:
+                                    postNode.needCheck = -1
 
 
     def checkNodeNeededToStartWorkFlow(self):
@@ -251,8 +256,14 @@ class MonitoringManager:
             #check node all launched count
             count = 0
             for node in workflow.nodes.values():
-                if node.data['status'] != 'Waiting':
+                #check할 필요 없는 노드는 패스
+                if node.needCheck != 1:
                     count += 1
+                    continue
+
+                #실행 중인 노드는 패스
+                if node.data['status'] != 'Waiting':
+                    # count += 1
                     continue
 
                 postConditions = node.postConditions
