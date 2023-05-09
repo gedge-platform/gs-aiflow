@@ -73,20 +73,19 @@ CREATE TABLE IF NOT EXISTS TB_TENSORRT (
 )CHARACTER SET 'utf8';
 
 INSERT INTO TB_USER (user_id, login_id, login_pass, user_name, workspace_name , is_admin)
- SELECT * FROM (select 'user_1', 'admin', 'softonnet', '기본관리자', 1) AS admin
+ SELECT * FROM (select 'user1', 'admin', 'softonnet', '기본관리자', 'softonnet', 1) AS admin
  WHERE NOT EXISTS (SELECT user_id FROM TB_USER) LIMIT 1;
 
 INSERT INTO TB_PROJECT (project_id, project_name, user_id, pv_name)
- VALUES ('1_pj1', 'pj1', 'user_1', "testPV"),
- ('1_pj2', 'pj2', 'user_1', "testPV"),
- ('softonnet-test', 'softonnet-test', 'user_1', "testPV");
+ VALUES ('1_pj1', 'pj1', 'user1', "testPV"),
+ ('1_pj2', 'pj2', 'user1', "testPV"),
+ ('softonnet-test', 'softonnet-test', 'user1', "testPV");
 
 INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data)
-VALUES ('user_1_softonnet-test_aiflow-test1', 'aiflow-test1', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test1'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test1','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", '[]', "{'label': 'aiflow-test1', 'task': 'Train', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
-('user_1_softonnet-test_aiflow-test2', 'aiflow-test2', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test2'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test2','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test1']", "{'label': 'aiflow-test2', 'task': 'Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
-('user_1_softonnet-test_aiflow-test3', 'aiflow-test3', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test3'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test3','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test2']", "{'label': 'aiflow-test3', 'task': 'Optimization', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
-('user_1_softonnet-test_aiflow-test4', 'aiflow-test4', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test4'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test4','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test3']", "{'label': 'aiflow-test4', 'task': 'Opt_Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
-('user_1_softonnet-test_aiflow-test5', 'aiflow-test5', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test5'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test5','image': 'aiflow/test1:v1.0.1.230329',}]}}'),", "['aiflow-test4']", "{'label': 'aiflow-test5', 'task': 'Opt_Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}");
+VALUES ('user1.softonnet-test.aiflow-test1', 'aiflow-test1', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test1'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test1','image': 'aiflow/test1:v1.0.1.230329',}]}}", '[]', "{'label': 'aiflow-test1', 'task': 'Train', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user1.softonnet-test.aiflow-test2', 'aiflow-test2', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test2'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test2','image': 'aiflow/test1:v1.0.1.230329',}]}}", "['aiflow-test1']", "{'label': 'aiflow-test2', 'task': 'Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user1.softonnet-test.aiflow-test3', 'aiflow-test3', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test3'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test3','image': 'aiflow/test1:v1.0.1.230329',}]}}", "['aiflow-test2']", "{'label': 'aiflow-test3', 'task': 'Optimization', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
+('user1.softonnet-test.aiflow-test4', 'aiflow-test4', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test4'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test4','image': 'aiflow/test1:v1.0.1.230329',}]}}", "['aiflow-test3']", "{'label': 'aiflow-test4', 'task': 'Opt_Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}");
 
 INSERT INTO TB_RUNTIME (runtime_name, framework, version, python_version, path)
  VALUES ('pt121_py38', 'PyTorch', '1.2.1', '3.8', '.');

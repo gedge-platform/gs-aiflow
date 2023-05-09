@@ -169,103 +169,6 @@ def dummy():
 def getDAG(dagId):
     return monitor_impl.getDag(dagId)
 
-
-    # return {'data': 'data1',
-    #         'edges': [
-    #             {
-    #                 'id': 'e1-2',
-    #                 'source': '1',
-    #                 'target': '2'
-    #             },
-    #             {
-    #                 'id': 'e1-3',
-    #                 'source': '2',
-    #                 'target': '3'
-    #             },
-    #             {
-    #                 'id': 'e1-4',
-    #                 'source': '3',
-    #                 'target': '4'
-    #             },
-    #             {
-    #                 'id': 'e1-5',
-    #                 'source': '4',
-    #                 'target': '5'
-    #             }
-    #         ],
-    #         'nodes': [
-    #             {
-    #                 'id': '1',
-    #                 'type': 'textUpdater',
-    #                 'position': {
-    #                     'x': 0,
-    #                     'y': 0
-    #                 },
-    #                 'data': {
-    #                     'type': 'deployment',
-    #                     'label': '라벨1',
-    #                     'origin': '22',
-    #                     'status': 'pending',
-    #                     'erwerewr': 'rewr',
-    #                     'sdfwerwrq': "vcvcx",
-    #                     'yaml': "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n name: nignx-deployment"
-    #                 }
-    #             }, {
-    #                 'id': '2',
-    #                 'position': {
-    #                     'x': 500,
-    #                     'y': 0
-    #                 },
-    #                 'type': 'textUpdater',
-    #                 'data': {
-    #                     'type': 'service',
-    #                     'label': '라벨2',
-    #                     'status': 'success',
-    #                     'yaml': "werwerqweqw,l,v;dkfopwekopqewqe",
-    #                 }
-    #             }, {
-    #                 'id': '3',
-    #                 'position': {
-    #                     'x': 1000,
-    #                     'y': 0
-    #                 },
-    #                 'type': 'textUpdater',
-    #                 'data': {
-    #                     'type': 'job',
-    #                     'label': '라벨3',
-    #                     'status': 'failed',
-    #                     'yaml': "werwerqweqw,l,v;dkfopwekopqewqeaskq x;pxlxl,x,xdkl;papq0",
-    #                 }
-    #             }, {
-    #                 'id': '4',
-    #                 'position': {
-    #                     'x': 1500,
-    #                     'y': 0
-    #                 },
-    #                 'type': 'textUpdater',
-    #                 'data': {
-    #                     'type': 'gom',
-    #                     'label': '라벨4',
-    #                     'status': 'waiting',
-    #                     'yaml': "eeewqkopw,oozxca",
-    #                 }
-    #             }, {
-    #                 'id': '5',
-    #                 'position': {
-    #                     'x': 2000,
-    #                     'y': 0
-    #                 },
-    #                 'type': 'textUpdater',
-    #                 'data': {
-    #                     'type': 'sadasd',
-    #                     'label': '라벨5',
-    #                     'status': 'success',
-    #                     'yaml': "102185089065",
-    #                 }
-    #             }
-    #         ]
-    #     }
-
 @app.route('/api/testget', methods=['GET'])
 def testget1():
     return monitor_impl.getTest()
@@ -308,19 +211,19 @@ def getClusterList(userID):
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.createProject("user_1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+        return monitor_impl.createProject("user1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
 def deleteProject(projectName):
     if request.method == 'DELETE':
-        return monitor_impl.deleteProject("user_1", projectName)
+        return monitor_impl.deleteProject("user1", projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
 def getProject(projectName):
     if request.method == 'GET':
-        return monitor_impl.getProject("user_1", projectName)
+        return monitor_impl.getProject("user1", projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
 def getPodEnv():

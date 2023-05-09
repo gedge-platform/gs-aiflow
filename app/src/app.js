@@ -1,5 +1,5 @@
 import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined} from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, MenuProps, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {Link, Route,Routes} from 'react-router-dom';
 
@@ -16,6 +16,9 @@ import { ServiceDefine } from './service_define';
 import Flow from "./react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
 import { DagDefine } from './dag_define';
+import { ReactFlowProvider } from 'reactflow';
+import { DagMonitoring } from './dag_monitoring';
+import UserInfo from './user_info';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -30,8 +33,8 @@ function getItem(label, key, icon, children) {
 const items = [
   getItem('AI-Project', '1',<PieChartOutlined />, [
     getItem(<Link to ='project_list'>Project</Link>, 'project_list', <BarsOutlined />),
-    getItem(<Link to ='monitoring/default'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
-    getItem(<Link to ='editing/default'>DAG Editing</Link>, 'editing', <FormOutlined />)
+    getItem(<Link to ='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
+    getItem(<Link to ='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
   ]),
   getItem(<a href={process.env.REACT_APP_API+'/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
   // getItem('Option 2', '2', <DesktopOutlined />),
@@ -48,13 +51,22 @@ const items = [
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState('1')
+  const [mainProjectID, setMainProjectID] = useState(null); 
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [username, setUsername] = useState('user1');
+  const [avatarSrc, setAvatarSrc] = useState('');
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
+  const handleLogout = () => {
+    setUsername('');
+    setLoggedIn(false);
+  };
+
   const changeTitle = (data) => {
     if(data == 'project_list')
-      return '프로젝트'
+      return '프로젝트 목록'
     else if(data == 'monitoring')
       return '모니터링'
     else if(data == 'editing')
@@ -70,15 +82,21 @@ const App = () => {
     <Content style={{minHeight:'100vh', display:'flex', flexDirection:'column'}}>
 
       <Header className="header" style={{ paddingInline:'16px'}}>
-        <div className="logo" />
+        <div style={{display:'flex', height : '100%'}}>
+
         <div
           style={{
-            width:'200px',
+            width:'180px',
             height:'100%',
             textAlign:'center',
             background: 'rgba(255, 255, 255, 0)',
-          }}
-        > <img id='image_aieyeflow' src='/images/logo_aieye.png' alt='image_aieyeflow' style={{height:'auto', width:'100%'}}/></div>
+          }}> 
+          <img id='image_aieyeflow' src='/images/logo_aieye.png' alt='image_aieyeflow' style={{height:'auto', width:'100%', verticalAlign:'middle'}}/>
+        </div>
+        <div style={{marginLeft:'auto'}}>
+          {loggedIn ? (<UserInfo username={username} avatarSrc={avatarSrc} onLogout={handleLogout} style={{}}/>) : (<UserInfo/>)}
+        </div>
+        </div>
       </Header>
       <div ></div>
     <Layout
@@ -100,6 +118,7 @@ const App = () => {
             color:'#ffffff'
           }}
         >
+        <ReactFlowProvider>
         <QueryClientProvider client={queryClient}>
                 <div id='body' >
                      <div id='body_main'>
@@ -112,8 +131,10 @@ const App = () => {
                              <Route path='/delete' element={<Delete />}></Route>
                              <Route path='/logviewer' element={<LogViewer />}></Route>
                              <Route path='/project_list/*' element={<ServiceDefine setPage={setSelectedKey}/>}></Route>
-                             <Route path='/monitoring/:projectID' element={<Flow />}></Route>
-                             <Route path='/editing/:projectID' element={<DagDefine />}></Route>
+                             <Route path='/monitoring/:projectID' element={<DagMonitoring setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID}/>}></Route>
+                             <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID}/>}></Route>
                              <Route path='/*' element={<NotFound />}></Route>
                          </Routes>
                       {/* </div> */}
@@ -123,6 +144,7 @@ const App = () => {
                      </div>
                  </div>
           </QueryClientProvider>
+          </ReactFlowProvider>
           {/* <Breadcrumb
             style={{
               margin: '16px 0',

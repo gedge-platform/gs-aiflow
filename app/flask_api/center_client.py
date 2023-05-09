@@ -1,5 +1,7 @@
 import requests
 from flask import json
+
+import flask_api.runtime_helper
 from flask_api.global_def import config
 
 
@@ -165,3 +167,28 @@ def projectsDelete(projectName : str):
         return response.json()
     except:
         return {'status' : 'failed'}
+
+def pvCreate(userID : str, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/pvs", method="POST", params=query, body=flask_api.runtime_helper.getProjectYaml(userID, project)['PV'])
+    try:
+        return response.json()
+    except:
+        return {}
+
+
+def pvcCreate(userID : str, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/pvcs", method="POST", params=query, body=flask_api.runtime_helper.getProjectYaml(userID, project)['PVC'])
+    try:
+        return response.json()
+    except:
+        return {}

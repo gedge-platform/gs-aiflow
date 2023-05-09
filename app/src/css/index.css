@@ -444,7 +444,7 @@ html,body{
     margin-top:20px;
 }
 
-.pod_node_border{
+/* .pod_node_border{
     border-radius: 20px;
     background-color: #FFFFFF;
 
@@ -457,6 +457,38 @@ html,body{
     min-height: 50px;
     min-width: 130px;
     font-weight: bold;
+} */
+
+.pod_node_border{
+    border-radius: 25px;
+    background-color: #FFFFFF;
+    padding: 6px;
+    width: 52px;
+    height: 52px;
+    margin: auto; 
+    position: relative;
+}
+.pod_node{
+    border-radius: 20px;
+    text-align: center;
+    vertical-align: middle;
+    position: absolute;
+    top: 6px; 
+    height: 40px;
+    width: 40px;
+    margin: auto;
+    font-weight: bold;
+}
+
+.node_text_wrapper{
+    width: 200px;
+    text-align: center;
+    overflow: hidden;
+    display: inline-block;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    font-weight: bold;
+    font-size: 23px;
 }
 
 .dag_status_color, .dag_task_color{

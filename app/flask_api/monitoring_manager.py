@@ -1,6 +1,7 @@
 from flask import jsonify
 from kubernetes import client, utils
 
+import common.logger
 from .database import get_db_connection
 from .workflow import WorkFlow, WorkFlowNode
 import flask_api.center_client
@@ -66,13 +67,13 @@ class MonitoringManager:
         if not isinstance(data, WorkFlow):
             return False
         # TODO: 무결성 체크 및 파싱
-        project = flask_api.center_client.userProjectsNameGet('softonnet-test')
+        project = flask_api.center_client.userProjectsNameGet(data.id)
         if project['data'] is not None:
             detailInfoList = project['data']['DetailInfo']
             for detailInfo in detailInfoList:
                 resourceData : dict = detailInfo['resource']
                 for res in resourceData.items():
-                    if res[0] != 'namespace_count' and res[1] != 0:
+                    if res[0] != 'namespace_count' and res[0] != 'pv_count' and res[1] != 0:
                         return False
 
             self.__monitoringList[data.id] = data
@@ -107,7 +108,7 @@ class MonitoringManager:
         return d
     def getListNamespacePodFromCenter(self, workFlow : WorkFlow):
         d = dict()
-        project='softonnet-test'
+        project=workFlow.id
         cluster='mec(ilsan)'
         workspace='softonet'
 
@@ -139,7 +140,7 @@ class MonitoringManager:
 
     def getListNamespacePodDetailFromCenter(self, workFlow : WorkFlow, podID : str):
         d = dict()
-        project='softonnet-test'
+        project=workFlow.id
         cluster='mec(ilsan)'
         workspace='softonet'
 
@@ -239,6 +240,7 @@ class MonitoringManager:
     def checkNodeNeededToStartWorkFlowFromServer(self):
         self.monitoringWorkFlowFromCenter()
 
+        willDeleteIDList = []
         for data in self.__monitoringList.items():
             id = data[0]
             workflow: WorkFlow = data[1]
@@ -246,8 +248,11 @@ class MonitoringManager:
             if workflow is None:
                 continue
 
+            #check node all launched count
+            count = 0
             for node in workflow.nodes.values():
                 if node.data['status'] != 'Waiting':
+                    count += 1
                     continue
 
                 postConditions = node.postConditions
@@ -273,5 +278,18 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
 
-                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", "softonnet-test")
+                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", id)
                 node.data['status'] = 'Pending'
+
+            #check all node launched
+            if count == len(workflow.nodes.keys()):
+                willDeleteIDList.append(id)
+
+        #delete list after check
+        for id in willDeleteIDList:
+            try:
+                del self.__monitoringList[id]
+            except:
+                common.logger.get_logger().error("del monitoring key error")
+
+

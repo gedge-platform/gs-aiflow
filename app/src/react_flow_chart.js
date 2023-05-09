@@ -10,22 +10,24 @@ import ReactFlow, {
   updateEdge,
   Connection,
   PanOnScrollMode,
+  useNodes,
+  ReactFlowProvider
 } from 'reactflow';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
 import Sidebar from './service_define_sidebar';
 import NodeInfo from './service_define_node_info';
 import TextUpdaterNode from './textUpdaterNode';
-import PodNode from './pod_node';
+import PodNode from './pod_node_small';
 import './css/textUpdaterNode.scss'
 import axios from 'axios';
 import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
-import { Button, Row, Col, Divider } from 'antd';
+import { Button, Row, Col, Divider, Select } from 'antd';
 import { CaretRightOutlined, CloseOutlined } from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
@@ -36,15 +38,15 @@ const rfStyle = {
   height: '500px'
 };
 
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const nodeWidth = 252;
 const nodeHeight = 142;
 
 const getLayoutedElements = (nodes, edges, direction = 'LR') => {
+  var dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
+  dagreGraph.setGraph({ rankdir: direction, width: 0, height:0 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -55,6 +57,7 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
   });
 
   dagre.layout(dagreGraph);
+  var label = dagreGraph._label;
 
   nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
@@ -71,18 +74,23 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
     return node;
   });
 
-  return { nodes, edges };
+  return { nodes, edges, label };
 };
 
-function Flow() {
+function Flow(props) {
+  const setProjectID = props.setProjectID;
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [value, setValue] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [selectedNodeData, setSelectedNodeData] = useState(null);
   const [toggleFlag, setToggleFlag] = useState(false);
+  const [pjList, setPjList] = useState([]);
   const id = useParams().projectID;
-  const { isLoading, error, data, isFetching } = useQuery(
-    [], () => {
+  const navigate = useNavigate();
+  const [needFitView, setNeedFitView]=useState(true);
+  const { isLoading, error, data, isFetching, refetch} = useQuery(
+    ["dag" + id], () => {
       return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id)
         .then((res) => {
           var nodes = res['data']['nodes'];
@@ -96,13 +104,6 @@ function Flow() {
             elem.markerEnd = {type: MarkerType.ArrowClosed, color:'red', width: '7px', height:'7px'};
           });
         
-        // selectedEdge['markerEnd'] = {
-        //   type: MarkerType.ArrowClosed,
-        //   width: 20,
-        //   height: 20,
-        //   color: 'red'
-        // };
-
           var layoutedElems = getLayoutedElements(
             nodes,
             edges
@@ -113,12 +114,32 @@ function Flow() {
           setEdges((edge) => {
             return layoutedElems.edges
           });
+
+          if(needFitView){
+            setNeedFitView(false);
+            if(reactFlowInstance){
+              reactFlowInstance.fitBounds({x:0,y:0, width: layoutedElems.label.width, height : layoutedElems.label.height})
+            }
+          }
+          //fit view
           return res['data']
         })
     }, {
-    refetchInterval: 5000
+    refetchInterval: 5000,
   }
   );
+
+
+const getProjectList = async ( id ) => {
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+  var list = data.project_list;
+  list.forEach(function(item){
+      item.value = item.project_name;
+      item.label = item.project_name;
+  })
+  setPjList(list)
+  return list;
+};
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -225,7 +246,7 @@ function Flow() {
 
   function launchProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/launch',
-      { projectID: "ss" })
+      { projectID: id })
       .then(response => {
         if (response.data['status'] == 'success') {
           setTitle("실행에 성공했습니다.")
@@ -240,14 +261,53 @@ function Flow() {
 
   function InitProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/init',
-      { projectID: "ss" })
+      { projectID: id })
       .then(response => {
         console.log(response)
       })
   }
+  const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
+    return getProjectList('user1')
+  }, {
+    refetchOnWindowFocus:false,
+    retry:0,
+  });
+
+  const onChangeProjectSelect = (data) =>{
+    setNeedFitView(true)
+    setProjectID(data);
+    setSelectedNodeData(null);
+    navigate('/monitoring/' + data)
+  } 
+
+  const nodeColor = (node) =>{
+    if(node){
+      if(node.data){
+        if(node.data.task){
+          var task = node.data.task;
+          if(task == "Train"){
+              return '#F5C9B2'
+          }
+          else if(task == "Validate"){
+            return '#9AC8F5';
+          }
+          else if(task == "Optimization"){
+            return '#CBF5DC';
+          }
+          else if(task == "Opt_Validate"){
+            return '#BBBBBB';
+          }
+        }
+      }
+    }
+    return '#666666'
+  }
+
 
   return (
     <div id='reactflow_wrapper'>
+      <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
+      options={pjList}></Select>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
       </div>
@@ -281,7 +341,6 @@ function Flow() {
             </Row>
           </div>
           <div align='right' style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            {/* <h2 >프로젝트 목록</h2>  */}
             <Button style={{ backgroundColor: '#00CC00', margin: 'auto 0' }} type="primary" icon={<CaretRightOutlined />} onClick={launchProject}>
               Launch Project
             </Button>
@@ -304,15 +363,14 @@ function Flow() {
             onEdgeUpdate={onEdgeUpdate}
             nodeTypes={nodeTypes}
             fitView
-            maxZoom={1.0}
-            minZoom={1.0}
-            translateExtent={[[-300, -100], [2500, 300]]}
+            onInit={setReactFlowInstance}
+            // translateExtent={[[-300, -100], [2500, 300]]}
             panOnScrollMode={PanOnScrollMode.Horizontal}
-            zoomOnScroll={false}
+            zoomOnScroll={true}
             nodesDraggable={false}
             style={rfStyle}>
-            {/* <MiniMap/> */}
-            {/* <Controls/> */}
+            <MiniMap nodeColor={nodeColor} nodeStrokeWidth={5} nodeStrokeColor={'black'}/>
+            <Controls/>
             <Background />
 
             {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>

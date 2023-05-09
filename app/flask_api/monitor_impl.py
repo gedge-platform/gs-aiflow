@@ -15,6 +15,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import common.logger
 import flask_api.center_client
+import flask_api.runtime_helper
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -26,12 +27,12 @@ monitoringManager = MonitoringManager()
 
 def initTest():
     list = ['aiflow-test1', 'aiflow-test2', 'aiflow-test3', 'aiflow-test4', 'aiflow-test5']
-    monitoringManager.deleteWorkFlow('default')
+    monitoringManager.deleteWorkFlow('softonnet-test')
     for item in list:
         flask_api.center_client.podsNameDelete(item, 'softonet', 'mec(ilsan)', 'softonnet-test')
     return jsonify(status = 'success'), 200
 def launchTest():
-    result = monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'default',
+    result = monitoringManager.addWorkFlow((monitoringManager.parseFromDAGToWorkFlow({'id': 'softonnet-test',
                                   'edges': [
                                       {
                                           'id': 'e1-2',
@@ -663,10 +664,10 @@ def getPodStatus(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
     return str(response.status.phase)
-def getDag(projectID):
+def getDag(projectID, needYaml = False):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    c = cursor.execute(f'select node_id, node_type, precondition_list, data from TB_NODE where project_id = "{projectID}"')
+    c = cursor.execute(f'select node_id, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
 
     d = dict()
@@ -683,6 +684,7 @@ def getDag(projectID):
         preConds = row[2]
         preCondsList = ast.literal_eval(preConds)
         rowData = ast.literal_eval(row[3])
+        yaml = ast.literal_eval(row[4])
 
         for preCond in preCondsList:
             d['edges'].append({'id': nodeID + "_" + preCond,
@@ -698,6 +700,9 @@ def getDag(projectID):
             'type' : nodeTypeStr,
             'data': rowData
         }
+        if needYaml:
+            node['data']['yaml'] = yaml
+
         node['data']['status'] = 'Waiting'
 
         if data['data'] is not None:
@@ -733,11 +738,25 @@ def getProjectList(userID):
 
 def launchProject(projectID):
     #TODO: DB처리및 유효성체크
-
-    return launchTest()
+    dag = getDag(projectID, True)
+    # return launchTest()
+    res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(dag))
+    if res is True:
+        return jsonify(status="success"), 200
+    else:
+        return jsonify(status="failed"), 200
 # return None
-def initProject(param):
-    return initTest()
+def initProject(projectID):
+    mycon = get_db_connection()
+
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select node_id from TB_NODE where project_id="{projectID}"')
+    rows = cursor.fetchall()
+
+    monitoringManager.deleteWorkFlow(projectID)
+    for item in rows:
+        flask_api.center_client.podsNameDelete(item['node_id'], 'softonet', 'mec(ilsan)', projectID)
+    return jsonify(status = 'success'), 200
 
 
 def getClusterList(userID):
@@ -792,6 +811,18 @@ def createProject(userID, projectName, projectDesc, clusterName):
                                              clusterName=clusterName)
 
             if status['status'] != 'failed':
+                # pv 부터 pvc는 프로젝트 생성후
+                status = flask_api.center_client.pvCreate(userID, workspaceName, clusterName, projectName)
+                if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+                    flask_api.center_client.projectsDelete(projectName)
+                    return jsonify(status='failed', msg='pv make failed'), 200
+
+                status = flask_api.center_client.pvcCreate(userID, workspaceName, clusterName, projectName)
+                if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+                    flask_api.center_client.projectsDelete(projectName)
+                    #TODO: PV 제거
+                    return jsonify(status='failed', msg='pvc make failed'), 200
+
                 cursor.execute(f'insert into TB_PROJECT (project_id, project_name, user_id, pv_name) value ("{projectName}", "{projectName}", "{userID}", "testPV");')
                 mycon.commit()
                 return jsonify(status='success'), 200
@@ -897,19 +928,19 @@ def postDag():
             if preCondition.get(edge['target']) == None:
                 preCondition[edge['target']] = [edge['source']]
             else:
-                preCondition[edge['target']].append([edge['source']])
+                preCondition[edge['target']].append(edge['source'])
     #TODO: 유효성체크
 
     #delete
-    cursor.execute(f'select node_uuid from TB_NODE')
+    cursor.execute(f'select node_uuid, node_id from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
     nodeList = {}
     for row in rows:
-        nodeList[row['node_uuid']] = row['node_uuid']
+        nodeList[row['node_uuid']] = row['node_id']
     #add
     if data['nodes'] != None:
         for node in data['nodes']:
-            uid = 'softonnet' + '_' + projectID + '_' + node['id']
+            uid = 'user1' + '.' + projectID + '.' + node['id']
             nodeType = 0
             if node['type'] == 'Pod':
                 nodeType = 0
@@ -918,22 +949,37 @@ def postDag():
             if(preCond == None):
                 preCond = []
             preCond = preCond.__str__()
+            task = node['data']['task']
+            yaml = {}
+            if task == 'Train':
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif task == 'Validate':
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif(task == 'Optimization'):
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+            elif(task == 'Opt_Validate'):
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
 
+            yaml = yaml.__str__()
             d = node['data'].__str__()
             #TODO: yaml 생성
 
 
             cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
-                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{""}", "{preCond}",  "{d}")' +
-                           f'on duplicate key update yaml = "{""}", precondition_list = "{preCond}", data = "{d}";')
+                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")' +
+                           f'on duplicate key update yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}";')
             mycon.commit()
 
             if nodeList.get(uid) != None:
                 del nodeList[uid]
 
-    for n in nodeList.keys():
+    for n in nodeList.items():
         cursor.execute(
-            f'delete from TB_NODE where node_uuid = "{n}";');
+            f'delete from TB_NODE where node_uuid = "{n[0]}";');
         mycon.commit()
+
+        #delete from k8s
+        flask_api.center_client.podsNameDelete(n[1], 'softonet', 'mec(ilsan)', projectID)
+
 
     return jsonify(status="success"), 200
