@@ -383,7 +383,7 @@ function DagDefine(props) {
     return (
         <>
 
-            <Select style={{width : "180px"}} defaultValue={projectID} onChange={onChangeProjectSelect} placeholder='select project'
+            <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={projectID} onChange={onChangeProjectSelect} placeholder='select project'
                 options={pjList}></Select>
             <QueryClientProvider client={queryClient}>
                 <Row>

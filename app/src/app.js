@@ -18,6 +18,7 @@ import {QueryClient, QueryClientProvider} from 'react-query'
 import { DagDefine } from './dag_define';
 import { ReactFlowProvider } from 'reactflow';
 import { DagMonitoring } from './dag_monitoring';
+import UserInfo from './user_info';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -51,9 +52,17 @@ const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState('1')
   const [mainProjectID, setMainProjectID] = useState(null); 
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [username, setUsername] = useState('user1');
+  const [avatarSrc, setAvatarSrc] = useState('');
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+
+  const handleLogout = () => {
+    setUsername('');
+    setLoggedIn(false);
+  };
 
   const changeTitle = (data) => {
     if(data == 'project_list')
@@ -73,15 +82,21 @@ const App = () => {
     <Content style={{minHeight:'100vh', display:'flex', flexDirection:'column'}}>
 
       <Header className="header" style={{ paddingInline:'16px'}}>
-        <div className="logo" />
+        <div style={{display:'flex', height : '100%'}}>
+
         <div
           style={{
-            width:'200px',
+            width:'180px',
             height:'100%',
             textAlign:'center',
             background: 'rgba(255, 255, 255, 0)',
-          }}
-        > <img id='image_aieyeflow' src='/images/logo_aieye.png' alt='image_aieyeflow' style={{height:'auto', width:'100%'}}/></div>
+          }}> 
+          <img id='image_aieyeflow' src='/images/logo_aieye.png' alt='image_aieyeflow' style={{height:'auto', width:'100%', verticalAlign:'middle'}}/>
+        </div>
+        <div style={{marginLeft:'auto'}}>
+          {loggedIn ? (<UserInfo username={username} avatarSrc={avatarSrc} onLogout={handleLogout} style={{}}/>) : (<UserInfo/>)}
+        </div>
+        </div>
       </Header>
       <div ></div>
     <Layout
