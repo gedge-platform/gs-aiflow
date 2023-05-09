@@ -667,7 +667,7 @@ def getPodStatus(result):
 def getDag(projectID, needYaml = False):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    c = cursor.execute(f'select node_id, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
+    c = cursor.execute(f'select node_name, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
 
     d = dict()
@@ -871,7 +871,7 @@ def getProject(userID, projectName):
                 returnResponse['nodes']['total'] = 0
 
                 cursor.execute(
-                    f'select node_type, count(node_uuid) as cnt from TB_NODE where project_id = "{pid}" group by node_type')
+                    f'select node_type, count(node_id) as cnt from TB_NODE where project_id = "{pid}" group by node_type')
                 nodeRows = cursor.fetchall()
                 if nodeRows is not None:
                     for nodeRow in nodeRows:
@@ -932,11 +932,11 @@ def postDag():
     #TODO: 유효성체크
 
     #delete
-    cursor.execute(f'select node_uuid, node_id from TB_NODE where project_id = "{projectID}"')
+    cursor.execute(f'select node_id, node_name from TB_NODE where project_id = "{projectID}"')
     rows = cursor.fetchall()
     nodeList = {}
     for row in rows:
-        nodeList[row['node_uuid']] = row['node_id']
+        nodeList[row['node_id']] = row['node_name']
     #add
     if data['nodes'] != None:
         for node in data['nodes']:
@@ -965,7 +965,7 @@ def postDag():
             #TODO: yaml 생성
 
 
-            cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
+            cursor.execute(f'insert into TB_NODE (node_id, node_name, project_id, node_type, yaml, precondition_list, data) ' +
                            f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")' +
                            f'on duplicate key update yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}";')
             mycon.commit()
@@ -975,7 +975,7 @@ def postDag():
 
     for n in nodeList.items():
         cursor.execute(
-            f'delete from TB_NODE where node_uuid = "{n[0]}";');
+            f'delete from TB_NODE where node_id = "{n[0]}";');
         mycon.commit()
 
         #delete from k8s
