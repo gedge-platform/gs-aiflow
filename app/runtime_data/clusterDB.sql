@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS runningserver (
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_USER (
-  user_id VARCHAR(36) NOT NULL PRIMARY KEY,
+  user_uuid VARCHAR(36) NOT NULL PRIMARY KEY,
   login_id VARCHAR(30) NOT NULL UNIQUE,
   login_pass VARCHAR(30),
   user_name VARCHAR(30),
@@ -32,23 +32,23 @@ CREATE TABLE IF NOT EXISTS TB_USER (
   CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_PROJECT (
-    project_id VARCHAR(30) NOT NULL PRIMARY KEY,
+    project_uuid VARCHAR(100) NOT NULL PRIMARY KEY,
     project_name VARCHAR(30) NOT NULL,
     user_id VARCHAR(36) NOT NULL,
     pv_name VARCHAR(30) NOT NULL,
-    INDEX FK_TB_PROJECT_TB_USER (user_id), CONSTRAINT FK_TB_PROJECT_TB_USER FOREIGN KEY (user_id) REFERENCES TB_USER (user_id) ON DELETE CASCADE
+    INDEX FK_TB_PROJECT_TB_USER (user_uuid), CONSTRAINT FK_TB_PROJECT_TB_USER FOREIGN KEY (user_uuid) REFERENCES TB_USER (user_uuid) ON DELETE CASCADE
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_NODE (
     node_uuid VARCHAR(100) NOT NULL PRIMARY KEY,
-    node_id VARCHAR(30) NOT NULL,
-    project_id VARCHAR(36) NOT NULL,
+    node_name VARCHAR(30) NOT NULL,
+    project_uuid VARCHAR(36) NOT NULL,
     node_type INT NOT NULL,
     yaml TEXT NOT NULL,
     create_date TIMESTAMP,
     precondition_list TEXT NOT NULL,
     data TEXT DEFAULT '{}',
-    INDEX FK_TB_NODE_TB_PROJECT (project_id), CONSTRAINT FK_TB_NODE_TB_PROJECT FOREIGN KEY (project_id) REFERENCES TB_PROJECT (project_id) ON DELETE CASCADE
+    INDEX FK_TB_NODE_TB_PROJECT (project_uuid), CONSTRAINT FK_TB_NODE_TB_PROJECT FOREIGN KEY (project_uuid) REFERENCES TB_PROJECT (project_uuid) ON DELETE CASCADE
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_RUNTIME (
@@ -81,7 +81,7 @@ INSERT INTO TB_PROJECT (project_id, project_name, user_id, pv_name)
  ('1_pj2', 'pj2', 'user1', "testPV"),
  ('softonnet-test', 'softonnet-test', 'user1', "testPV");
 
-INSERT INTO TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data)
+INSERT INTO TB_NODE (node_id, node_name, project_id, node_type, yaml, precondition_list, data)
 VALUES ('user1.softonnet-test.aiflow-test1', 'aiflow-test1', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test1'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test1','image': 'aiflow/test1:v1.0.1.230329',}]}}", '[]', "{'label': 'aiflow-test1', 'task': 'Train', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
 ('user1.softonnet-test.aiflow-test2', 'aiflow-test2', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test2'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test2','image': 'aiflow/test1:v1.0.1.230329',}]}}", "['aiflow-test1']", "{'label': 'aiflow-test2', 'task': 'Validate', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),
 ('user1.softonnet-test.aiflow-test3', 'aiflow-test3', "softonnet-test", 0, "{'apiVersion': 'v1','kind': 'Pod','metadata': {'name': 'aiflow-test3'},'spec': {'restartPolicy': 'Never','containers': [{'name': 'aiflow-test3','image': 'aiflow/test1:v1.0.1.230329',}]}}", "['aiflow-test2']", "{'label': 'aiflow-test3', 'task': 'Optimization', 'runtime': 'pt121_py38', 'tensorRT': 'tensorRT8.2.5.1', 'cuda': 'cuda11.2-cudnn8.2.1', 'type': 'Pod'}"),

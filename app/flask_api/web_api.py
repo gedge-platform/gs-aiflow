@@ -189,11 +189,13 @@ def getPodDetail(podID):
 def launchProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.launchProject(jsonData['projectID'])
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.launchProject(userID, jsonData['projectID'])
 
 @app.route('/api/getProjectList/<string:userID>', methods=['GET'])
 def getProjectList(userID):
     if request.method == 'GET':
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
         return monitor_impl.getProjectList(userID)
 
 
@@ -201,29 +203,34 @@ def getProjectList(userID):
 def initProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.initProject(jsonData['projectID'])
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.initProject(userID, jsonData['projectID'])
 @app.route('/api/clusters/<string:userID>', methods=['GET'])
 def getClusterList(userID):
     if request.method == 'GET':
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
         return monitor_impl.getClusterList(userID)
 
 @app.route('/api/project', methods=['POST'])
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.createProject("user1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.createProject(userID, jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
 def deleteProject(projectName):
     if request.method == 'DELETE':
-        return monitor_impl.deleteProject("user1", projectName)
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.deleteProject(userID, projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
 def getProject(projectName):
     if request.method == 'GET':
-        return monitor_impl.getProject("user1", projectName)
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.getProject(userID, projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
 def getPodEnv():
@@ -238,7 +245,8 @@ def getStorageSite():
 @app.route('/api/project/dag', methods=['POST'])
 def postDag():
     if request.method == 'POST':
-        return monitor_impl.postDag()
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return monitor_impl.postDag(userID)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

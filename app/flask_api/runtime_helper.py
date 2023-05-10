@@ -1,7 +1,7 @@
 from flask_api.database import get_db_connection
 
 
-def getBasicYaml(userID, projectID, nodeID):
+def getBasicYaml(userID, projectName, projectID, nodeID):
     data = {'apiVersion': 'v1', 'kind': 'Pod',
             'metadata': {'name': nodeID, 'labels': {'app': 'nfs-test'}},
             'spec': {'restartPolicy': 'Never', 'nodeName': 'gedgeworker1', 'containers': [
@@ -24,18 +24,18 @@ def getBasicYaml(userID, projectID, nodeID):
                      'subPath': 'dataset/coco128',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                     'subPath': 'user_data/' + userID + "/" + projectID}]}],
+                     'subPath': 'user_data/' + userID + "/" + projectName}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userID, projectID)}}]}}
     return data
 
 
 def getBasicPVName(userID, projectID):
-    return "softonet" + "." + "pv." + userID + "." + projectID
+    return "pv." + projectID
 
 
 def getBasicPVCName(userID, projectID):
-    return "softonet" + "." + "pvc." + userID + "." + projectID
+    return "pvc." + projectID
 
 
 def getBasicPVYaml(userID, projectID):
@@ -98,24 +98,24 @@ def getBasicPVCYaml(userID, projectID):
     return data
 
 
-def makeYamlTrainRuntime(userID, projectID, node_id, runtime, model, tensorRT, cuda):
-    data = getBasicYaml(userID, projectID, node_id)
+def makeYamlTrainRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+    data = getBasicYaml(userID, projectName, projectID, node_id)
 
     return data
 
-def makeYamlValidateRuntime(userID, projectID, node_id, runtime, model, tensorRT, cuda):
-    data = getBasicYaml(userID, projectID, node_id)
+def makeYamlValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+    data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; cd /root/yolov5; python val.py --project /root/user --name yolo_coco128_validate --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights /root/user/yolo_coco128_train/weights/best.pt --batch-size 1']
 
     return data
-def makeYamlOptimizationRuntime(userID, projectID, node_id, runtime, model, tensorRT, cuda):
-    data = getBasicYaml(userID, projectID, node_id)
+def makeYamlOptimizationRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+    data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; cd /root/yolov5; python export.py --weights /root/user/yolo_coco128_train/weights/best.pt --include engine --device 0 --half --batch-size 1 --imgsz 640']
 
     return data
 
-def makeYamlOptValidateRuntime(userID, projectID, node_id, runtime, model, tensorRT, cuda):
-    data = getBasicYaml(userID, projectID, node_id)
+def makeYamlOptValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+    data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; cd /root/yolov5; python val.py --project /root/user --name yolo_coco128_opt_validate --weights /root/user/yolo_coco128_train/weights/best.engine --data ~/volume/dataset/coco128/coco128.yaml --device 0 --batch-size 1 --imgsz 640']
 
     return data

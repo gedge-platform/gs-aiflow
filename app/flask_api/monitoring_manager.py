@@ -44,6 +44,7 @@ class MonitoringManager:
             workFlowNode = WorkFlowNode()
             nodeData = node['data']
             workFlowNode.id = node['id']
+            workFlowNode.uuid = node
             workFlowNode.data = nodeData
 
             #선행후행
