@@ -28,7 +28,7 @@ import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
 import { Button, Row, Col, Divider, Select } from 'antd';
-import { CaretRightOutlined, CloseOutlined } from "@ant-design/icons";
+import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
 
@@ -303,11 +303,28 @@ const getProjectList = async ( id ) => {
     return '#666666'
   }
 
+  const getProjectStoargeLink = () => {
+    if(id == undefined || id == null || id == ""){
+      return;
+    }
+
+    axios.get(process.env.REACT_APP_API + '/api/project/' + id + '/storage')
+      .then(response => {
+        window.open(response.data.link)
+      })
+  }
+
 
   return (
     <div id='reactflow_wrapper'>
-      <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
-      options={pjList}></Select>
+      <div style={{width:'100%', display: 'flex'}}>
+        <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
+        options={pjList}></Select>
+
+        <div style={{marginLeft:'auto'}}>
+          <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<FileSearchOutlined />} onClick={getProjectStoargeLink}>Storage</Button>
+        </div>
+      </div>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
       </div>

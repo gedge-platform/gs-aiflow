@@ -240,7 +240,14 @@ def getPodEnv():
 @app.route('/api/storage', methods=['GET'])
 def getStorageSite():
     if request.method == 'GET':
-        return redirect ('http://127.0.0.1:8888/?token=9acfb1f896d95c4b5522063cd5c0157af3bba8f417a54130')
+        return redirect ('http://127.0.0.1:8888?token=90f3998918319b395ae9f32b561b2b98ec090dc7aa7a88f7')
+
+
+@app.route('/api/project/<string:projectName>/storage', methods=['GET'])
+def getProjectStorage(projectName):
+    if request.method == 'GET':
+        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
+        return flask.jsonify(link='http://127.0.0.1:8888/tree/' + projectName + '/?token=90f3998918319b395ae9f32b561b2b98ec090dc7aa7a88f7'), 200
 
 @app.route('/api/project/dag', methods=['POST'])
 def postDag():
