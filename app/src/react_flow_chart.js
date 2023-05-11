@@ -27,7 +27,7 @@ import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
-import { Button, Row, Col, Divider, Select } from 'antd';
+import { Button, Row, Col, Divider, Select , notification} from 'antd';
 import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
@@ -37,7 +37,6 @@ const rfStyle = {
   backgroundColor: '#B8CEFF',
   height: '500px'
 };
-
 
 const nodeWidth = 252;
 const nodeHeight = 142;
@@ -83,7 +82,8 @@ function Flow(props) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [value, setValue] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [selectedNodeData, setSelectedNodeData] = useState(null);
+  const [selectedNodeData, setSelectedNodeData] = useState(null); 
+  const [api, contextHolder] = notification.useNotification();
   const [toggleFlag, setToggleFlag] = useState(false);
   const [pjList, setPjList] = useState([]);
   const id = useParams().projectID;
@@ -249,12 +249,14 @@ const getProjectList = async ( id ) => {
       { projectID: id })
       .then(response => {
         if (response.data['status'] == 'success') {
-          setTitle("실행에 성공했습니다.")
+          openNotificationWithIcon("success", {message:"Launch Project", description:"실행에 성공했습니다."})
         }
         else {
-          setTitle("실행에 실패했습니다. 워크플로를 초기화 해주십시오.")
+          openNotificationWithIcon("error", {message:"Launch Project", description:"실행에 실패했습니다. 워크플로를 초기화 해주십시오."})
         }
-        openPopUpModal()
+      })
+      .catch(error => {
+        openNotificationWithIcon("error", {message:"Launch Project", description:"서버 에러, 실행에 실패했습니다."})
       })
 
   }
@@ -263,7 +265,15 @@ const getProjectList = async ( id ) => {
     axios.post(process.env.REACT_APP_API + '/api/project/init',
       { projectID: id })
       .then(response => {
-        console.log(response)
+        if (response.data['status'] == 'success') {
+          openNotificationWithIcon("success", {message:"Init Project", description:"초기화에 성공했습니다."})
+        }
+        else{
+          openNotificationWithIcon("error", {message:"Init Project", description:"초기화에 실패했습니다."})
+        }
+      })
+      .catch(error => {
+        openNotificationWithIcon("error", {message:"Init Project", description:"서버 에러, 초기화에 실패했습니다."})
       })
   }
   const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
@@ -312,11 +322,15 @@ const getProjectList = async ( id ) => {
       .then(response => {
         window.open(response.data.link)
       })
-  }
-
+  } 
+  const openNotificationWithIcon = (type, data) => {
+    console.log(api, type, api[type])
+    api[type](data);
+  };
 
   return (
     <div id='reactflow_wrapper'>
+      {contextHolder}
       <div style={{width:'100%', display: 'flex'}}>
         <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
         options={pjList}></Select>
