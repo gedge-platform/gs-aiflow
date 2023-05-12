@@ -237,6 +237,28 @@ def getPodEnv():
     if request.method == 'GET':
         return monitor_impl.getPodEnv()
 
+
+@app.route('/api/pod/env/model', methods=['GET'])
+def getPodEnvModel():
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvModel()
+
+@app.route('/api/pod/env/framework/<string:modelName>', methods=['GET'])
+def getPodEnvFramework(modelName):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvFrameWork(modelName)
+
+@app.route('/api/pod/env/runtime/<string:modelName>/<string:framework>', methods=['GET'])
+def getPodEnvRuntime(modelName, framework):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvRuntime(modelName, framework)
+
+@app.route('/api/pod/env/tensorrt/<string:runtimeName>', methods=['GET'])
+def getPodEnvTensor(runtimeName):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvTensor(runtimeName)
+
+
 @app.route('/api/storage', methods=['GET'])
 def getStorageSite():
     if request.method == 'GET':

@@ -8,14 +8,29 @@ const DagDefineModalPod = (props) => {
   const nodes = props.nodes;
 
   const [nameStatus, setNameStatus] = useState({ status: "", help: "" })
+  const [frameworkList, setFrameworkList] = useState([])
+  const [runtimeList, setRuntimeList] = useState([])
+  const [tensorRTList, setTensorRTList] = useState([])
+
 
   const getEnv = async () => {
     const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env');
     return data;
   };
 
+  const getModelsAPI = async () => {
+    const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model')
+    console.log(data)
+    return data;
+  };
 
-  const { isLoading, isError, data, error } = useQuery(["env"], () => { return getEnv() }, {
+
+  // const { isLoading, isError, data, error } = useQuery(["env"], () => { return getEnv() }, {
+  //   refetchOnWindowFocus: false,
+  //   retry: 0,
+  // });
+
+  const {isLoading, isError, data, error} = useQuery(["models"], () => { return getModelsAPI() }, {
     refetchOnWindowFocus: false,
     retry: 0,
   });
@@ -30,54 +45,54 @@ const DagDefineModalPod = (props) => {
     ids.push(node.id);
   });
 
-  function getRuntimes(){
+  function getModels(){
+    if(isError){
+      return;
+    }
     if(data){
-      if(data.runtime){
-        const runtimes = [];
-        data.runtime.forEach((runtime) => {
-          runtimes.push(<Select.Option value={runtime}>{runtime}</Select.Option>)
+      if(data.model){
+        const models = [];
+        data.model.forEach((model) => {
+          models.push(<Select.Option value={model}>{model}</Select.Option>)
         })
-        return runtimes;
+        return models;
       }
     }
-    return (
-      <>
-      </>
-    )
+    return;
   }
 
-  function getCudas(){
-    if(data){
-      if(data.cuda){
-        const cudas = [];
-        data.cuda.forEach((cuda) => {
-          cudas.push(<Select.Option value={cuda}>{cuda}</Select.Option>)
+  function getFrameworks(){
+    if(frameworkList){
+      const frameworks = [];
+        frameworkList.forEach((framework) => {
+          frameworks.push(<Select.Option value={framework}>{framework}</Select.Option>)
         })
-        return cudas;
-      }
+        return frameworks;
     }
-    return (
-      <>
-      </>
-    )
+    return;
+  }
+
+  function getRuntimes(){
+    if(runtimeList){
+      const runtimes = [];
+      runtimeList.forEach((runtime) => {
+        runtimes.push(<Select.Option value={runtime.runtime_name}>{runtime.runtime_name}</Select.Option>)
+      })
+      return runtimes;
+    }
+    return;
   }
 
   function getTensorRTs(){
-    if(data){
-      if(data.tensorrt){
-        const tensorrts = [];
-        data.tensorrt.forEach((tensorrt) => {
-          tensorrts.push(<Select.Option value={tensorrt}>{tensorrt}</Select.Option>)
-        })
-        return tensorrts;
-      }
+    if(tensorRTList){
+      const tensorRTs = [];
+      tensorRTList.forEach((tensorRT) => {
+        tensorRTs.push(<Select.Option value={tensorRT.tensorrt_name}>{tensorRT.tensorrt_name}</Select.Option>)
+      })
+      return tensorRTs;
     }
-    return (
-      <>
-      </>
-    )
+    return;
   }
-
 
   var specialNameRegex = /^[A-Za-z0-9\-]+$/;
 
@@ -103,30 +118,55 @@ const DagDefineModalPod = (props) => {
     form.precondition = data;
   }
 
+  function onChangeModel(data) {
+    form.model = data;
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data)
+    .then((res) => {
+      setFrameworkList(res.data.framework);
+    })
+    .catch((error) => {
+      setFrameworkList([]);
+    });
+  }
+  
   function onChangeTask(data) {
     form.task = data;
   }
 
+  function onChangeFrameWorks(data) {
+    form.framework = data;
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data)
+    .then((res) => {
+      setRuntimeList(res.data.runtime)
+    })
+    .catch((error) => {
+      setRuntimeList([]);
+    });
+  }
+
   function onChangeRuntime(data) {
     form.runtime = data;
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data)
+    .then((res) => {
+      setTensorRTList(res.data.tensorrt)
+    })
+    .catch((error) => {
+      setTensorRTList([]);
+    });
   }
 
   function onChangeTensorRT(data) {
     form.tensorRT = data;
   }
 
-  function onChangeCuda(data) {
-    form.cuda = data;
-  }
-
   return (
     <div>
       <Form
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 14 }}
+        labelCol={{ span: 5 }}
+        wrapperCol={{ span: 18 }}
         layout="horizontal"
         disabled={false}
-        style={{ maxWidth: '600px' }}
+        style={{ maxWidth: '800px' }}
       >
         <Form.Item label="Type">
           <Input disabled={false} value={"Pod"} />
@@ -154,7 +194,17 @@ const DagDefineModalPod = (props) => {
             onChange={onChangePrecondition}
           />
         </Form.Item>
-        <Form.Item label="Runtime">
+        <Form.Item label="Model">
+          <Select onChange={onChangeModel}>
+            {!isLoading && getModels()}
+          </Select>
+        </Form.Item>
+         <Form.Item label="Framework">
+          <Select onChange={onChangeFrameWorks}>
+            {!isLoading && getFrameworks()}
+          </Select>
+        </Form.Item>
+         <Form.Item label="Runtime">
           <Select onChange={onChangeRuntime}>
             {!isLoading && getRuntimes()}
           </Select>
@@ -162,11 +212,6 @@ const DagDefineModalPod = (props) => {
         <Form.Item label="TensorRT">
           <Select onChange={onChangeTensorRT}>
             {!isLoading && getTensorRTs()}
-          </Select>
-        </Form.Item>
-        <Form.Item label="Cuda+Cudnn">
-          <Select onChange={onChangeCuda}>
-            {!isLoading && getCudas()}
           </Select>
         </Form.Item>
       </Form>
