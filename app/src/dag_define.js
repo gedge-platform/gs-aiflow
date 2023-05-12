@@ -289,15 +289,15 @@ function DagDefine(props) {
     }
 
     function makeNodePod() {
-        console.log(form)
         const name = form.name;
         const type = form.type;
         const status = form.status;
         const precondition = form.precondition;
         const task = form.task;
+        const model = form.model;
+        const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
-        const cuda = form.cuda;
 
         if (!name) {
             return;
@@ -308,13 +308,16 @@ function DagDefine(props) {
         if (!task) {
             return;
         }
+        if (!model) {
+            return;
+        }
+        if (!framework) {
+            return;
+        }
         if (!runtime) {
             return;
         }
         if (!tensorRT) {
-            return;
-        }
-        if (!cuda) {
             return;
         }
         if (status != "success") {
@@ -324,9 +327,10 @@ function DagDefine(props) {
         taskCreating.id = name;
         taskCreating.data.label = name;
         taskCreating.data.task = task;
+        taskCreating.data.model = model;
+        taskCreating.data.framework = framework;
         taskCreating.data.runtime = runtime;
         taskCreating.data.tensorRT = tensorRT;
-        taskCreating.data.cuda = cuda;
         taskCreating.data.type = type;
 
         const newEdges = [];

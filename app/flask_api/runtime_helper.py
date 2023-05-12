@@ -99,23 +99,23 @@ def getBasicPVCYaml(userID, projectID):
     return data
 
 
-def makeYamlTrainRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+def makeYamlTrainRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, framework):
     data = getBasicYaml(userID, projectName, projectID, node_id)
 
     return data
 
-def makeYamlValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+def makeYamlValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, framework):
     data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_validate --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights /root/user/yolo_coco128_train/weights/best.pt --batch-size 1 &>> /root/user/logs/' + node_id + '.log']
 
     return data
-def makeYamlOptimizationRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+def makeYamlOptimizationRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, framework):
     data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python export.py --weights /root/user/yolo_coco128_train/weights/best.pt --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log']
 
     return data
 
-def makeYamlOptValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, cuda):
+def makeYamlOptValidateRuntime(userID, projectName, projectID, node_id, runtime, model, tensorRT, framework):
     data = getBasicYaml(userID, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_opt_validate --weights /root/user/yolo_coco128_train/weights/best.engine --data ~/volume/dataset/coco128/coco128.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log']
 

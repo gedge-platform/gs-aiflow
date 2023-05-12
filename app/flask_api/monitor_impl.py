@@ -1001,13 +1001,13 @@ def postDag(userID):
             task = node['data']['task']
             yaml = {}
             if task == 'Train':
-                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif task == 'Validate':
-                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Optimization'):
-                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Opt_Validate'):
-                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
 
             yaml = yaml.__str__()
             d = node['data'].__str__()

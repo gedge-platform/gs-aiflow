@@ -12,6 +12,8 @@ const DagDefineModal = (props) => {
     form.status = "";
     form.precondition = [];
     form.task = null;
+    form.model = null;
+    form.framework = null;
     form.runtime = null;
     form.tensorRT = null;
     form.cuda = null;
