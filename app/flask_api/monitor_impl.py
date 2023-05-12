@@ -1044,3 +1044,39 @@ def getPodEnvModel():
             list.append(row['model'])
 
     return jsonify(model=list), 200
+
+def getPodEnvFrameWork(modelName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select framework from TB_RUNTIME where model = "{modelName}" group by framework;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row['framework'])
+
+    return jsonify(framework=list), 200
+
+def getPodEnvRuntime(modelName, framework):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select runtime_name, version, python_version, cuda_version, cudnn_version from TB_RUNTIME where model = "{modelName}" and framework = "{framework}";')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(runtime=list), 200
+
+def getPodEnvTensor(runtimeName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select tensorrt_name, tensorrt_version from TB_TENSORRT where runtime_name = "{runtimeName}";')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(tensorrt=list), 200
