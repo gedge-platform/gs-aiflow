@@ -23,3 +23,5 @@ log_level: INFO
 
 #node_type
 node_type : ['pod', 'cron_job', 'deployment', 'service', 'daemon_set', 'stateful_set']
+nfs_server : "127.0.0.1"
+nfs_path: "/path"

@@ -1031,3 +1031,16 @@ def postDag(userID):
 
 
     return jsonify(status="success"), 200
+
+
+def getPodEnvModel():
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select model from TB_RUNTIME group by model;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row['model'])
+
+    return jsonify(model=list), 200
