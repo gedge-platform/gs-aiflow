@@ -20,8 +20,6 @@ def login():
     id = data.get('ID')
     pw = data.get('PW')
 
-    print(session.get('user_id'))
-    print(session.get('is_login'))
     res = getUserRow(id, pw)
     if res is not None:
         session['user_id'] = id
@@ -31,8 +29,6 @@ def login():
         session['user_name'] = res['user_name']
         session['user_uuid'] = res['user_uuid']
 
-        print(session.get('user_id'))
-        print(session.get('is_login'))
         data = {
             'userName' : res['user_name']
         }

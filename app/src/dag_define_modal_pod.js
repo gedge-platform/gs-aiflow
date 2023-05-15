@@ -14,12 +14,12 @@ const DagDefineModalPod = (props) => {
 
 
   const getEnv = async () => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env');
+    const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env', {withCredentials:true});
     return data;
   };
 
   const getModelsAPI = async () => {
-    const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model')
+    const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model', {withCredentials:true})
     console.log(data)
     return data;
   };

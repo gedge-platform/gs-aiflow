@@ -168,7 +168,10 @@ def dummy():
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
 @user_impl.needLogin()
 def getDAG(dagId):
-    return monitor_impl.getDag(dagId)
+    userID = session.get('user_uuid')
+    if userID is None:
+        return flask.jsonify(status='failed', msg = 'auth failed'), 401
+    return monitor_impl.getDag(userID, dagId)
 
 @app.route('/api/testget', methods=['GET'])
 def testget1():
@@ -292,24 +295,29 @@ def getPodEnvTensor(runtimeName):
 @user_impl.needLogin()
 def getStorageSite():
     if request.method == 'GET':
-        return redirect ('http://127.0.0.1:8888?token=90f3998918319b395ae9f32b561b2b98ec090dc7aa7a88f7')
+        return redirect ('http://172.16.16.121:32223')
 
 
 @app.route('/api/project/<string:projectName>/storage', methods=['GET'])
 @user_impl.needLogin()
 def getProjectStorage(projectName):
     if request.method == 'GET':
-        userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
-        return flask.jsonify(link='http://127.0.0.1:8888/tree/' + projectName + '/?token=90f3998918319b395ae9f32b561b2b98ec090dc7aa7a88f7'), 200
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return flask.jsonify(link='http://172.16.16.121:32223/' + projectName), 200
 
 @app.route('/api/project/dag', methods=['POST'])
 @user_impl.needLogin()
 def postDag():
     if request.method == 'POST':
         userID = session.get('user_uuid')
+        userName = session.get('user_id')
         if userID is None:
             return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.postDag(userID)
+        if userName is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.postDag(userID, userName)
 
 @app.route('/api/login', methods=['POST'])
 def login():

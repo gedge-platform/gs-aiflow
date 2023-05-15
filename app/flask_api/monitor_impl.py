@@ -664,10 +664,9 @@ def getPodStatus(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
     return str(response.status.phase)
-def getDag(projectName, needYaml = False):
+def getDag(userID, projectName, needYaml = False):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    userID = "9dda2182-99f2-46b6-b6c7-00e19a4ab08d"
     # c = cursor.execute(f'select node_name, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
     c = cursor.execute(f'select node_name, node_type, precondition_list, data, yaml, TB_NODE.project_uuid from TB_PROJECT INNER JOIN TB_NODE ON TB_PROJECT.project_uuid = TB_NODE.project_uuid where project_name = "{projectName}" and user_uuid = "{userID}"')
     rows = cursor.fetchall()
@@ -755,7 +754,7 @@ def launchProject(userID, projectName):
         return jsonify(status = 'failed'), 200
 
     projectID = rows[0]['project_uuid']
-    dag = getDag(projectName, True)
+    dag = getDag(userID, projectName, True)
     # return launchTest()
     dag['id'] = projectID
     res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(dag))
@@ -952,7 +951,7 @@ def getPodEnv():
     return data, 200
 
 
-def postDag(userID):
+def postDag(userID, userName):
     data = request.json
 
     if data['projectID'] is None:
@@ -1001,13 +1000,13 @@ def postDag(userID):
             task = node['data']['task']
             yaml = {}
             if task == 'Train':
-                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif task == 'Validate':
-                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Optimization'):
-                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Opt_Validate'):
-                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userID, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
 
             yaml = yaml.__str__()
             d = node['data'].__str__()

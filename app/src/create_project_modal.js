@@ -88,7 +88,7 @@ const validateProjectName = (name) => {
 
 const validateProjectFromServer = (name) => {
   enterLoading(0);
-  axios.get(process.env.REACT_APP_API+'/api/project/' + name)
+  axios.get(process.env.REACT_APP_API+'/api/project/' + name, {withCredentials:true})
   .then(response => {
     if(response['data']['data'] != undefined){
         setValidation(false);
