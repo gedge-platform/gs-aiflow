@@ -287,5 +287,11 @@ def logout():
     if request.method == 'POST':
         return user_impl.logout()
 
+@app.route('/api/login', methods=['GET'])
+def isLoginCheck():
+    if request.method == 'GET':
+        return user_impl.isLogin()
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -5,7 +5,7 @@ import axios from 'axios';
 const LoginPage = (props) => {
     const handleLogin = props.handleLogin;
     const onFinish = (values) => {
-        axios.post(process.env.REACT_APP_API + "/api/login", values)
+        axios.post(process.env.REACT_APP_API + "/api/login", values, {withCredentials:true})
         .then((res) => {
             console.log(res)
             if(res.data.status == 'success'){

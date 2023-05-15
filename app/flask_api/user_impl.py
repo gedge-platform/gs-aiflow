@@ -20,6 +20,8 @@ def login():
     id = data.get('ID')
     pw = data.get('PW')
 
+    print(session.get('user_id'))
+    print(session.get('is_login'))
     res = getUserRow(id, pw)
     if res is not None:
         session['user_id'] = id
@@ -28,6 +30,8 @@ def login():
         session['workspace'] = res['workspace_name']
         session['user_name'] = res['user_name']
 
+        print(session.get('user_id'))
+        print(session.get('is_login'))
         data = {
             'userName' : res['user_name']
         }
@@ -85,3 +89,17 @@ def getUserRow(id : str, pw : str):
 def logout():
     session.clear()
     return jsonify(status='success'), 200
+
+
+def isLogin():
+    isLogin = session.get('is_login')
+    if isLogin is None:
+        return jsonify(status="failed", msg='expire session'), 401
+    if isLogin is False:
+        return jsonify(status="failed", msg='expire session'), 401
+
+    data = {
+        'userName': session.get('user_name'),
+    }
+
+    return jsonify(status="success", data=data), 200

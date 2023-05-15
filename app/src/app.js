@@ -60,14 +60,13 @@ const App = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
-
+  
   const handleLogout = () => {
     axios.post(process.env.REACT_APP_API + "/api/logout").finally(()=>{
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();
-      setUsername('');
-      setLoggedIn(false);
+      setLogin('', false);
     });
   };
 
@@ -82,15 +81,24 @@ const App = () => {
       },
     });
   };
-  
 
+  const setLogin = (name, status) => {
+    setUsername(name);
+    setLoggedIn(status)
+  }
 
-  const handleLogin = (name) => {
+  axios.get(process.env.REACT_APP_API + "/api/login", {withCredentials:true}).then((res)=>{
+    setLogin(res.data.data.userName, true);
+  })
+  .catch((error)=>{setLogin('', false)});
+
+  const handleLogin = (name) => { 
     notificationData.message = "로그인";
     notificationData.description = "안녕하세요. " + name + "님!\n환영합니다.";
     openNotification();
-    setUsername(name);
-    setLoggedIn(true);
+    setLogin(name, true);
+    // setUsername(name);
+    // setLoggedIn(true);
   };
 
   const changeTitle = (data) => {
