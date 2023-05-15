@@ -4,13 +4,13 @@ import time
 import ssl
 import flask_restful
 import flask
-from flask import request, redirect
+from flask import request, redirect, session
 from flask_sockets import Sockets
 from flask_cors import CORS
 
 # from flask_restful import reqparse
 
-from flask_api import monitor_impl
+from flask_api import monitor_impl, user_impl
 
 app = flask.Flask(import_name='client_web',
 				  static_folder=os.path.join('../web_root','static'),
@@ -276,6 +276,16 @@ def postDag():
     if request.method == 'POST':
         userID = '9dda2182-99f2-46b6-b6c7-00e19a4ab08d'
         return monitor_impl.postDag(userID)
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        return user_impl.login()
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    if request.method == 'POST':
+        return user_impl.logout()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

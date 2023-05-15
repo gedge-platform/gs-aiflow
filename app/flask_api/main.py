@@ -1,6 +1,8 @@
 import os
+import random
 import sys
 import argparse
+from datetime import timedelta
 
 import yaml
 from gevent.pywsgi import WSGIServer
@@ -24,8 +26,10 @@ def main():
     try:
         import subprocess as sp
         url = f"http:\/\/127.0.0.1:{args.port}"
-        sp.call(['sed', '-i', '-e', f'2s/.*/REACT_APP_API=\"{url}\"/', '.env'], shell=False)
+        # sp.call(['sed', '-i', '-e', f'2s/.*/REACT_APP_API=\"{url}\"/', '.env'], shell=False)
 
+        app.secret_key = 'softonnet'
+        app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=10)  # 로그인 지속시간을 정합니다. 현재 1분
 
         http_server = WSGIServer(("0.0.0.0", args.port), app)
         http_server.serve_forever()
