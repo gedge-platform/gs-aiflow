@@ -29,6 +29,7 @@ def login():
         session['is_admin'] = res['is_admin']
         session['workspace'] = res['workspace_name']
         session['user_name'] = res['user_name']
+        session['user_uuid'] = res['user_uuid']
 
         print(session.get('user_id'))
         print(session.get('is_login'))

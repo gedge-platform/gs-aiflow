@@ -27,7 +27,7 @@ const CreateProjectModal = (props) => {
   ];
 
   const getClusterList = async ( id ) => {
-      const { data } = await axios.get(process.env.REACT_APP_API+'/api/clusters/' + id);
+      const { data } = await axios.get(process.env.REACT_APP_API+'/api/clusters/' + id, {withCredentials:true});
       var list = data.cluster_list;
       var count = 0;
       console.log(data)

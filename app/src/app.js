@@ -62,7 +62,7 @@ const App = () => {
   } = theme.useToken();
   
   const handleLogout = () => {
-    axios.post(process.env.REACT_APP_API + "/api/logout").finally(()=>{
+    axios.post(process.env.REACT_APP_API + "/api/logout", {}, {withCredentials:true}).finally(()=>{
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();

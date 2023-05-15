@@ -120,7 +120,7 @@ const DagDefineModalPod = (props) => {
 
   function onChangeModel(data) {
     form.model = data;
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data)
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data, {withCredentials:true})
     .then((res) => {
       setFrameworkList(res.data.framework);
     })
@@ -135,7 +135,7 @@ const DagDefineModalPod = (props) => {
 
   function onChangeFrameWorks(data) {
     form.framework = data;
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data)
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data, {withCredentials:true})
     .then((res) => {
       setRuntimeList(res.data.runtime)
     })
@@ -146,7 +146,7 @@ const DagDefineModalPod = (props) => {
 
   function onChangeRuntime(data) {
     form.runtime = data;
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data)
+    axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data, {withCredentials:true})
     .then((res) => {
       setTensorRTList(res.data.tensorrt)
     })

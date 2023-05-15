@@ -91,7 +91,7 @@ function Flow(props) {
   const [needFitView, setNeedFitView]=useState(true);
   const { isLoading, error, data, isFetching, refetch} = useQuery(
     ["dag" + id], () => {
-      return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id)
+      return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id, {withCredentials:true})
         .then((res) => {
           var nodes = res['data']['nodes'];
           var edges = res['data']['edges'];
@@ -131,7 +131,7 @@ function Flow(props) {
 
 
 const getProjectList = async ( id ) => {
-  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
   var list = data.project_list;
   list.forEach(function(item){
       item.value = item.project_name;
@@ -246,7 +246,7 @@ const getProjectList = async ( id ) => {
 
   function launchProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/launch',
-      { projectID: id })
+      { projectID: id }, {withCredentials:true})
       .then(response => {
         if (response.data['status'] == 'success') {
           openNotificationWithIcon("success", {message:"Launch Project", description:"실행에 성공했습니다."})
@@ -263,7 +263,7 @@ const getProjectList = async ( id ) => {
 
   function InitProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/init',
-      { projectID: id })
+      { projectID: id }, {withCredentials:true})
       .then(response => {
         if (response.data['status'] == 'success') {
           openNotificationWithIcon("success", {message:"Init Project", description:"초기화에 성공했습니다."})
@@ -318,7 +318,7 @@ const getProjectList = async ( id ) => {
       return;
     }
 
-    axios.get(process.env.REACT_APP_API + '/api/project/' + id + '/storage')
+    axios.get(process.env.REACT_APP_API + '/api/project/' + id + '/storage', {withCredentials:true})
       .then(response => {
         window.open(response.data.link)
       })

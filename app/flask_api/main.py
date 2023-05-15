@@ -30,7 +30,7 @@ def main():
         # sp.call(['sed', '-i', '-e', f'2s/.*/REACT_APP_API=\"{url}\"/', '.env'], shell=False)
 
         app.secret_key = 'softonnet'
-        app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=20)  # 로그인 지속시간을 정합니다. 현재 1분
+        app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)  # 로그인 지속시간을 정합니다. 현재 30분
         CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
         http_server = WSGIServer(("0.0.0.0", args.port), app)
         http_server.serve_forever()
