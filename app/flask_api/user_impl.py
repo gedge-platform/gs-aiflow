@@ -1,115 +1,57 @@
-from functools import wraps
-from random import random
-
 from flask import request, jsonify, session
+
+import flask_api.auth_impl
 from flask_api.monitoring_manager import get_db_connection
 from flask_api.global_def import config
-import hashlib
 
-def login():
-    if request.is_json is False:
-        return jsonify(status='failed', msg='not json'), 200
+
+def getUsers():
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select login_id, user_name, is_admin from TB_USER;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(users=list), 200
+
+
+def createUser():
     data = request.json
     if data is None:
-        return jsonify(status='failed', msg='wrong data'), 200
-    if type(data.get('ID')) != str:
-        return jsonify(status='failed', msg='id is not str'), 200
-    if type(data.get('PW')) != str:
-        return jsonify(status='failed', msg='pw is not str'), 200
+        return jsonify(status='failed', msg='body is not json'), 200
+    if data.get('login_id') is None or type( data.get('login_id')) != str:
+        return jsonify(status='failed', msg='login_id is wrong'), 200
+    if data.get('user_name') is None or type( data.get('user_name')) != str:
+        return jsonify(status='failed', msg='user_name is wrong'), 200
+    if data.get('login_pass') is None or type( data.get('login_pass')) != str:
+        return jsonify(status='failed', msg='login_pass is wrong'), 200
+    if data.get('is_admin') is None or type( data.get('is_admin')) != int:
+        return jsonify(status='failed', msg='is_admin is wrong'), 200
 
-    id = data.get('ID')
-    pw = data.get('PW')
-
-    res = getUserRow(id, pw)
-    if res is not None:
-        session['user_id'] = id
-        session['is_login'] = True
-        session['is_admin'] = bool(res['is_admin'])
-        session['workspace'] = res['workspace_name']
-        session['user_name'] = res['user_name']
-        session['user_uuid'] = res['user_uuid']
-
-        data = {
-            'userName' : res['user_name'],
-            'isAdmin' : bool(res['is_admin'])
-        }
-        return jsonify(status='success', data=data), 200
-    else:
-        return jsonify(status='failed', msg='id or pw is wrong'), 200
-
-def needLogin():
-    def _login_filter(func):
-        @wraps(func)
-        def _login_filter_(*args, **kargs):
-            if session.get('is_login') is None:
-                return jsonify(msg = 'login is expired'), 401
-            if session.get('is_login') is not True:
-                return jsonify(msg = 'login is expired'), 401
-            return func(*args, **kargs)
-        return _login_filter_
-    return _login_filter
-
-def maintainLogin():
-    def _maintain(func):
-        @wraps(func)
-        def _maintain(*args, **kargs):
-            session['is_login'] = True
-            return func(*args, **kargs)
-        return _maintain
-    return _maintain
-
-def forAdmin():
-    def _login_filter(func):
-        @wraps(func)
-        def _login_filter_(*args, **kargs):
-            if session.get('is_admin') is None:
-                return jsonify(msg = 'login is expired'), 401
-            if session.get('is_admin') is not True:
-                return jsonify(msg = 'user is not admin'), 401
-            return func(*args, **kargs)
-        return _login_filter_
-    return _login_filter
-
-
-def salt(pw : str):
-    return pw + config.salt
-
-def encodeHash(pwAddedSalt : str):
-    return hashlib.sha256(pwAddedSalt.encode()).hexdigest()
-
-def getUserRow(id : str, pw : str):
-    saltedPw = salt(pw)
-    encodePw = encodeHash(saltedPw)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(f'select * from TB_USER where login_id = "{id}" and login_pass = "{encodePw}"')
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select * from TB_USER where login_id = "{data.get("login_id")}";')
     rows = cursor.fetchall()
 
     if rows is None:
-        return None
+        return jsonify(status='failed', msg='server error'), 200
+    elif len(rows) >= 1:
+        return jsonify(status='failed', msg='login_id is already exist'), 200
 
-    if len(rows) == 1:
-        return rows[0]
+    #pass
+    saltedPW = flask_api.auth_impl.salt(data.get('login_pass'));
+    encodedPW = flask_api.auth_impl.encodeHash(saltedPW);
 
-    return None
+    #insert to db
+    import uuid
+    try:
+        cursor.execute(f'insert into TB_USER (user_uuid, login_id, login_pass, user_name, workspace_name, is_admin) '
+                   f'values("{uuid.uuid4().__str__()}", "{data.get("login_id")}", "{encodedPW}", "{data.get("user_name")}", "softonet", {data.get("is_admin")});')
+        mycon.commit()
+    except:
+        return jsonify(status='failed', msg='server error'), 200
 
-
-def logout():
-    session.clear()
-    return jsonify(status='success'), 200
-
-
-def isLogin():
-    isLogin = session.get('is_login')
-    if isLogin is None:
-        return jsonify(status="failed", msg='expire session'), 401
-    if isLogin is False:
-        return jsonify(status="failed", msg='expire session'), 401
-
-    data = {
-        'userName': session.get('user_name'),
-        'isAdmin' : session.get('is_admin')
-    }
-
-    return jsonify(status="success", data=data), 200
+    return jsonify(status="success"), 200

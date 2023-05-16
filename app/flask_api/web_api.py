@@ -10,7 +10,7 @@ from flask_cors import CORS
 
 # from flask_restful import reqparse
 
-from flask_api import monitor_impl, user_impl
+from flask_api import monitor_impl, auth_impl, user_impl
 
 app = flask.Flask(import_name='client_web',
 				  static_folder=os.path.join('../web_root','static'),
@@ -166,7 +166,7 @@ def dummy():
 
 
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getDAG(dagId):
     userID = session.get('user_uuid')
     if userID is None:
@@ -177,14 +177,14 @@ def getDAG(dagId):
 def testget1():
     return monitor_impl.getTest()
 @app.route('/api/getPodStatus', methods=['POST'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodStatus\
                 ():
     if request.method == 'POST':
         result = request.form
         return monitor_impl.getPodStatus(result)
 @app.route('/api/getPodDetail/<string:podID>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodDetail(podID):
     if request.method == 'GET':
         result = request.form
@@ -192,7 +192,7 @@ def getPodDetail(podID):
 
 
 @app.route('/api/project/launch', methods=['POST'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def launchProject():
     if request.method == 'POST':
         jsonData = request.json
@@ -202,7 +202,7 @@ def launchProject():
         return monitor_impl.launchProject(userID, jsonData['projectID'])
 
 @app.route('/api/getProjectList/<string:userID>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getProjectList(userID):
     if request.method == 'GET':
         userID = session.get('user_uuid')
@@ -212,7 +212,7 @@ def getProjectList(userID):
 
 
 @app.route('/api/project/init', methods=['POST'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def initProject():
     if request.method == 'POST':
         jsonData = request.json
@@ -221,7 +221,7 @@ def initProject():
             return flask.jsonify(status='failed', msg = 'auth failed'), 401
         return monitor_impl.initProject(userID, jsonData['projectID'])
 @app.route('/api/clusters/<string:userID>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getClusterList(userID):
     if request.method == 'GET':
         userID = session.get('user_uuid')
@@ -230,7 +230,7 @@ def getClusterList(userID):
         return monitor_impl.getClusterList(userID)
 
 @app.route('/api/project', methods=['POST'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
@@ -241,7 +241,7 @@ def createProject():
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def deleteProject(projectName):
     if request.method == 'DELETE':
         userID = session.get('user_uuid')
@@ -251,7 +251,7 @@ def deleteProject(projectName):
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getProject(projectName):
     if request.method == 'GET':
         userID = session.get('user_uuid')
@@ -260,46 +260,46 @@ def getProject(projectName):
         return monitor_impl.getProject(userID, projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodEnv():
     if request.method == 'GET':
         return monitor_impl.getPodEnv()
 
 
 @app.route('/api/pod/env/model', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodEnvModel():
     if request.method == 'GET':
         return monitor_impl.getPodEnvModel()
 
 @app.route('/api/pod/env/framework/<string:modelName>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodEnvFramework(modelName):
     if request.method == 'GET':
         return monitor_impl.getPodEnvFrameWork(modelName)
 
 @app.route('/api/pod/env/runtime/<string:modelName>/<string:framework>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodEnvRuntime(modelName, framework):
     if request.method == 'GET':
         return monitor_impl.getPodEnvRuntime(modelName, framework)
 
 @app.route('/api/pod/env/tensorrt/<string:runtimeName>', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getPodEnvTensor(runtimeName):
     if request.method == 'GET':
         return monitor_impl.getPodEnvTensor(runtimeName)
 
 
 @app.route('/api/storage', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getStorageSite():
     if request.method == 'GET':
         return redirect ('http://172.16.16.121:32223')
 
 
 @app.route('/api/project/<string:projectName>/storage', methods=['GET'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def getProjectStorage(projectName):
     if request.method == 'GET':
         userID = session.get('user_uuid')
@@ -308,7 +308,7 @@ def getProjectStorage(projectName):
         return flask.jsonify(link='http://172.16.16.121:32223/' + projectName), 200
 
 @app.route('/api/project/dag', methods=['POST'])
-@user_impl.needLogin()
+@auth_impl.needLogin()
 def postDag():
     if request.method == 'POST':
         userID = session.get('user_uuid')
@@ -322,26 +322,35 @@ def postDag():
 @app.route('/api/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        return user_impl.login()
+        return auth_impl.login()
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
     if request.method == 'POST':
-        return user_impl.logout()
+        return auth_impl.logout()
 
 @app.route('/api/login', methods=['GET'])
-@user_impl.needLogin()
-@user_impl.maintainLogin()
+@auth_impl.needLogin()
+@auth_impl.maintainLogin()
 def isLoginCheck():
     if request.method == 'GET':
-        return user_impl.isLogin()
+        return auth_impl.isLogin()
 
 @app.route('/api/users', methods=['GET'])
-@user_impl.needLogin()
-@user_impl.forAdmin()
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
 def getUsers():
     if request.method == 'GET':
-        return monitor_impl.getUsers()
+        return user_impl.getUsers()
+
+@app.route('/api/users', methods=['POST'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def createUser():
+    if request.method == 'POST':
+        if request.is_json is False:
+            return flask.jsonify(status='failed', msg='body is not json')
+        return user_impl.createUser()
 
 
 if __name__ == "__main__":
