@@ -1080,3 +1080,27 @@ def getPodEnvTensor(runtimeName):
 
     return jsonify(tensorrt=list), 200
 
+
+def getAllClusters():
+    res = flask_api.center_client.clustersGet()
+    result = []
+    if res.get('data') is not None:
+        for item in res.get('data'):
+            data = {
+                "clusterEndpoint": "",
+                "clusterType": "",
+                "clusterName": "",
+                "nodeCnt": 0,
+            }
+
+            if item.get('clusterEndpoint') is not None:
+                data['clusterEndpoint'] = item.get('clusterEndpoint')
+            if item.get('clusterType') is not None:
+                data['clusterType'] = item.get('clusterType')
+            if item.get('clusterName') is not None:
+                data['clusterName'] = item.get('clusterName')
+            if item.get('nodeCnt') is not None:
+                data['nodeCnt'] = item.get('nodeCnt')
+
+            result.append(data)
+    return jsonify(data=result), 200

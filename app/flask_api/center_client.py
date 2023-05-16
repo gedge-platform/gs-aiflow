@@ -1,3 +1,4 @@
+# coding: UTF-8
 import requests
 from flask import json
 
@@ -33,10 +34,10 @@ def send_api(path, method, params=None, body=None, ):
             response = requests.get(url, headers=headers, params=params, verify=False)
         elif method == 'POST':
             response = requests.post(url, headers=headers, params=params,
-                                     data=json.dumps(body, ensure_ascii=False, indent="\t"))
+                                     data=json.dumps(body, ensure_ascii=False, indent="\t").encode('utf-8').decode('iso-8859-1'))
         elif method == 'DELETE':
             response = requests.delete(url, headers=headers, params=params,
-                                     data=json.dumps(body, ensure_ascii=False, indent="\t"))
+                                     data=json.dumps(body, ensure_ascii=False, indent="\t").encode('utf-8').decode('iso-8859-1'))
 
         if response.status_code == 401:
             jwtBody = {"Id": config.api_id, "Password": config.api_pass}
@@ -51,10 +52,10 @@ def send_api(path, method, params=None, body=None, ):
                 response = requests.get(url, headers=headers, params=params, verify=False)
             elif method == 'POST':
                 response = requests.post(url, headers=headers, params=params,
-                                         data=json.dumps(body, ensure_ascii=False, indent="\t"))
+                                         data=json.dumps(body, ensure_ascii=False, indent="\t").encode('utf-8').decode('iso-8859-1'))
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers, params=params,
-                                           data=json.dumps(body, ensure_ascii=False, indent="\t"))
+                                           data=json.dumps(body, ensure_ascii=False, indent="\t").encode('utf-8').decode('iso-8859-1'))
         return response, response.status_code
 
     except Exception as ex:
@@ -156,6 +157,32 @@ def workspacesNameGet(workspace: str):
         return response.json()
     except:
         return {'selectCluster' : []}
+
+def clustersGet():
+    response, code = send_api('/clusters', 'GET', params={}, body={})
+    if code != 201 and code != 200:
+        return {'data' : []}
+
+    try:
+        return response.json()
+    except:
+        return {'data' : []}
+def workspacesPost(workspace: str = "", workspaceDes: str = "" , clusterName: list = []):
+    body = {
+        "workspaceDescription" : workspaceDes,
+        "workspaceName": workspace,
+        "memberName" : config.api_id,
+        "clusterName" : clusterName,
+    }
+    response, code = send_api('/workspaces', 'POST', params={}, body=body)
+
+    if code != 201 and code != 200:
+        return {'status' : "failed"}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : "failed"}
 
 def projectsDelete(projectName : str):
     response, code = send_api('/projects/' + projectName, 'DELETE', params={}, body={})

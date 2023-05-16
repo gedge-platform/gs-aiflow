@@ -220,9 +220,9 @@ def initProject():
         if userID is None:
             return flask.jsonify(status='failed', msg = 'auth failed'), 401
         return monitor_impl.initProject(userID, jsonData['projectID'])
-@app.route('/api/clusters/<string:userID>', methods=['GET'])
+@app.route('/api/clusters', methods=['GET'])
 @auth_impl.needLogin()
-def getClusterList(userID):
+def getClusterList():
     if request.method == 'GET':
         userID = session.get('user_uuid')
         if userID is None:
@@ -352,6 +352,12 @@ def createUser():
             return flask.jsonify(status='failed', msg='body is not json')
         return user_impl.createUser()
 
+@app.route('/api/clusters/all', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getAllClusters():
+    if request.method == 'GET':
+        return monitor_impl.getAllClusters()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
