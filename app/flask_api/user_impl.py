@@ -24,13 +24,14 @@ def login():
     if res is not None:
         session['user_id'] = id
         session['is_login'] = True
-        session['is_admin'] = res['is_admin']
+        session['is_admin'] = bool(res['is_admin'])
         session['workspace'] = res['workspace_name']
         session['user_name'] = res['user_name']
         session['user_uuid'] = res['user_uuid']
 
         data = {
-            'userName' : res['user_name']
+            'userName' : res['user_name'],
+            'isAdmin' : bool(res['is_admin'])
         }
         return jsonify(status='success', data=data), 200
     else:
@@ -57,6 +58,17 @@ def maintainLogin():
         return _maintain
     return _maintain
 
+def forAdmin():
+    def _login_filter(func):
+        @wraps(func)
+        def _login_filter_(*args, **kargs):
+            if session.get('is_admin') is None:
+                return jsonify(msg = 'login is expired'), 401
+            if session.get('is_admin') is not True:
+                return jsonify(msg = 'user is not admin'), 401
+            return func(*args, **kargs)
+        return _login_filter_
+    return _login_filter
 
 
 def salt(pw : str):
@@ -97,6 +109,7 @@ def isLogin():
 
     data = {
         'userName': session.get('user_name'),
+        'isAdmin' : session.get('is_admin')
     }
 
     return jsonify(status="success", data=data), 200

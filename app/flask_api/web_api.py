@@ -336,6 +336,13 @@ def isLoginCheck():
     if request.method == 'GET':
         return user_impl.isLogin()
 
+@app.route('/api/users', methods=['GET'])
+@user_impl.needLogin()
+@user_impl.forAdmin()
+def getUsers():
+    if request.method == 'GET':
+        return monitor_impl.getUsers()
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

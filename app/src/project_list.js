@@ -15,7 +15,6 @@ const getProjectList = async ( id ) => {
         item.key = count;
         count++;
     })
-    console.log(list)
     return list;
     
   };

@@ -7,9 +7,8 @@ const LoginPage = (props) => {
     const onFinish = (values) => {
         axios.post(process.env.REACT_APP_API + "/api/login", values, {withCredentials:true})
         .then((res) => {
-            console.log(res)
             if(res.data.status == 'success'){
-                handleLogin(res.data.data.userName);
+                handleLogin(res.data.data.userName, res.data.data.isAdmin);
             }
             else{
                 setSubmitText(res.data.msg);
@@ -71,7 +70,7 @@ const LoginPage = (props) => {
                             <Button id='login-form_Submit' style={{width:'100%'}} type="primary" htmlType="submit">
                                     Login
                             </Button>
-                            <div id='login-form_Submit_text' style={{width:'100%', fontWeight:'bold', color:'red'}} type="primary" htmlType="submit">
+                            <div id='login-form_Submit_text' style={{width:'100%', fontWeight:'bold', color:'red'}} type="primary" htmltype="submit">
                                 {submitText}
                             </div>
                         </Form></div>

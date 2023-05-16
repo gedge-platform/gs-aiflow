@@ -1079,3 +1079,16 @@ def getPodEnvTensor(runtimeName):
             list.append(row)
 
     return jsonify(tensorrt=list), 200
+
+
+def getUsers():
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select login_id, user_name, is_admin from TB_USER;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(users=list), 200

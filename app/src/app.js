@@ -1,5 +1,5 @@
 import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification, Divider } from 'antd';
 import { Component, useEffect, useState } from 'react';
 import { Link, Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 
@@ -21,6 +21,8 @@ import { DagMonitoring } from './dag_monitoring';
 import UserInfo from './user_info';
 import LoginPage from './login_page';
 import axios from 'axios';
+import { UserList } from './user_list';
+import { UserManagement } from './user_management';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -32,73 +34,71 @@ function getItem(label, key, icon, children) {
     label,
   };
 }
-const items = [
-  getItem('AI-Project', '1', <PieChartOutlined />, [
-    getItem(<Link to='project_list'>Project</Link>, 'project_list', <BarsOutlined />),
-    getItem(<Link to='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
-    getItem(<Link to='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
-  ]),
-  getItem(<a href={process.env.REACT_APP_API + '/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
-  // getItem('Option 2', '2', <DesktopOutlined />),
-  // getItem('User', 'sub1', <UserOutlined />, [
-  //   getItem('Tom', '3'),
-  //   getItem('Bill', '4'),
-  //   getItem('Alex', '5'),
-  // ]),
-  // getItem('Team', 'sub2', <TeamOutlined />, [getItem('Team 1', '6'), getItem('Team 2', '8')]),
-  // getItem('Files', '9', <FileOutlined />),
-];
-
 
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState('project_list')
   const [mainProjectID, setMainProjectID] = useState(null);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [username, setUsername] = useState('user1');
+  const [username, setUsername] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [avatarSrc, setAvatarSrc] = useState('');
   const {
     token: { colorBgContainer },
   } = theme.useToken();
-  
+
+
+  const items = [
+    getItem('AI-Project', '1', <PieChartOutlined />, [
+      getItem(<Link to='project_list'>Project</Link>, 'project_list', <BarsOutlined />),
+      getItem(<Link to='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
+      getItem(<Link to='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
+    ]),
+    getItem(<a href={process.env.REACT_APP_API + '/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
+  ];
+  if (isAdmin == true) {
+    items.push(getItem(<Link to='users/'>Users Management</Link>, 'user_management', <TeamOutlined />));
+  }
+
+
   const handleLogout = () => {
-    axios.post(process.env.REACT_APP_API + "/api/logout", {}, {withCredentials:true}).finally(()=>{
+    axios.post(process.env.REACT_APP_API + "/api/logout", {}, { withCredentials: true }).finally(() => {
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();
-      setLogin('', false);
+      setLogin('', false, false);
+      setIsAdmin(false);
     });
   };
 
-  var notificationData = {message:"", description:""}
+  var notificationData = { message: "", description: "" }
 
   const openNotification = () => {
     notification.open({
       message: notificationData.message,
       description:
-      notificationData.description,
+        notificationData.description,
       onClick: () => {
       },
     });
   };
 
-  const setLogin = (name, status) => {
+  const setLogin = (name, status, isAdmin) => {
     setUsername(name);
     setLoggedIn(status)
+    setIsAdmin(isAdmin);
   }
 
-  axios.get(process.env.REACT_APP_API + "/api/login", {withCredentials:true}).then((res)=>{
-    setLogin(res.data.data.userName, true);
+  axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
+    setLogin(res.data.data.userName, true, res.data.data.isAdmin);
   })
-  .catch((error)=>{setLogin('', false)});
+    .catch((error) => { setLogin('', false, false) });
 
-  const handleLogin = (name) => { 
+  const handleLogin = (name, isAdmin) => {
     notificationData.message = "로그인";
     notificationData.description = "안녕하세요. " + name + "님!\n환영합니다.";
     openNotification();
-    setLogin(name, true);
-    // setUsername(name);
-    // setLoggedIn(true);
+    setLogin(name, true, isAdmin);
   };
 
   const changeTitle = (data) => {
@@ -108,6 +108,8 @@ const App = () => {
       return '모니터링'
     else if (data == 'editing')
       return 'DAG 정의'
+    else if (data == 'user_management')
+      return '유저 관리'
     return "Not Found"
   }
 
@@ -120,10 +122,10 @@ const App = () => {
       <Routes>
         <Route
           path="/login"
-          element={(loggedIn ? <Navigate to='/'/> : <LoginPage handleLogin={handleLogin}/>)}
+          element={(loggedIn ? <Navigate to='/' /> : <LoginPage handleLogin={handleLogin} />)}
         />
         <Route
-          path="/*"
+          path="*"
           element={(loggedIn ? <><Header className="header" style={{ paddingInline: '16px' }}>
             <div style={{ display: 'flex', height: '100%' }}>
 
@@ -173,7 +175,8 @@ const App = () => {
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
-                              <Route path='/*' element={<NotFound />}></Route>
+                              <Route path='/users/' element={isAdmin ? <UserManagement /> : <Navigate to={'/not_found'} />}></Route>
+                              <Route path='*' element={<NotFound />}></Route>
                             </Routes>
                           </Content>
 
