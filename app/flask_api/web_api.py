@@ -352,6 +352,21 @@ def createUser():
             return flask.jsonify(status='failed', msg='body is not json')
         return user_impl.createUser()
 
+@app.route('/api/users/<string:loginID>', methods=['DELETE'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def deleteUser(loginID):
+    if request.method == 'DELETE':
+        return user_impl.deleteUser(loginID)
+
+
+@app.route('/api/users/<string:loginID>', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getUser(loginID):
+    if request.method == 'GET':
+        return user_impl.getUser(loginID)
+
 @app.route('/api/clusters/all', methods=['GET'])
 @auth_impl.needLogin()
 @auth_impl.forAdmin()

@@ -10,6 +10,7 @@ const queryClient = new QueryClient();
 
 function UserManagement(props) {
     const setPage = props.setPage
+    const userID = props.userID
     const [selectedProject, setSelectedProject] = useState("");
 
     return (
@@ -19,7 +20,7 @@ function UserManagement(props) {
     <QueryClientProvider client={queryClient}>
         <div className="content_box" style={{minHeight:'600px'}} >
         <Routes>
-            <Route path="" element={<UserList/>}></Route>
+            <Route path="" element={<UserList userID={userID}/>}></Route>
         </Routes>
         </div>
 

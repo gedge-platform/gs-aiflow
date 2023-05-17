@@ -71,3 +71,66 @@ def createUser():
         return jsonify(status='failed', msg='server error'), 200
 
     return jsonify(status="success"), 200
+
+
+def getUser(loginID):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select user_uuid, user_name from TB_USER where login_id = "{loginID}";')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) >= 1:
+            return jsonify(status="success", user=rows[0]), 200
+
+    return jsonify(status="failed", msg="no user " + loginID), 200
+
+
+def deleteUser(loginID):
+    def deleteUserData(uuid):
+        res = flask_api.center_client.workspacesDelete(uuid)
+
+        mycon = get_db_connection()
+        cursor = mycon.cursor(dictionary=True)
+        cursor.execute(
+            f'delete from TB_USER where login_id = "{loginID}";')
+        mycon.commit()
+        return jsonify(status='success'), 200
+
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select TB_USER.user_uuid, user_name, project_uuid from TB_USER LEFT JOIN TB_PROJECT ON TB_USER.user_uuid = TB_PROJECT.user_uuid where login_id = "{loginID}";')
+    rows = cursor.fetchall()
+
+    if rows is not None:
+        if len(rows) >= 1:
+            userUUID = rows[0]['user_uuid']
+
+            #get project list from server
+            workspaceInfo = flask_api.center_client.workspacesNameGet(userUUID)
+            serverProjectNameList = {}
+            if workspaceInfo.get('projectList') != None:
+                serverProjectList = workspaceInfo.get('projectList')
+                for serverProject in serverProjectList:
+                    if serverProject.get('projectName') is not None:
+                        serverProjectNameList[serverProject['projectName']] = serverProject['projectName']
+                if len(serverProjectList) == 0:
+                    return deleteUserData(userUUID)
+                else:
+                    for row in rows:
+                        if row.get('project_uuid') is not None:
+                            projectUUID = row.get('project_uuid')
+
+                            if projectUUID is not None:
+                                res = flask_api.center_client.projectsDelete(projectUUID)
+
+                                if serverProjectNameList.get(projectUUID) is not None:
+                                    del serverProjectNameList[projectUUID]
+
+                    #delete rest server project
+                    for projectUUID in serverProjectNameList.keys():
+                        res = flask_api.center_client.projectsDelete(projectUUID)
+
+                    return deleteUserData(userUUID)
+            else:
+                return deleteUserData(userUUID)
+    return jsonify(status="failed", msg="no user " + loginID), 200

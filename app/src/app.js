@@ -41,6 +41,7 @@ const App = () => {
   const [mainProjectID, setMainProjectID] = useState(null);
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
+  const [userID, setUserID] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [avatarSrc, setAvatarSrc] = useState('');
   const {
@@ -83,22 +84,23 @@ const App = () => {
     });
   };
 
-  const setLogin = (name, status, isAdmin) => {
+  const setLogin = (id, name, status, isAdmin) => {
     setUsername(name);
+    setUserID(id);
     setLoggedIn(status)
     setIsAdmin(isAdmin);
   }
 
   axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
-    setLogin(res.data.data.userName, true, res.data.data.isAdmin);
+    setLogin(res.data.data.userID, res.data.data.userName, true, res.data.data.isAdmin);
   })
-    .catch((error) => { setLogin('', false, false) });
+    .catch((error) => { setLogin('', '', false, false) });
 
-  const handleLogin = (name, isAdmin) => {
+  const handleLogin = (id, name, isAdmin) => {
     notificationData.message = "로그인";
     notificationData.description = "안녕하세요. " + name + "님!\n환영합니다.";
     openNotification();
-    setLogin(name, true, isAdmin);
+    setLogin(id, name, true, isAdmin);
   };
 
   const changeTitle = (data) => {
@@ -175,7 +177,7 @@ const App = () => {
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
-                              <Route path='/users/' element={isAdmin ? <UserManagement /> : <Navigate to={'/not_found'} />}></Route>
+                              <Route path='/users/' element={isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
                               <Route path='*' element={<NotFound />}></Route>
                             </Routes>
                           </Content>

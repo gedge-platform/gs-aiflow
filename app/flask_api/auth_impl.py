@@ -30,6 +30,7 @@ def login():
         session['user_uuid'] = res['user_uuid']
 
         data = {
+            'userID' : id,
             'userName' : res['user_name'],
             'isAdmin' : bool(res['is_admin'])
         }
@@ -108,6 +109,7 @@ def isLogin():
         return jsonify(status="failed", msg='expire session'), 401
 
     data = {
+        'userID' : session.get('user_id'),
         'userName': session.get('user_name'),
         'isAdmin' : session.get('is_admin')
     }

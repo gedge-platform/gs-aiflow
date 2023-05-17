@@ -151,12 +151,12 @@ def workspacesNameGet(workspace: str):
     response, code = send_api('/workspaces/' + workspace, 'GET', params={}, body={})
 
     if code != 201 and code != 200:
-        return {'selectCluster' : []}
+        return {'selectCluster' : [], 'projectList' : []}
 
     try:
         return response.json()
     except:
-        return {'selectCluster' : []}
+        return {'selectCluster' : [], 'projectList' : []}
 
 def clustersGet():
     response, code = send_api('/clusters', 'GET', params={}, body={})
@@ -175,6 +175,17 @@ def workspacesPost(workspace: str = "", workspaceDes: str = "" , clusterName: li
         "clusterName" : clusterName,
     }
     response, code = send_api('/workspaces', 'POST', params={}, body=body)
+
+    if code != 201 and code != 200:
+        return {'status' : "failed"}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : "failed"}
+
+def workspacesDelete(workspace: str = ""):
+    response, code = send_api('/workspaces/' + workspace, 'DELETE', params={}, body={})
 
     if code != 201 and code != 200:
         return {'status' : "failed"}

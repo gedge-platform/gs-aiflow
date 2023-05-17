@@ -1103,4 +1103,4 @@ def getAllClusters():
                 data['nodeCnt'] = item.get('nodeCnt')
 
             result.append(data)
-    return jsonify(data=result), 200
+    return jsonify(cluster_list=result), 200

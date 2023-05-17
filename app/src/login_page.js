@@ -8,7 +8,7 @@ const LoginPage = (props) => {
         axios.post(process.env.REACT_APP_API + "/api/login", values, {withCredentials:true})
         .then((res) => {
             if(res.data.status == 'success'){
-                handleLogin(res.data.data.userName, res.data.data.isAdmin);
+                handleLogin(res.data.data.userID, res.data.data.userName, res.data.data.isAdmin);
             }
             else{
                 setSubmitText(res.data.msg);
