@@ -23,3 +23,10 @@ log_level: INFO
 
 #node_type
 node_type : ['pod', 'cron_job', 'deployment', 'service', 'daemon_set', 'stateful_set']
+
+#for pv
+nfs_server : "127.0.0.1"
+nfs_path: "/path"
+
+#salt string
+salt : 'salt'

@@ -72,13 +72,25 @@ const DagDefineDetailPod = (props) => {
     return "";
   }
 
-  function getCuda(){
-    if(data.data){
-      if(data.data.cuda){
-        return data.data.cuda;
+  function getModel(){
+    if(data){
+      if(data.data){
+        if(data.data.model){
+          return data.data.model;
+        }
       }
     }
-    
+    return "";
+  }
+
+  function getFramework(){
+    if(data){
+      if(data.data){
+        if(data.data.framework){
+          return data.data.framework;
+        }
+      }
+    }
     return "";
   }
 
@@ -102,16 +114,16 @@ const DagDefineDetailPod = (props) => {
         <Col className='dag_define_detail_col data' span={18}><h4>{getPreconditions().join(', ')}</h4></Col>
       </Row>
       <Row className='dag_define_detail_row'>
+        <Col className='dag_define_detail_col head' span={6}><h4>Model</h4></Col>
+        <Col className='dag_define_detail_col data' span={6}><h4>{getModel()}</h4></Col>
+        <Col className='dag_define_detail_col head' span={6}><h4>Framework</h4></Col>
+        <Col className='dag_define_detail_col data' span={6}><h4>{getFramework()}</h4></Col>
+      </Row>
+      <Row className='dag_define_detail_row'>
         <Col className='dag_define_detail_col head' span={6}><h4>Runtime</h4></Col>
         <Col className='dag_define_detail_col data' span={6}><h4>{getRuntime()}</h4></Col>
         <Col className='dag_define_detail_col head' span={6}><h4>TensorRT Ver.</h4></Col>
         <Col className='dag_define_detail_col data' span={6}><h4>{getTensorRT()}</h4></Col>
-      </Row>
-      <Row className='dag_define_detail_row'>
-        <Col className='dag_define_detail_col head' span={6}><h4>Cuda Ver.</h4></Col>
-        <Col className='dag_define_detail_col data' span={6}><h4>{getCuda()}</h4></Col>
-        <Col className='dag_define_detail_col head' span={6}><h4></h4></Col>
-        <Col className='dag_define_detail_col data' span={6}><h4></h4></Col>
       </Row>
    
     </div>

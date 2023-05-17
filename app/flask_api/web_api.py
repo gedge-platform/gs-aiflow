@@ -4,13 +4,13 @@ import time
 import ssl
 import flask_restful
 import flask
-from flask import request, redirect
+from flask import request, redirect, session
 from flask_sockets import Sockets
 from flask_cors import CORS
 
 # from flask_restful import reqparse
 
-from flask_api import monitor_impl
+from flask_api import monitor_impl, auth_impl, user_impl
 
 app = flask.Flask(import_name='client_web',
 				  static_folder=os.path.join('../web_root','static'),
@@ -166,19 +166,25 @@ def dummy():
 
 
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
+@auth_impl.needLogin()
 def getDAG(dagId):
-    return monitor_impl.getDag(dagId)
+    userID = session.get('user_uuid')
+    if userID is None:
+        return flask.jsonify(status='failed', msg = 'auth failed'), 401
+    return monitor_impl.getDag(userID, dagId)
 
 @app.route('/api/testget', methods=['GET'])
 def testget1():
     return monitor_impl.getTest()
 @app.route('/api/getPodStatus', methods=['POST'])
+@auth_impl.needLogin()
 def getPodStatus\
                 ():
     if request.method == 'POST':
         result = request.form
         return monitor_impl.getPodStatus(result)
 @app.route('/api/getPodDetail/<string:podID>', methods=['GET'])
+@auth_impl.needLogin()
 def getPodDetail(podID):
     if request.method == 'GET':
         result = request.form
@@ -186,59 +192,187 @@ def getPodDetail(podID):
 
 
 @app.route('/api/project/launch', methods=['POST'])
+@auth_impl.needLogin()
 def launchProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.launchProject(jsonData['projectID'])
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.launchProject(userID, jsonData['projectID'])
 
 @app.route('/api/getProjectList/<string:userID>', methods=['GET'])
+@auth_impl.needLogin()
 def getProjectList(userID):
     if request.method == 'GET':
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
         return monitor_impl.getProjectList(userID)
 
 
 @app.route('/api/project/init', methods=['POST'])
+@auth_impl.needLogin()
 def initProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.initProject(jsonData['projectID'])
-@app.route('/api/clusters/<string:userID>', methods=['GET'])
-def getClusterList(userID):
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.initProject(userID, jsonData['projectID'])
+@app.route('/api/clusters', methods=['GET'])
+@auth_impl.needLogin()
+def getClusterList():
     if request.method == 'GET':
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
         return monitor_impl.getClusterList(userID)
 
 @app.route('/api/project', methods=['POST'])
+@auth_impl.needLogin()
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
-        return monitor_impl.createProject("user1", jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.createProject(userID, jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
+@auth_impl.needLogin()
 def deleteProject(projectName):
     if request.method == 'DELETE':
-        return monitor_impl.deleteProject("user1", projectName)
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.deleteProject(userID, projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
+@auth_impl.needLogin()
 def getProject(projectName):
     if request.method == 'GET':
-        return monitor_impl.getProject("user1", projectName)
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.getProject(userID, projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
+@auth_impl.needLogin()
 def getPodEnv():
     if request.method == 'GET':
         return monitor_impl.getPodEnv()
 
+
+@app.route('/api/pod/env/model', methods=['GET'])
+@auth_impl.needLogin()
+def getPodEnvModel():
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvModel()
+
+@app.route('/api/pod/env/framework/<string:modelName>', methods=['GET'])
+@auth_impl.needLogin()
+def getPodEnvFramework(modelName):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvFrameWork(modelName)
+
+@app.route('/api/pod/env/runtime/<string:modelName>/<string:framework>', methods=['GET'])
+@auth_impl.needLogin()
+def getPodEnvRuntime(modelName, framework):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvRuntime(modelName, framework)
+
+@app.route('/api/pod/env/tensorrt/<string:runtimeName>', methods=['GET'])
+@auth_impl.needLogin()
+def getPodEnvTensor(runtimeName):
+    if request.method == 'GET':
+        return monitor_impl.getPodEnvTensor(runtimeName)
+
+
 @app.route('/api/storage', methods=['GET'])
+@auth_impl.needLogin()
 def getStorageSite():
     if request.method == 'GET':
-        return redirect ('http://127.0.0.1:8888/?token=9acfb1f896d95c4b5522063cd5c0157af3bba8f417a54130')
+        return redirect ('http://172.16.16.121:32223')
+
+
+@app.route('/api/project/<string:projectName>/storage', methods=['GET'])
+@auth_impl.needLogin()
+def getProjectStorage(projectName):
+    if request.method == 'GET':
+        userID = session.get('user_uuid')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return flask.jsonify(link='http://172.16.16.121:32223/' + projectName), 200
 
 @app.route('/api/project/dag', methods=['POST'])
+@auth_impl.needLogin()
 def postDag():
     if request.method == 'POST':
-        return monitor_impl.postDag()
+        userID = session.get('user_uuid')
+        userName = session.get('user_id')
+        if userID is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        if userName is None:
+            return flask.jsonify(status='failed', msg = 'auth failed'), 401
+        return monitor_impl.postDag(userID, userName)
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        return auth_impl.login()
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    if request.method == 'POST':
+        return auth_impl.logout()
+
+@app.route('/api/login', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.maintainLogin()
+def isLoginCheck():
+    if request.method == 'GET':
+        return auth_impl.isLogin()
+
+@app.route('/api/users', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getUsers():
+    if request.method == 'GET':
+        return user_impl.getUsers()
+
+@app.route('/api/users', methods=['POST'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def createUser():
+    if request.method == 'POST':
+        if request.is_json is False:
+            return flask.jsonify(status='failed', msg='body is not json')
+        return user_impl.createUser()
+
+@app.route('/api/users/<string:loginID>', methods=['DELETE'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def deleteUser(loginID):
+    if request.method == 'DELETE':
+        return user_impl.deleteUser(loginID)
+
+
+@app.route('/api/users/<string:loginID>', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getUser(loginID):
+    if request.method == 'GET':
+        return user_impl.getUser(loginID)
+
+@app.route('/api/clusters/all', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getAllClusters():
+    if request.method == 'GET':
+        return monitor_impl.getAllClusters()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

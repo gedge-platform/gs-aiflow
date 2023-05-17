@@ -53,7 +53,7 @@ function DagDefine(props) {
     const [needFitView, setNeedFitView]=useState(true);
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID], () => {
-            return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID)
+            return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID, {withCredentials:true})
                 .then((res) => {
                     var nodes = res['data']['nodes'];
                     var edges = res['data']['edges'];
@@ -69,7 +69,7 @@ function DagDefine(props) {
     const navigate = useNavigate();
 
     const getProjectList = async ( id ) => {
-        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
         var list = data.project_list;
         list.forEach(function(item){
             item.value = item.project_name;
@@ -289,15 +289,15 @@ function DagDefine(props) {
     }
 
     function makeNodePod() {
-        console.log(form)
         const name = form.name;
         const type = form.type;
         const status = form.status;
         const precondition = form.precondition;
         const task = form.task;
+        const model = form.model;
+        const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
-        const cuda = form.cuda;
 
         if (!name) {
             return;
@@ -308,13 +308,16 @@ function DagDefine(props) {
         if (!task) {
             return;
         }
+        if (!model) {
+            return;
+        }
+        if (!framework) {
+            return;
+        }
         if (!runtime) {
             return;
         }
         if (!tensorRT) {
-            return;
-        }
-        if (!cuda) {
             return;
         }
         if (status != "success") {
@@ -324,9 +327,10 @@ function DagDefine(props) {
         taskCreating.id = name;
         taskCreating.data.label = name;
         taskCreating.data.task = task;
+        taskCreating.data.model = model;
+        taskCreating.data.framework = framework;
         taskCreating.data.runtime = runtime;
         taskCreating.data.tensorRT = tensorRT;
-        taskCreating.data.cuda = cuda;
         taskCreating.data.type = type;
 
         const newEdges = [];
@@ -344,7 +348,7 @@ function DagDefine(props) {
 
     function saveGraph() {
         axios.post(process.env.REACT_APP_API + '/api/project/dag',
-            { projectID: projectID, nodes: nodes, edges: edges })
+            { projectID: projectID, nodes: nodes, edges: edges }, {withCredentials:true})
             .then(response => {
                 console.log(response)
                 // if (response.data['status'] == 'success') {

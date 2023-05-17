@@ -664,17 +664,24 @@ def getPodStatus(result):
     v1 = client.CoreV1Api(aApiClient)
     response=v1.read_namespaced_pod_status(name=pod, namespace=namespace)
     return str(response.status.phase)
-def getDag(projectID, needYaml = False):
+def getDag(userID, projectName, needYaml = False):
     conn = flask_api.database.get_db_connection();
     cursor = conn.cursor()
-    c = cursor.execute(f'select node_id, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
+    # c = cursor.execute(f'select node_name, node_type, precondition_list, data, yaml from TB_NODE where project_id = "{projectID}"')
+    c = cursor.execute(f'select node_name, node_type, precondition_list, data, yaml, TB_NODE.project_uuid from TB_PROJECT INNER JOIN TB_NODE ON TB_PROJECT.project_uuid = TB_NODE.project_uuid where project_name = "{projectName}" and user_uuid = "{userID}"')
     rows = cursor.fetchall()
 
     d = dict()
-    d['id'] = projectID
+    d['id'] = projectName
     d['edges'] = []
     d['nodes'] = []
     s: tuple
+
+    projectID = ""
+    if len(rows) == 0:
+        return d
+    else:
+        projectID = rows[0][5]
 
     data = flask_api.center_client.getPods('softonet', 'mec(ilsan)', projectID)
 
@@ -722,7 +729,7 @@ def getProjectList(userID):
     mycon = get_db_connection()
 
     cursor=mycon.cursor(dictionary=True)
-    cursor.execute(f'select project_name from TB_PROJECT where user_id="{userID}"')
+    cursor.execute(f'select project_name from TB_PROJECT where user_uuid="{userID}"')
     rows= cursor.fetchall()
 
     if rows is not None:
@@ -736,26 +743,44 @@ def getProjectList(userID):
         common.logger.get_logger().debug('[monitor_impl.getProjectList] failed to get from db')
         return jsonify(msg='Internal Server Error'), 500
 
-def launchProject(projectID):
-    #TODO: DB처리및 유효성체크
-    dag = getDag(projectID, True)
+def launchProject(userID, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status = 'failed'), 200
+    if len(rows) == 0:
+        return jsonify(status = 'failed'), 200
+
+    projectID = rows[0]['project_uuid']
+    dag = getDag(userID, projectName, True)
     # return launchTest()
+    dag['id'] = projectID
     res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(dag))
     if res is True:
         return jsonify(status="success"), 200
     else:
         return jsonify(status="failed"), 200
 # return None
-def initProject(projectID):
+def initProject(userID, projectName):
     mycon = get_db_connection()
-
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select node_id from TB_NODE where project_id="{projectID}"')
+    cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status = 'failed'), 200
+    if len(rows) == 0:
+        return jsonify(status = 'failed'), 200
+
+    projectID = rows[0]['project_uuid']
+
+    cursor.execute(f'select node_name from TB_NODE where project_uuid="{projectID}"')
     rows = cursor.fetchall()
 
     monitoringManager.deleteWorkFlow(projectID)
     for item in rows:
-        flask_api.center_client.podsNameDelete(item['node_id'], 'softonet', 'mec(ilsan)', projectID)
+        flask_api.center_client.podsNameDelete(item['node_name'], 'softonet', 'mec(ilsan)', projectID)
     return jsonify(status = 'success'), 200
 
 
@@ -763,7 +788,7 @@ def getClusterList(userID):
     mycon = get_db_connection()
 
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+    cursor.execute(f'select workspace_name from TB_USER where user_uuid="{userID}"')
     rows = cursor.fetchall()
 
     if rows is not None:
@@ -795,9 +820,12 @@ def getClusterList(userID):
 
 def createProject(userID, projectName, projectDesc, clusterName):
     mycon = get_db_connection()
-
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select workspace_name from TB_USER where user_id="{userID}"')
+
+    import uuid
+    projectID = uuid.uuid4().__str__()
+
+    cursor.execute(f'select workspace_name from TB_USER where user_uuid="{userID}"')
     rows = cursor.fetchall()
 
     if rows is not None:
@@ -807,23 +835,23 @@ def createProject(userID, projectName, projectDesc, clusterName):
             break
 
         if workspaceName is not None:
-            status = flask_api.center_client.projectsPost(workspaceName, "softonet", projectName, projectDesc,
+            status = flask_api.center_client.projectsPost(workspaceName, "softonet", projectID, projectDesc,
                                              clusterName=clusterName)
 
             if status['status'] != 'failed':
                 # pv 부터 pvc는 프로젝트 생성후
-                status = flask_api.center_client.pvCreate(userID, workspaceName, clusterName, projectName)
+                status = flask_api.center_client.pvCreate(userID, workspaceName, clusterName, projectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
-                    flask_api.center_client.projectsDelete(projectName)
+                    flask_api.center_client.projectsDelete(projectID)
                     return jsonify(status='failed', msg='pv make failed'), 200
 
-                status = flask_api.center_client.pvcCreate(userID, workspaceName, clusterName, projectName)
+                status = flask_api.center_client.pvcCreate(userID, workspaceName, clusterName, projectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
-                    flask_api.center_client.projectsDelete(projectName)
+                    flask_api.center_client.projectsDelete(projectID)
                     #TODO: PV 제거
                     return jsonify(status='failed', msg='pvc make failed'), 200
 
-                cursor.execute(f'insert into TB_PROJECT (project_id, project_name, user_id, pv_name) value ("{projectName}", "{projectName}", "{userID}", "testPV");')
+                cursor.execute(f'insert into TB_PROJECT (project_uuid, project_name, user_uuid, pv_name) value ("{projectID}", "{projectName}", "{userID}", "testPV");')
                 mycon.commit()
                 return jsonify(status='success'), 200
             else:
@@ -832,13 +860,22 @@ def createProject(userID, projectName, projectDesc, clusterName):
 
 
 def deleteProject(userID, projectName):
-    status = flask_api.center_client.projectsDelete(projectName)
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status = 'failed'), 200
+    if len(rows) == 0:
+        return jsonify(status = 'failed'), 200
+
+    projectID = rows[0]['project_uuid']
+
+    status = flask_api.center_client.projectsDelete(projectID)
 
     if status['status'] != 'failed':
         cursor.execute(
-            f'delete from TB_PROJECT where project_id = "{projectName}";')
+            f'delete from TB_PROJECT where project_uuid = "{projectID}";')
         mycon.commit()
         return jsonify(status='success'), 200
     return jsonify(status='failed'), 200
@@ -847,17 +884,16 @@ def deleteProject(userID, projectName):
 def getProject(userID, projectName):
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select project_id from TB_PROJECT where project_name="{projectName}" and user_id="{userID}"')
+    cursor.execute(f'select project_uuid from TB_PROJECT where project_name="{projectName}" and user_uuid="{userID}"')
     rows = cursor.fetchall()
     if rows is not None:
         if len(rows) != 0:
-            pid = rows[0]['project_id']
+            pid = rows[0]['project_uuid']
             response = flask_api.center_client.userProjectsNameGet(pid)
             if response['data'] is not None:
                 returnResponse = {}
-                returnResponse['projectName'] = response['data']['projectName']
+                returnResponse['projectName'] = projectName
                 returnResponse['projectDescription'] = response['data']['projectDescription']
-                returnResponse['userId'] = userID
                 returnResponse['created_at'] = response['data']['created_at']
                 returnResponse['clusterList'] = []
                 for cluster in response['data']['selectCluster']:
@@ -871,7 +907,7 @@ def getProject(userID, projectName):
                 returnResponse['nodes']['total'] = 0
 
                 cursor.execute(
-                    f'select node_type, count(node_uuid) as cnt from TB_NODE where project_id = "{pid}" group by node_type')
+                    f'select node_type, count(node_uuid) as cnt from TB_NODE where project_uuid = "{pid}" group by node_type')
                 nodeRows = cursor.fetchall()
                 if nodeRows is not None:
                     for nodeRow in nodeRows:
@@ -915,11 +951,22 @@ def getPodEnv():
     return data, 200
 
 
-def postDag():
+def postDag(userID, userName):
     data = request.json
-    projectID = data['projectID']
+
+    if data['projectID'] is None:
+        return jsonify(status = 'failed'), 200
+
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userID}" and project_name = "{data["projectID"]}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status = 'failed'), 200
+    if len(rows) == 0:
+        return jsonify(status = 'failed'), 200
+
+    projectID = rows[0]['project_uuid']
 
     #precondition
     preCondition = {}
@@ -932,15 +979,16 @@ def postDag():
     #TODO: 유효성체크
 
     #delete
-    cursor.execute(f'select node_uuid, node_id from TB_NODE where project_id = "{projectID}"')
+    cursor.execute(f'select node_uuid, node_name from TB_NODE where project_uuid = "{projectID}"')
     rows = cursor.fetchall()
     nodeList = {}
     for row in rows:
-        nodeList[row['node_uuid']] = row['node_id']
+        nodeList[row['node_name']] = row['node_uuid']
     #add
     if data['nodes'] != None:
         for node in data['nodes']:
-            uid = 'user1' + '.' + projectID + '.' + node['id']
+            import uuid
+            uid = uuid.uuid4().__str__()
             nodeType = 0
             if node['type'] == 'Pod':
                 nodeType = 0
@@ -952,34 +1000,107 @@ def postDag():
             task = node['data']['task']
             yaml = {}
             if task == 'Train':
-                yaml = flask_api.runtime_helper.makeYamlTrainRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif task == 'Validate':
-                yaml = flask_api.runtime_helper.makeYamlValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Optimization'):
-                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             elif(task == 'Opt_Validate'):
-                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime('user1', projectID, node['id'], node['data']['runtime'],'yolov5', node['data']['tensorRT'], node['data']['cuda'])
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userID, userName, data["projectID"], projectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
 
             yaml = yaml.__str__()
             d = node['data'].__str__()
             #TODO: yaml 생성
 
-
-            cursor.execute(f'insert into TB_NODE (node_uuid, node_id, project_id, node_type, yaml, precondition_list, data) ' +
-                           f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")' +
-                           f'on duplicate key update yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}";')
+            if nodeList.get(node["id"]) != None:
+                cursor.execute(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
+                del nodeList[node["id"]]
+            else:
+                cursor.execute(f'insert into TB_NODE (node_uuid, node_name, project_uuid, node_type, yaml, precondition_list, data) ' +
+                               f'value ("{uid}", "{node["id"]}", "{projectID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")')
             mycon.commit()
-
-            if nodeList.get(uid) != None:
-                del nodeList[uid]
 
     for n in nodeList.items():
         cursor.execute(
-            f'delete from TB_NODE where node_uuid = "{n[0]}";');
+            f'delete from TB_NODE where node_uuid = "{n[1]}";');
         mycon.commit()
 
         #delete from k8s
-        flask_api.center_client.podsNameDelete(n[1], 'softonet', 'mec(ilsan)', projectID)
+        flask_api.center_client.podsNameDelete(n[0], 'softonet', 'mec(ilsan)', projectID)
 
 
     return jsonify(status="success"), 200
+
+
+def getPodEnvModel():
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select model from TB_RUNTIME group by model;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row['model'])
+
+    return jsonify(model=list), 200
+
+def getPodEnvFrameWork(modelName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select framework from TB_RUNTIME where model = "{modelName}" group by framework;')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row['framework'])
+
+    return jsonify(framework=list), 200
+
+def getPodEnvRuntime(modelName, framework):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select runtime_name, version, python_version, cuda_version, cudnn_version from TB_RUNTIME where model = "{modelName}" and framework = "{framework}";')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(runtime=list), 200
+
+def getPodEnvTensor(runtimeName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select tensorrt_name, tensorrt_version from TB_TENSORRT where runtime_name = "{runtimeName}";')
+    rows = cursor.fetchall()
+    list = []
+    if rows is not None:
+        for row in rows:
+            list.append(row)
+
+    return jsonify(tensorrt=list), 200
+
+
+def getAllClusters():
+    res = flask_api.center_client.clustersGet()
+    result = []
+    if res.get('data') is not None:
+        for item in res.get('data'):
+            data = {
+                "clusterEndpoint": "",
+                "clusterType": "",
+                "clusterName": "",
+                "nodeCnt": 0,
+            }
+
+            if item.get('clusterEndpoint') is not None:
+                data['clusterEndpoint'] = item.get('clusterEndpoint')
+            if item.get('clusterType') is not None:
+                data['clusterType'] = item.get('clusterType')
+            if item.get('clusterName') is not None:
+                data['clusterName'] = item.get('clusterName')
+            if item.get('nodeCnt') is not None:
+                data['nodeCnt'] = item.get('nodeCnt')
+
+            result.append(data)
+    return jsonify(cluster_list=result), 200

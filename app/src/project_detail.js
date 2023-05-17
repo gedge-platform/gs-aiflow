@@ -18,7 +18,7 @@ function ProjectDetail(props) {
 
       const getProjectDetail = async ( ) => {
         if(selectedProject != ""){
-          const { data } = await axios.get(process.env.REACT_APP_API+'/api/project/' + selectedProject);
+          const { data } = await axios.get(process.env.REACT_APP_API+'/api/project/' + selectedProject, {withCredentials:true});
           console.log(data)
           return data;
         }

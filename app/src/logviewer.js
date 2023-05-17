@@ -50,7 +50,7 @@ function LogViewer(props){
 
     var update_list;
     function getListCluster(){
-        axios.get(process.env.REACT_APP_API+'/api/getListCluster').then(response => {
+        axios.get(process.env.REACT_APP_API+'/api/getListCluster', {withCredentials:true}).then(response => {
             var data=response['data'];
             var dataKey=Object.keys(data);
             update_list=[];
@@ -66,7 +66,7 @@ function LogViewer(props){
     }
 
     function getListNamespace(data){
-        axios.get(process.env.REACT_APP_API+'/api/getPodNamespaceList/'+data).then(response => {
+        axios.get(process.env.REACT_APP_API+'/api/getPodNamespaceList/'+data, {withCredentials:true}).then(response => {
             var data=response['data'];
             var dataKey=Object.keys(data);
             update_list=[];

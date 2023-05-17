@@ -45,7 +45,7 @@ function Create(){
     }
     function createServer(data){
         const datajson=JSON.stringify(data);
-        const config={"Content-Type": 'application/json'};
+        const config={"Content-Type": 'application/json', withCredentials:true};
         axios.post(process.env.REACT_APP_API+'/api/createServer',datajson,config).then(response => {
             console.log(response);
             alert(response);
@@ -56,7 +56,7 @@ function Create(){
 
     function deleteDeployment(data){
         const datajson=JSON.stringify(data);
-        const config={"Content-Type": 'application/json'};
+        const config={"Content-Type": 'application/json', withCredentials:true};
         axios.post(process.env.REACT_APP_API+'/api/deleteDeployment',datajson,config).then(response => {
             console.log(response);
             alert(response);
@@ -65,7 +65,7 @@ function Create(){
 
     var update_list;
     function getlistCluster(){
-        axios.get(process.env.REACT_APP_API+'/api/getListCluster').then(response => {
+        axios.get(process.env.REACT_APP_API+'/api/getListCluster', {withCredentials:true}).then(response => {
             var data=response['data'];
             var dataKey=Object.keys(data);
             update_list=[];
@@ -81,7 +81,7 @@ function Create(){
     }
 
     function getlistServer(){
-        axios.get(process.env.REACT_APP_API+'/api/getServerList').then(response => {
+        axios.get(process.env.REACT_APP_API+'/api/getServerList', {withCredentials:true}).then(response => {
             var data=response['data']['serverList'];
             update_list=[];
             for(var i=0;i<data.length;i++){
@@ -94,7 +94,7 @@ function Create(){
     }
 
     function getListDeployment(server){
-        axios.get(process.env.REACT_APP_API+'/api/getListCreateDeployment/'+server).then(response => {
+        axios.get(process.env.REACT_APP_API+'/api/getListCreateDeployment/'+server , {withCredentials:true}).then(response => {
             var data= response['data']['deployList'];
             update_list=[];
             for(var i=0;i<data.length;i++){

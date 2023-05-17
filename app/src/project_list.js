@@ -8,14 +8,13 @@ import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@an
 import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
 const getProjectList = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
     var list = data.project_list;
     var count = 0;
     list.forEach(function(item){
         item.key = count;
         count++;
     })
-    console.log(list)
     return list;
     
   };
@@ -185,7 +184,7 @@ function ProjectList(props) {
       const cL = []
       clusterList.forEach(elem => cL.push(elem.name))
       axios.post(process.env.REACT_APP_API + '/api/project', 
-      {projectName: projectName, projectDesc: projectDesc, clusterName: cL})
+      {projectName: projectName, projectDesc: projectDesc, clusterName: cL}, {withCredentials:true})
       .then(response => {
 
           if(response.data['status'] == 'success'){
@@ -211,7 +210,7 @@ function ProjectList(props) {
   function sendDeleteProject() {
     setConfirmDeleteLoading(true);
 
-    axios.delete(process.env.REACT_APP_API + '/api/project/' + deleteProjectName,{})
+    axios.delete(process.env.REACT_APP_API + '/api/project/' + deleteProjectName, {withCredentials:true})
     .then(response => {
 
         if(response.data['status'] == 'success'){

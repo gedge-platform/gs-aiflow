@@ -29,7 +29,7 @@ const NodeInfo = ({
         setValue(true);
         axios
             .get(
-                process.env.REACT_APP_API + '/api/makeData'
+                process.env.REACT_APP_API + '/api/makeData' , {withCredentials:true}
             )
             .then(response => {
               console.log(response)

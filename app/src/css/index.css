@@ -534,3 +534,22 @@ html,body{
 .dag_task_color.opt_validate{
     background-color:var(--opt_validate_task); 
 }
+
+
+/* 로그인 */
+#login-form_ID{
+    height: 50px;
+    font-weight: bold;
+}
+
+#login-form_PW{
+    height: 40px;
+    font-weight: bold;
+}
+
+#login-form_Submit{
+    height: 50px;
+    font-weight: bold;
+    font-size: large;
+    border: 1px solid #999999;
+}

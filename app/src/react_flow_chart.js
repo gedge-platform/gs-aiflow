@@ -27,8 +27,8 @@ import Modal from 'react-modal';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
-import { Button, Row, Col, Divider, Select } from 'antd';
-import { CaretRightOutlined, CloseOutlined } from "@ant-design/icons";
+import { Button, Row, Col, Divider, Select , notification} from 'antd';
+import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
 
@@ -37,7 +37,6 @@ const rfStyle = {
   backgroundColor: '#B8CEFF',
   height: '500px'
 };
-
 
 const nodeWidth = 252;
 const nodeHeight = 142;
@@ -83,7 +82,8 @@ function Flow(props) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [value, setValue] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [selectedNodeData, setSelectedNodeData] = useState(null);
+  const [selectedNodeData, setSelectedNodeData] = useState(null); 
+  const [api, contextHolder] = notification.useNotification();
   const [toggleFlag, setToggleFlag] = useState(false);
   const [pjList, setPjList] = useState([]);
   const id = useParams().projectID;
@@ -91,7 +91,7 @@ function Flow(props) {
   const [needFitView, setNeedFitView]=useState(true);
   const { isLoading, error, data, isFetching, refetch} = useQuery(
     ["dag" + id], () => {
-      return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id)
+      return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id, {withCredentials:true})
         .then((res) => {
           var nodes = res['data']['nodes'];
           var edges = res['data']['edges'];
@@ -131,7 +131,7 @@ function Flow(props) {
 
 
 const getProjectList = async ( id ) => {
-  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id);
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
   var list = data.project_list;
   list.forEach(function(item){
       item.value = item.project_name;
@@ -246,24 +246,34 @@ const getProjectList = async ( id ) => {
 
   function launchProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/launch',
-      { projectID: id })
+      { projectID: id }, {withCredentials:true})
       .then(response => {
         if (response.data['status'] == 'success') {
-          setTitle("실행에 성공했습니다.")
+          openNotificationWithIcon("success", {message:"Launch Project", description:"실행에 성공했습니다."})
         }
         else {
-          setTitle("실행에 실패했습니다. 워크플로를 초기화 해주십시오.")
+          openNotificationWithIcon("error", {message:"Launch Project", description:"실행에 실패했습니다. 워크플로를 초기화 해주십시오."})
         }
-        openPopUpModal()
+      })
+      .catch(error => {
+        openNotificationWithIcon("error", {message:"Launch Project", description:"서버 에러, 실행에 실패했습니다."})
       })
 
   }
 
   function InitProject() {
     axios.post(process.env.REACT_APP_API + '/api/project/init',
-      { projectID: id })
+      { projectID: id }, {withCredentials:true})
       .then(response => {
-        console.log(response)
+        if (response.data['status'] == 'success') {
+          openNotificationWithIcon("success", {message:"Init Project", description:"초기화에 성공했습니다."})
+        }
+        else{
+          openNotificationWithIcon("error", {message:"Init Project", description:"초기화에 실패했습니다."})
+        }
+      })
+      .catch(error => {
+        openNotificationWithIcon("error", {message:"Init Project", description:"서버 에러, 초기화에 실패했습니다."})
       })
   }
   const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
@@ -303,11 +313,32 @@ const getProjectList = async ( id ) => {
     return '#666666'
   }
 
+  const getProjectStoargeLink = () => {
+    if(id == undefined || id == null || id == ""){
+      return;
+    }
+
+    axios.get(process.env.REACT_APP_API + '/api/project/' + id + '/storage', {withCredentials:true})
+      .then(response => {
+        window.open(response.data.link)
+      })
+  } 
+  const openNotificationWithIcon = (type, data) => {
+    console.log(api, type, api[type])
+    api[type](data);
+  };
 
   return (
     <div id='reactflow_wrapper'>
-      <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
-      options={pjList}></Select>
+      {contextHolder}
+      <div style={{width:'100%', display: 'flex'}}>
+        <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
+        options={pjList}></Select>
+
+        <div style={{marginLeft:'auto'}}>
+          <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<FileSearchOutlined />} onClick={getProjectStoargeLink}>Storage</Button>
+        </div>
+      </div>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
       </div>
