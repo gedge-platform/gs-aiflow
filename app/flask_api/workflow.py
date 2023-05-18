@@ -1,8 +1,9 @@
 
 class WorkFlow:
-    def __init__(self, id = "id"):
+    def __init__(self, userID = "softonnet", id = "id"):
         self.nodes = {}
         self.id = id
+        self.userID = userID
         self.origin = {}
 
 class WorkFlowNode:

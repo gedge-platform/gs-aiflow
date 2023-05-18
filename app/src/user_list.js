@@ -9,11 +9,16 @@ import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
 import CreateUserModal from "./create_user_modal";
 import useNotification from "antd/es/notification/useNotification";
+import EditUserModal from "./edit_user_modal";
 
 
 
 function UserList(props) {
   const userID = props.userID;
+  const [editingID, setEditingID] = useState("");
+  const [editingName, setEditingName] = useState("");
+  const [editingIsAdmin, setEditingIsAdmin] = useState(1);
+
   const getUserList = async () => {
     const { data } = await axios.get(process.env.REACT_APP_API + '/api/users', { withCredentials: true });
     var list = data.users;
@@ -84,7 +89,23 @@ function UserList(props) {
           );
       }
     },
+    {
+      title: '액션',
+      key: 'action',
+      width: 400,
+      render: (_, value) => {
+        return(<Button type="primary" style={{backgroundColor:'#cc8800'}} onClick={()=>{updateUser(value)}}>Edit</Button>);
+      }
+    },
   ];
+
+  const updateUser = (value) => {
+    console.log(value)
+    setEditingIsAdmin(value.is_admin);
+    setEditingID(value.login_id);
+    setEditingName(value.user_name);
+    setEditOpen(true);
+  }
 
   function getRoleText(admin){
     if(admin == 1){
@@ -126,6 +147,8 @@ function UserList(props) {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmDeleteLoading, setConfirmDeleteLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmEditLoading, setConfirmEditLoading] = useState(false);
 
   const showModal = () => {
     setOpen(true);
@@ -141,6 +164,14 @@ function UserList(props) {
 
   const handleDeleteCancel = () => {
     setDeleteOpen(false);
+  }
+
+  const handleEditOk = () => {
+    // sendDeleteUser();
+  }
+
+  const handleEditCancel = () => {
+    setEditOpen(false);
   }
 
   function sendDeleteUser() {
@@ -202,6 +233,11 @@ function UserList(props) {
   const handleSuccessCreateUser = () => {
     refetch();
     setOpen(false);
+  }
+
+  const handleSuccessEditUser = () => {
+    refetch();
+    setEditOpen(false);
   }
 
   const defaultFilterSelect = "login_id"
@@ -287,6 +323,18 @@ function UserList(props) {
       >
         <div style={{ height: '10px' }} />
         {"유저 " + selectedRowKeys[0] + "를 삭제하시겠습니까?"}
+      </Modal>
+      <Modal
+        title="유저 수정"
+        open={editOpen}
+        width={700}
+        // onOk={handleOk}
+        onCancel={handleEditCancel}
+        destroyOnClose={true}
+        footer={[]}
+      >
+        <div style={{ height: '10px' }} />
+        <EditUserModal data={{id:editingID, userName: editingName, isAdmin: editingIsAdmin}} handleSuccess={handleSuccessEditUser} contextHolder={[api, contextHolder]}/>
       </Modal>
     </div>
     </>

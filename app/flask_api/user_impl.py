@@ -82,6 +82,7 @@ def getUser(loginID):
         if len(rows) >= 1:
             return jsonify(status="success", user=rows[0]), 200
 
+
     return jsonify(status="failed", msg="no user " + loginID), 200
 
 
@@ -134,3 +135,28 @@ def deleteUser(loginID):
             else:
                 return deleteUserData(userUUID)
     return jsonify(status="failed", msg="no user " + loginID), 200
+
+
+
+def updateUser(loginID):
+    data = request.json
+    if data is None:
+        return jsonify(status='failed', msg='body is not json'), 200
+    if data.get('user_name') is None or type( data.get('user_name')) != str:
+        return jsonify(status='failed', msg='user_name is wrong'), 200
+    if data.get('is_admin') is None or type( data.get('is_admin')) != int:
+        return jsonify(status='failed', msg='is_admin is wrong'), 200
+
+    userData, code = getUser(loginID)
+    if userData.json['status'] == 'failed':
+        return jsonify(status="failed", msg="no user " + loginID), 200
+    else:
+        mycon = get_db_connection()
+        cursor = mycon.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                f'update TB_USER set user_name = "{data.get("user_name")}", is_admin = {data.get("is_admin")} where login_id = "{loginID}";')
+            mycon.commit()
+        except:
+            return jsonify(status="failed", msg="update error"), 200
+        return jsonify(status="success"), 200

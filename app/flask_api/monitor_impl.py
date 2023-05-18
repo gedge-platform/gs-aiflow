@@ -682,8 +682,7 @@ def getDag(userID, projectName, needYaml = False):
         return d
     else:
         projectID = rows[0][5]
-
-    data = flask_api.center_client.getPods('softonet', 'mec(ilsan)', projectID)
+    data = flask_api.center_client.getPods(userID, 'mec(ilsan)', projectID)
 
     for row in rows:
         nodeID = row[0]
@@ -757,7 +756,7 @@ def launchProject(userID, projectName):
     dag = getDag(userID, projectName, True)
     # return launchTest()
     dag['id'] = projectID
-    res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(dag))
+    res = monitoringManager.addWorkFlow(monitoringManager.parseFromDAGToWorkFlow(userID, dag))
     if res is True:
         return jsonify(status="success"), 200
     else:
@@ -780,7 +779,7 @@ def initProject(userID, projectName):
 
     monitoringManager.deleteWorkFlow(projectID)
     for item in rows:
-        flask_api.center_client.podsNameDelete(item['node_name'], 'softonet', 'mec(ilsan)', projectID)
+        flask_api.center_client.podsNameDelete(item['node_name'], userID, 'mec(ilsan)', projectID)
     return jsonify(status = 'success'), 200
 
 
@@ -827,35 +826,32 @@ def createProject(userID, projectName, projectDesc, clusterName):
 
     cursor.execute(f'select workspace_name from TB_USER where user_uuid="{userID}"')
     rows = cursor.fetchall()
-
-    if rows is not None:
-        workspaceName = None
-        for row in rows:
-            workspaceName = row['workspace_name']
-            break
-
-        if workspaceName is not None:
-            status = flask_api.center_client.projectsPost(workspaceName, "softonet", projectID, projectDesc,
-                                             clusterName=clusterName)
-
-            if status['status'] != 'failed':
+    workspaceName = userID
+    if workspaceName is not None:
+        status = flask_api.center_client.projectsPost(workspaceName, config.api_id, projectID, projectDesc,
+                                                      clusterName=clusterName)
+        if status['status'] != 'failed':
+            for cluster in clusterName:
                 # pv 부터 pvc는 프로젝트 생성후
-                status = flask_api.center_client.pvCreate(userID, workspaceName, clusterName, projectID)
+                status = flask_api.center_client.pvCreate(userID, workspaceName, cluster, projectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(projectID)
                     return jsonify(status='failed', msg='pv make failed'), 200
 
-                status = flask_api.center_client.pvcCreate(userID, workspaceName, clusterName, projectID)
+                status = flask_api.center_client.pvcCreate(userID, workspaceName, cluster, projectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(projectID)
-                    #TODO: PV 제거
+                    # TODO: PV 제거
                     return jsonify(status='failed', msg='pvc make failed'), 200
 
-                cursor.execute(f'insert into TB_PROJECT (project_uuid, project_name, user_uuid, pv_name) value ("{projectID}", "{projectName}", "{userID}", "testPV");')
-                mycon.commit()
-                return jsonify(status='success'), 200
-            else:
-                return jsonify(status='failed'), 200
+            cursor.execute(
+                f'insert into TB_PROJECT (project_uuid, project_name, user_uuid, pv_name) value ("{projectID}", "{projectName}", "{userID}", "testPV");')
+            mycon.commit()
+            return jsonify(status='success'), 200
+        else:
+            return jsonify(status='failed'), 200
+
+
     return jsonify(status='failed'), 200
 
 
@@ -1026,7 +1022,7 @@ def postDag(userID, userName):
         mycon.commit()
 
         #delete from k8s
-        flask_api.center_client.podsNameDelete(n[0], 'softonet', 'mec(ilsan)', projectID)
+        flask_api.center_client.podsNameDelete(n[0], userID, 'mec(ilsan)', projectID)
 
 
     return jsonify(status="success"), 200
