@@ -97,6 +97,11 @@ function Flow(props) {
           var edges = res['data']['edges'];
 
           //style
+          nodes.forEach((elem) => {
+            elem.data.isConnectable = false;
+            elem.data.needStatus = true;
+          });
+
           edges.forEach((elem) => {
             elem.animated = true;
             elem.style = {stroke: 'red', 
@@ -108,6 +113,7 @@ function Flow(props) {
             nodes,
             edges
           );
+
           setNodes((node) => {
             return layoutedElems.nodes
           });

@@ -6,7 +6,9 @@ import { Handle, Position } from 'reactflow';
 const startHandleStyle = { width:'12px', height:'12px' };
 const endHandleStyle = { width:'12px', height:'12px' };
 
-function PodNode({ id, data, isConnectable }) {
+function PodNode({ id, data }) {
+  const isConnectable = data.isConnectable != undefined ? data.isConnectable : true;
+  const needStatus = data.needStatus != undefined ? data.needStatus : false;
   const [stat, setStat] = useState("waiting")
   useEffect(() => {
     setStatus(data.status)
@@ -30,7 +32,10 @@ function PodNode({ id, data, isConnectable }) {
   }
 
   function getStatusBorder() {
-    if (stat == 'Pending') {
+    if(needStatus == false){
+      return 'grey'
+    }
+    else if (stat == 'Pending') {
       return 'orange'
     }
     else if (stat == 'Succeeded') {
@@ -73,11 +78,6 @@ function PodNode({ id, data, isConnectable }) {
       
     <div className="pod_node_border" style={{ backgroundColor: getStatusBorder()}}>
       <div className="pod_node" style={{ border: '#000000' + ' solid 3px', backgroundColor: getBackgroundColor() }}>
-        {/* <Handle type="target" position={Position.Top} isConnectable={isConnectable} /> */}
-        <div>
-
-        </div>
-        {/* <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} /> */}
       </div>
         <Handle
           type="target"

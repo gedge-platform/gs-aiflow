@@ -1,7 +1,7 @@
 import { React, useState, useRef, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { Route, Routes, Router, useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Modal, Form } from "antd";
+import { Row, Col, Modal, notification, message } from "antd";
 import ReactFlow, {
     ReactFlowProvider,
     MiniMap,
@@ -44,6 +44,7 @@ const rfStyle = {
     height: '500px'
 };
 function DagDefine(props) {
+    const [api, contextHolder] = notification.useNotification();
     const { projectID } = useParams();
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -51,6 +52,15 @@ function DagDefine(props) {
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const [needFitView, setNeedFitView]=useState(true);
+
+    var notificationData = { message : "", description : ""}
+    const openNotificationWithIcon = (type) => {
+        api[type]({
+          message: notificationData.message,
+          description: notificationData.description,
+        });
+      };
+
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID], () => {
             return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID, {withCredentials:true})
@@ -252,6 +262,10 @@ function DagDefine(props) {
             const deleteNode = [selectedNode];
             reactFlowInstance.deleteElements({ nodes: deleteNode, edges: [] });
             setSelectedNode(null);
+            openSuccessNotification("삭제 성공", "삭제 성공했습니다.")
+        }
+        else{
+            openErrorNotification("삭제 실패", "삭제할 것을 선택해주세요.");
         }
     }
 
@@ -350,15 +364,16 @@ function DagDefine(props) {
         axios.post(process.env.REACT_APP_API + '/api/project/dag',
             { projectID: projectID, nodes: nodes, edges: edges }, {withCredentials:true})
             .then(response => {
-                console.log(response)
-                // if (response.data['status'] == 'success') {
-                //     setTitle("실행에 성공했습니다.")
-                // }
-                // else {
-                //     setTitle("실행에 실패했습니다. 워크플로를 초기화 해주십시오.")
-                // }
-                // openPopUpModal()
+                if (response.data['status'] == 'success') {
+                    openSuccessNotification('저장 성공', '저장에 성공했습니다.');
+                }
+                else {
+                    openErrorNotification("저장 실패", "서버 오류로 저장 실패했습니다.");
+                }
             })
+            .catch((error) => {
+                openErrorNotification("저장 실패", "서버 오류로 저장 실패했습니다.");
+            });
     }
 
     const nodeColor = (node) =>{
@@ -384,9 +399,21 @@ function DagDefine(props) {
         return '#666666'
       }
     
+    const openSuccessNotification = (message, des) => {
+        notificationData.message = message;
+        notificationData.description = des;
+        openNotificationWithIcon('success');
+    }
+
+    const openErrorNotification = (message, des) => {
+        notificationData.message = message;
+        notificationData.description = des;
+        openNotificationWithIcon('error');
+    }
+    
     return (
         <>
-
+            {contextHolder}
             <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={projectID} onChange={onChangeProjectSelect} placeholder='select project'
                 options={pjList}></Select>
             <QueryClientProvider client={queryClient}>
@@ -403,8 +430,14 @@ function DagDefine(props) {
                                 <div style={{ width: '100%', height: '40px' }}>
                                     <Button style={{ float: 'right', backgroundColor: '#CC0000' }} type="primary" icon={<DeleteOutlined />} onClick={onNodeDeleteClick}>Delete</Button>
                                     <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#00CC00' }} icon={<SaveOutlined />} onClick={() => { saveGraph() }} type="primary">Save</Button>
-                                    <Button style={{ float: 'right', marginRight: '15px', }} type="primary" icon={<DashOutlined />} onClick={() => { sortGraph(nodes, edges) }}>Sort Graph</Button>
-                                    <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#CC9900' }} icon={<UndoOutlined />} onClick={refetch} type="primary">Reset Graph</Button>
+                                    <Button style={{ float: 'right', marginRight: '15px', }} type="primary" icon={<DashOutlined />} onClick={() => { 
+                                            openSuccessNotification("정렬 성공", "데이터를 정렬 했습니다.");
+                                            sortGraph(nodes, edges)
+                                         }}>Sort Graph</Button>
+                                    <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#CC9900' }} icon={<UndoOutlined />} onClick={() => {
+                                            openSuccessNotification("리셋 성공", "원래 데이터로 리셋 했습니다.");
+                                            refetch()
+                                        }} type="primary">Reset Graph</Button>
                                 </div>
                                 <div style={{ width: '100%', height: '320px' }}>
                                     <ReactFlow
