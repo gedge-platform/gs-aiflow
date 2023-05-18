@@ -30,15 +30,16 @@ class MonitoringManager:
         self.scheduler.add_job(self.checkNodeNeededToStartWorkFlowFromServer, 'interval', seconds = 5, id='test')
         self.scheduler.start()
 
-    def parseFromDAGToWorkFlow(self, dag):
+    def parseFromDAGToWorkFlow(self, userID, dag):
         nodes = dag['nodes']
         edges = dag['edges']
         id = dag['id']
 
+
         if nodes is None or edges is None or id is None:
             return {}
 
-        workFlow = WorkFlow(id=id)
+        workFlow = WorkFlow(userID, id=id)
         workFlow.origin = dag
         for node in nodes:
             workFlowNode = WorkFlowNode()
@@ -111,7 +112,7 @@ class MonitoringManager:
         d = dict()
         project=workFlow.id
         cluster='mec(ilsan)'
-        workspace='softonet'
+        workspace=workFlow.userID
 
         for node in workFlow.nodes:
             node.isExternal is True
@@ -143,7 +144,7 @@ class MonitoringManager:
         d = dict()
         project=workFlow.id
         cluster='mec(ilsan)'
-        workspace='softonet'
+        workspace=workFlow.userID
 
         ret = flask_api.center_client.getPodDetail(podID, workspace, cluster, project)
         data = ret['data']
@@ -227,19 +228,6 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
                 aApiClient = apiClient('cluster_test1')
-                example_dict = {'apiVersion': 'v1',
-                                'kind': 'Pod',
-                                'metadata': {
-                                    'name': 'aiflow-test'
-                                },
-                                'spec': {
-                                    'restartPolicy': 'Never',
-                                    'containers': [{
-                                        'name': 'aiflow-test1',
-                                        'image': 'aiflow/test1:v1.0.0.230324',
-                                    }]
-                                }
-                                }
                 res = utils.create_from_dict(aApiClient, node.data['yaml'], verbose=True)
                 node.data['status'] = 'Pending'
 
@@ -290,7 +278,7 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
 
-                res = flask_api.center_client.podsPost(node.data['yaml'], "softonet", "mec(ilsan)", id)
+                res = flask_api.center_client.podsPost(node.data['yaml'], workflow.userID, "mec(ilsan)", id)
                 node.data['status'] = 'Pending'
 
             #check all node launched
