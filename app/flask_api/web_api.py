@@ -168,10 +168,10 @@ def dummy():
 @app.route('/api/getDAG/<string:dagId>', methods=['GET'])
 @auth_impl.needLogin()
 def getDAG(dagId):
-    userID = session.get('user_uuid')
-    if userID is None:
+    user = user_impl.getUserInSession()
+    if user is None:
         return flask.jsonify(status='failed', msg = 'auth failed'), 401
-    return monitor_impl.getDag(userID, dagId)
+    return monitor_impl.getDag(user, dagId)
 
 @app.route('/api/testget', methods=['GET'])
 def testget1():
@@ -196,19 +196,19 @@ def getPodDetail(podID):
 def launchProject():
     if request.method == 'POST':
         jsonData = request.json
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.launchProject(userID, jsonData['projectID'])
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.launchProject(user, jsonData['projectID'])
 
-@app.route('/api/getProjectList/<string:userID>', methods=['GET'])
+@app.route('/api/getProjectList', methods=['GET'])
 @auth_impl.needLogin()
-def getProjectList(userID):
+def getProjectList():
     if request.method == 'GET':
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.getProjectList(userID)
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.getProjectList(user.userUUID)
 
 
 @app.route('/api/project/init', methods=['POST'])
@@ -216,48 +216,48 @@ def getProjectList(userID):
 def initProject():
     if request.method == 'POST':
         jsonData = request.json
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.initProject(userID, jsonData['projectID'])
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.initProject(user.userUUID, user.workspaceName, jsonData['projectID'])
 @app.route('/api/clusters', methods=['GET'])
 @auth_impl.needLogin()
 def getClusterList():
     if request.method == 'GET':
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.getClusterList(userID)
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.getClusterList(user.userUUID)
 
 @app.route('/api/project', methods=['POST'])
 @auth_impl.needLogin()
 def createProject():
     if request.method == 'POST':
         jsonData = request.json
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.createProject(userID, jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.createProject(user.userUUID, user.userLoginID, jsonData['projectName'], jsonData['projectDesc'], jsonData['clusterName'])
 
 
 @app.route('/api/project/<string:projectName>', methods=['DELETE'])
 @auth_impl.needLogin()
 def deleteProject(projectName):
     if request.method == 'DELETE':
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.deleteProject(userID, projectName)
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.deleteProject(user.userUUID, projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
 @auth_impl.needLogin()
 def getProject(projectName):
     if request.method == 'GET':
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.getProject(userID, projectName)
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.getProject(user.userUUID, projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
 @auth_impl.needLogin()
@@ -295,29 +295,26 @@ def getPodEnvTensor(runtimeName):
 @auth_impl.needLogin()
 def getStorageSite():
     if request.method == 'GET':
-        return redirect ('http://172.16.16.121:32223')
+        return redirect ('http://223.62.156.241:32223')
 
 
 @app.route('/api/project/<string:projectName>/storage', methods=['GET'])
 @auth_impl.needLogin()
 def getProjectStorage(projectName):
     if request.method == 'GET':
-        userID = session.get('user_uuid')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return flask.jsonify(link='http://172.16.16.121:32223/' + projectName), 200
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return flask.jsonify(link='http://223.62.156.241:32223/' + projectName), 200
 
 @app.route('/api/project/dag', methods=['POST'])
 @auth_impl.needLogin()
 def postDag():
     if request.method == 'POST':
-        userID = session.get('user_uuid')
-        userName = session.get('user_id')
-        if userID is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        if userName is None:
-            return flask.jsonify(status='failed', msg = 'auth failed'), 401
-        return monitor_impl.postDag(userID, userName)
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.postDag(user.userUUID, user.userLoginID, user.userName, user.workspaceName)
 
 @app.route('/api/login', methods=['POST'])
 def login():

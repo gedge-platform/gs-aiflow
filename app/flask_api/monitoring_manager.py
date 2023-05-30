@@ -30,7 +30,7 @@ class MonitoringManager:
         self.scheduler.add_job(self.checkNodeNeededToStartWorkFlowFromServer, 'interval', seconds = 5, id='test')
         self.scheduler.start()
 
-    def parseFromDAGToWorkFlow(self, userID, dag):
+    def parseFromDAGToWorkFlow(self, workspaceName, dag):
         nodes = dag['nodes']
         edges = dag['edges']
         id = dag['id']
@@ -39,7 +39,7 @@ class MonitoringManager:
         if nodes is None or edges is None or id is None:
             return {}
 
-        workFlow = WorkFlow(userID, id=id)
+        workFlow = WorkFlow(workspaceName, id=id)
         workFlow.origin = dag
         for node in nodes:
             workFlowNode = WorkFlowNode()
@@ -112,7 +112,7 @@ class MonitoringManager:
         d = dict()
         project=workFlow.id
         cluster='mec(ilsan)'
-        workspace=workFlow.userID
+        workspace=workFlow.workspace
 
         for node in workFlow.nodes:
             node.isExternal is True
@@ -144,7 +144,7 @@ class MonitoringManager:
         d = dict()
         project=workFlow.id
         cluster='mec(ilsan)'
-        workspace=workFlow.userID
+        workspace=workFlow.workspace
 
         ret = flask_api.center_client.getPodDetail(podID, workspace, cluster, project)
         data = ret['data']
@@ -278,7 +278,7 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
 
-                res = flask_api.center_client.podsPost(node.data['yaml'], workflow.userID, "mec(ilsan)", id)
+                res = flask_api.center_client.podsPost(node.data['yaml'], workflow.workspace, "mec(ilsan)", id)
                 node.data['status'] = 'Pending'
 
             #check all node launched

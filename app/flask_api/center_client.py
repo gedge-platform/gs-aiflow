@@ -206,26 +206,26 @@ def projectsDelete(projectName : str):
     except:
         return {'status' : 'failed'}
 
-def pvCreate(userID : str, workspace : str, cluster : str, project : str):
+def pvCreate(body, workspace : str, cluster : str, project : str):
     query = dict()
     query['workspace'] = workspace
     query['cluster'] = cluster
     query['project'] = project
 
-    response, code = send_api(path="/pvs", method="POST", params=query, body=flask_api.runtime_helper.getProjectYaml(userID, project)['PV'])
+    response, code = send_api(path="/pvs", method="POST", params=query, body=body)
     try:
         return response.json()
     except:
         return {}
 
 
-def pvcCreate(userID : str, workspace : str, cluster : str, project : str):
+def pvcCreate(body, workspace : str, cluster : str, project : str):
     query = dict()
     query['workspace'] = workspace
     query['cluster'] = cluster
     query['project'] = project
 
-    response, code = send_api(path="/pvcs", method="POST", params=query, body=flask_api.runtime_helper.getProjectYaml(userID, project)['PVC'])
+    response, code = send_api(path="/pvcs", method="POST", params=query, body=body)
     try:
         return response.json()
     except:

@@ -137,7 +137,7 @@ function Flow(props) {
 
 
 const getProjectList = async ( id ) => {
-  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
   var list = data.project_list;
   list.forEach(function(item){
       item.value = item.project_name;
@@ -283,7 +283,7 @@ const getProjectList = async ( id ) => {
       })
   }
   const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
-    return getProjectList('user1')
+    return getProjectList()
   }, {
     refetchOnWindowFocus:false,
     retry:0,

@@ -90,7 +90,7 @@ function DagDefine(props) {
       };
     
   const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
-    return getProjectList('user1')
+    return getProjectList()
   }, {
     refetchOnWindowFocus:false,
     retry:0,

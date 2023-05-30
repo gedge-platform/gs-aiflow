@@ -2,7 +2,7 @@ import flask_api.global_def
 from flask_api.database import get_db_connection
 
 
-def getBasicYaml(userID, userName, projectName, projectID, nodeID):
+def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID):
     data = {'apiVersion': 'v1', 'kind': 'Pod',
             'metadata': {'name': nodeID, 'labels': {'app': 'nfs-test'}},
             'spec': {'restartPolicy': 'Never', 'containers': [
@@ -25,26 +25,26 @@ def getBasicYaml(userID, userName, projectName, projectID, nodeID):
                      'subPath': 'dataset/coco128',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                     'subPath': 'users/' + userName + "/" + projectName}]}],
+                     'subPath': 'users/' + userLoginID + "/" + projectName}]}],
                      'volumes': [
-                         {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userID, projectID)}}]}}
+                         {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
     return data
 
 
-def getBasicPVName(userID, projectID):
-    return "pv." + projectID
+def getBasicPVName(userLoginID, projectName):
+    return "pv." + flask_api.global_def.config.api_id + "." + userLoginID + "." + projectName
 
 
-def getBasicPVCName(userID, projectID):
-    return "pvc." + projectID
+def getBasicPVCName(userLoginID, projectName):
+    return "pvc." + flask_api.global_def.config.api_id + "." + userLoginID + "." + projectName
 
 
-def getBasicPVYaml(userID, projectID):
+def getBasicPVYaml(userLoginID, projectName):
     data = {
         "apiVersion": "v1",
         "kind": "PersistentVolume",
         "metadata": {
-            "name": getBasicPVName(userID, projectID),
+            "name": getBasicPVName(userLoginID, projectName),
             "labels": {
                 "app": "nfs-test"
             }
@@ -68,13 +68,12 @@ def getBasicPVYaml(userID, projectID):
     return data
 
 
-def getBasicPVCYaml(userID, projectID):
+def getBasicPVCYaml(userLoginID, projectName):
     data = {
         "apiVersion": "v1",
         "kind": "PersistentVolumeClaim",
         "metadata": {
-            "name": getBasicPVCName(userID, projectID),
-            "namespace": projectID
+            "name": getBasicPVCName(userLoginID, projectName),
         },
         "spec": {
             "accessModes": [
@@ -87,7 +86,7 @@ def getBasicPVCYaml(userID, projectID):
                     "storage": "10Gi"
                 }
             },
-            "volumeName": getBasicPVName(userID, projectID),
+            "volumeName": getBasicPVName(userLoginID, projectName),
             "selector": {
                 "matchLabels": {
                     "app": "nfs-test"
@@ -99,32 +98,32 @@ def getBasicPVCYaml(userID, projectID):
     return data
 
 
-def makeYamlTrainRuntime(userID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userID, userName, projectName, projectID, node_id)
+def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
 
     return data
 
-def makeYamlValidateRuntime(userID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userID, userName, projectName, projectID, node_id)
+def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_validate --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights /root/user/yolo_coco128_train/weights/best.pt --batch-size 1 &>> /root/user/logs/' + node_id + '.log']
 
     return data
-def makeYamlOptimizationRuntime(userID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userID, userName, projectName, projectID, node_id)
+def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python export.py --weights /root/user/yolo_coco128_train/weights/best.pt --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log']
 
     return data
 
-def makeYamlOptValidateRuntime(userID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userID, userName, projectName, projectID, node_id)
+def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_opt_validate --weights /root/user/yolo_coco128_train/weights/best.engine --data ~/volume/dataset/coco128/coco128.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log']
 
     return data
 
 
-def getProjectYaml(userID, projectID):
+def getProjectYaml(userLoginID, projectName):
     yaml = {'PV': {}, 'PVC': {}}
-    yaml['PV'] = getBasicPVYaml(userID, projectID)
-    yaml['PVC'] = getBasicPVCYaml(userID, projectID)
+    yaml['PV'] = getBasicPVYaml(userLoginID, projectName)
+    yaml['PVC'] = getBasicPVCYaml(userLoginID, projectName)
 
     return yaml

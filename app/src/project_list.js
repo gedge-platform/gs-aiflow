@@ -8,7 +8,7 @@ import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@an
 import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
 const getProjectList = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
+    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
     var list = data.project_list;
     var count = 0;
     list.forEach(function(item){

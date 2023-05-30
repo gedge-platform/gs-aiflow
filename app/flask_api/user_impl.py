@@ -1,3 +1,4 @@
+import flask
 from flask import request, jsonify, session
 
 import flask_api.auth_impl
@@ -5,6 +6,22 @@ from flask_api.monitoring_manager import get_db_connection
 import flask_api.center_client
 from flask_api.global_def import config
 
+class User:
+    def __init__(self, userID, userLoginID, userName, workspaceName, isAdmin):
+        self.userUUID = userID
+        self.userLoginID = userLoginID
+        self.userName = userName
+        self.workspaceName = workspaceName
+        self.isAdmin = isAdmin
+
+def getUserInSession():
+    isLogin = flask.session.get('is_login')
+    if isLogin is None:
+        return None
+    elif isLogin is False:
+        return None
+
+    return User(session['user_uuid'], session['user_id'], session['user_name'], session['workspace'], session['is_admin'])
 
 def getUsers():
     mycon = get_db_connection()
@@ -17,6 +34,9 @@ def getUsers():
             list.append(row)
 
     return jsonify(users=list), 200
+
+def getCenterUserName(loginID):
+    return config.api_id + "_" + loginID
 
 
 def createUser():
@@ -52,7 +72,7 @@ def createUser():
     uuid = uuid.uuid4().__str__()
 
     #make workspace
-    res = flask_api.center_client.workspacesPost(uuid, config.api_id + "_" + data.get("user_name"), data.get("cluster_list"))
+    res = flask_api.center_client.workspacesPost(getCenterUserName(data.get("login_id")), config.api_id + "_" + data.get("user_name"), data.get("cluster_list"))
     if res.get('status') is None:
         return jsonify(status='failed', msg='server error : workspace'), 200
     if res.get('status') != 'Created':
@@ -65,7 +85,7 @@ def createUser():
     #insert to db
     try:
         cursor.execute(f'insert into TB_USER (user_uuid, login_id, login_pass, user_name, workspace_name, is_admin) '
-                   f'values("{uuid}", "{data.get("login_id")}", "{encodedPW}", "{data.get("user_name")}", "{uuid}", {data.get("is_admin")});')
+                   f'values("{uuid}", "{data.get("login_id")}", "{encodedPW}", "{data.get("user_name")}", "{getCenterUserName(data.get("login_id"))}", {data.get("is_admin")});')
         mycon.commit()
     except:
         return jsonify(status='failed', msg='server error'), 200
