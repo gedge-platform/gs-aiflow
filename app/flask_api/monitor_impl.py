@@ -871,9 +871,9 @@ def deletePV(userUUID, userLoginID, workspaceName, projectName):
         f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status='failed'), 200
+        return {'status' : 'failed'}
     if len(rows) == 0:
-        return jsonify(status='failed'), 200
+        return {'status' : 'failed'}
 
     pvName = flask_api.runtime_helper.getBasicPVName(userLoginID, projectName)
     projectUUID = rows[0]['project_uuid']
@@ -881,16 +881,17 @@ def deletePV(userUUID, userLoginID, workspaceName, projectName):
 
     response = flask_api.center_client.userProjectsNameGet(centerProjectID)
     if response.get('data') is None:
-        return jsonify(status='failed'), 200
+        return {'status' : 'failed'}
     if response.get('data').get('selectCluster') is None:
-        return jsonify(status='failed'), 200
+        return {'status' : 'failed'}
 
     for cluster in response['data']['selectCluster']:
         status = flask_api.center_client.pvDelete(pvName, workspaceName, cluster.get('clusterName'), centerProjectID)
         if status.get('status') == 'failed':
+            return {'status' : 'failed', 'msg' : 'cluster is wrong'}
             return jsonify(status='failed', msg='cluster is wrong'), 200
 
-    return jsonify(status='success'), 200
+    return {'status' : 'success'}
 
 
 def deleteProject(userUUID, userLoginID, workspaceName, projectName):
