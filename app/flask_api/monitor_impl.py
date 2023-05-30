@@ -864,7 +864,40 @@ def createProject(userUUID, userLoginID, projectName, projectDesc, clusterName):
     return jsonify(status='failed'), 200
 
 
-def deleteProject(userUUID, projectName):
+def deletePV(userUUID, userLoginID, workspaceName, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(
+        f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status='failed'), 200
+    if len(rows) == 0:
+        return jsonify(status='failed'), 200
+
+    pvName = flask_api.runtime_helper.getBasicPVName(userLoginID, projectName)
+    projectUUID = rows[0]['project_uuid']
+    centerProjectID = getCenterProjectID(projectUUID, projectName)
+
+    response = flask_api.center_client.userProjectsNameGet(centerProjectID)
+    if response.get('data') is None:
+        return jsonify(status='failed'), 200
+    if response.get('data').get('selectCluster') is None:
+        return jsonify(status='failed'), 200
+
+    for cluster in response['data']['selectCluster']:
+        status = flask_api.center_client.pvDelete(pvName, workspaceName, cluster.get('clusterName'), centerProjectID)
+        if status.get('status') == 'failed':
+            return jsonify(status='failed', msg='cluster is wrong'), 200
+
+    cursor.execute(
+        f'delete from TB_PROJECT where project_uuid = "{projectUUID}";')
+    mycon.commit()
+
+    return jsonify(status='success'), 200
+
+
+def deleteProject(userUUID, userLoginID, workspaceName, projectName):
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
@@ -873,6 +906,11 @@ def deleteProject(userUUID, projectName):
         return jsonify(status = 'failed'), 200
     if len(rows) == 0:
         return jsonify(status = 'failed'), 200
+
+    #pv 지우기
+    status = deletePV(userUUID, userLoginID, workspaceName, projectName)
+    if status['status'] == 'failed':
+        return jsonify(status = 'failed', msg = 'cant delete pv'), 200
 
     projectUUID = rows[0]['project_uuid']
     centerProjectID = getCenterProjectID(projectUUID, projectName)

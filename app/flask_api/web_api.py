@@ -247,7 +247,7 @@ def deleteProject(projectName):
         user = user_impl.getUserInSession()
         if user is None:
             return flask.jsonify(status='failed', msg='auth failed'), 401
-        return monitor_impl.deleteProject(user.userUUID, projectName)
+        return monitor_impl.deleteProject(user.userUUID, user.userLoginID, user.workspaceName, projectName)
 
 
 @app.route('/api/project/<string:projectName>', methods=['GET'])
