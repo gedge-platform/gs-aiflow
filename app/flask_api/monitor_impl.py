@@ -890,10 +890,6 @@ def deletePV(userUUID, userLoginID, workspaceName, projectName):
         if status.get('status') == 'failed':
             return jsonify(status='failed', msg='cluster is wrong'), 200
 
-    cursor.execute(
-        f'delete from TB_PROJECT where project_uuid = "{projectUUID}";')
-    mycon.commit()
-
     return jsonify(status='success'), 200
 
 
