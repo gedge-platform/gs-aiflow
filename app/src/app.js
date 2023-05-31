@@ -23,6 +23,7 @@ import LoginPage from './login_page';
 import axios from 'axios';
 import { UserList } from './user_list';
 import { UserManagement } from './user_management';
+import { AdminServiceDefine } from './admin_service_define';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -59,6 +60,7 @@ const App = () => {
   ];
   if (isAdmin == true) {
     items.push(getItem(<Link to='users/'>Users Management</Link>, 'user_management', <TeamOutlined />));
+    items.push(getItem(<Link to='admin_project_list/'>Admin Project List</Link>, 'admin_project_list', <BarsOutlined />));
   }
 
 
@@ -112,6 +114,8 @@ const App = () => {
       return 'DAG 정의'
     else if (data == 'user_management')
       return '유저 관리'
+    else if (data == 'admin_project_list')
+      return '관리자용 프로젝트 관리'
     return "Not Found"
   }
 
@@ -171,13 +175,14 @@ const App = () => {
                           <Content className="body-layout">
                             <h2>{changeTitle(selectedKey)}</h2>
                             <Routes>
-                              <Route path='/' element={<ServiceDefine setPage={setSelectedKey} />}></Route>
-                              <Route path='/project_list/*' element={<ServiceDefine setPage={setSelectedKey} />}></Route>
+                              <Route path='/' element={<ServiceDefine userID={userID} setPage={setSelectedKey} />}></Route>
+                              <Route path='/project_list/*' element={<ServiceDefine userID={userID} setPage={setSelectedKey} />}></Route>
                               <Route path='/monitoring/:projectID' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/users/' element={isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
+                              <Route path='/admin_project_list/' element={isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
                               <Route path='*' element={<NotFound />}></Route>
                             </Routes>
                           </Content>

@@ -5,6 +5,7 @@ import {Route,Routes,Router} from 'react-router-dom';
 import Switch from "switch";
 import { ProjectList } from "./project_list";
 import { ProjectDetail } from "./project_detail";
+import { AdminProjectList } from "./admin_project_list";
 const queryClient = new QueryClient();
 // const customStyles = {
 //   content: {
@@ -28,7 +29,7 @@ const queryClient = new QueryClient();
 //   },
 // };
 
-function ServiceDefine(props) {
+function AdminServiceDefine(props) {
     const setPage = props.setPage
     const userID = props.userID;
     const [selectedProject, setSelectedProject] = useState("");
@@ -40,7 +41,7 @@ function ServiceDefine(props) {
     <QueryClientProvider client={queryClient}>
         <div className="content_box" >
         <Routes>
-            <Route path="" element={<ProjectList id={userID} setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
+            <Route path="" element={<AdminProjectList id={userID} setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
         </div>
         <div className="content_box">
@@ -56,5 +57,5 @@ function ServiceDefine(props) {
 }
 
 export {
-    ServiceDefine
+    AdminServiceDefine
 };

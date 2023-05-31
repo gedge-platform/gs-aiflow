@@ -41,23 +41,23 @@ function UserList(props) {
       label: '유저 아이디',
       sorter: (a, b) => { return ([a.login_id, b.login_id].sort()[0] === a.login_id ? 1 : -1) },
       width: 400,
-      filters: [
-        {
-          text: 'Joe',
-          value: 'Joe',
-        },
-        {
-          text: 'Category 1',
-          value: 'Category 1',
-        },
-        {
-          text: 'Category 2',
-          value: 'Category 2',
-        },
-      ],
-      filterMode: 'tree',
-      filterSearch: true,
-      onFilter: (value, record) => record.name.startsWith(value),
+      // filters: [
+      //   {
+      //     text: 'Joe',
+      //     value: 'Joe',
+      //   },
+      //   {
+      //     text: 'Category 1',
+      //     value: 'Category 1',
+      //   },
+      //   {
+      //     text: 'Category 2',
+      //     value: 'Category 2',
+      //   },
+      // ],
+      // filterMode: 'tree',
+      // filterSearch: true,
+      // onFilter: (value, record) => record.name.startsWith(value),
     },
     {
       title: '유저 이름',

@@ -1146,3 +1146,24 @@ def getAllClusters():
 
             result.append(data)
     return jsonify(cluster_list=result), 200
+
+
+def getProjectAllListForAdmin():
+    mycon = get_db_connection()
+
+    cursor=mycon.cursor(dictionary=True)
+    cursor.execute(f'select project_name, login_id, user_name from TB_USER inner join TB_PROJECT on TB_USER.user_uuid = TB_PROJECT.user_uuid')
+    rows= cursor.fetchall()
+
+    if rows is not None:
+        projectList = list()
+        for row in rows:
+            data = dict()
+            data['project_name'] = row['project_name']
+            data['login_id'] = row['login_id']
+            data['user_name'] = row['user_name']
+            projectList.append(data)
+        return jsonify(project_list=projectList), 200
+    else:
+        common.logger.get_logger().debug('[monitor_impl.getProjectList] failed to get from db')
+        return jsonify(msg='Internal Server Error'), 500

@@ -210,6 +210,16 @@ def getProjectList():
             return flask.jsonify(status='failed', msg='auth failed'), 401
         return monitor_impl.getProjectList(user.userUUID)
 
+@app.route('/api/getProjectList/all', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getProjectAllListForAdmin():
+    if request.method == 'GET':
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.getProjectAllListForAdmin()
+
 
 @app.route('/api/project/init', methods=['POST'])
 @auth_impl.needLogin()
