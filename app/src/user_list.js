@@ -41,23 +41,6 @@ function UserList(props) {
       label: '유저 아이디',
       sorter: (a, b) => { return ([a.login_id, b.login_id].sort()[0] === a.login_id ? 1 : -1) },
       width: 400,
-      // filters: [
-      //   {
-      //     text: 'Joe',
-      //     value: 'Joe',
-      //   },
-      //   {
-      //     text: 'Category 1',
-      //     value: 'Category 1',
-      //   },
-      //   {
-      //     text: 'Category 2',
-      //     value: 'Category 2',
-      //   },
-      // ],
-      // filterMode: 'tree',
-      // filterSearch: true,
-      // onFilter: (value, record) => record.name.startsWith(value),
     },
     {
       title: '유저 이름',
@@ -277,7 +260,7 @@ function UserList(props) {
       {contextHolder}
       <div style={{ display: 'flex' }} >
         <h2>목록</h2>
-        <Select defaultValue={defaultFilterSelect} style={{ width: '120px', margin: 'auto auto auto 40px' }} options={columns} onChange={onChangeFilterSelect} />
+        <Select defaultValue={defaultFilterSelect} style={{ width: '120px', margin: 'auto auto auto 40px' }} options={columns.filter(column => column.value != undefined)} onChange={onChangeFilterSelect} />
         <Input placeholder="input search" style={{ width: '200px', margin: 'auto auto auto 6px' }} onChange={onChangeFilterInput} />
         <div align='right' style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <Button style={{ margin: 'auto 0' }} type="primary" icon={<PlusOutlined />} onClick={createUser}>

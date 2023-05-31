@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
 import { useState} from 'react';
-import { Space, Table, Tag, Button, Modal, notification } from 'antd';
+import { Space, Table, Tag, Button, Modal, notification, Select, Input } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@ant-design/icons";
 import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
-const getProjectList = async ( id ) => {
+
+
+ 
+
+function AdminProjectList(props) {
+  const getProjectList = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/all', {withCredentials:true});
     var list = data.project_list;
     var count = 0;
@@ -15,13 +20,11 @@ const getProjectList = async ( id ) => {
         item.key = count;
         count++;
     })
+    setDataSource(list);
     return list;
     
   };
 
- 
-
-function AdminProjectList(props) {
   const columns = [
     {
       title: '유저 아이디',
@@ -44,6 +47,8 @@ function AdminProjectList(props) {
       title: '프로젝트 이름',
       dataIndex: 'project_name',
       key: 'project_name',
+      value: 'project_name',
+      label: '프로젝트 이름',
       width:400,
     },
     {
@@ -258,18 +263,45 @@ function AdminProjectList(props) {
       setOpen(false);
     };
 
+
+  const defaultFilterSelect = "login_id"
+  const defaultFilterInput = ""
+  const [filterSelect, setFilterSelect] = useState(defaultFilterSelect);
+  const [filterInput, setFilterInput] = useState(defaultFilterInput);
+  const [dataSource, setDataSource] = useState([]);
+
+  const onChangeFilterSelect = (data) => {
+    setFilterSelect(data);
+  }
+
+  const onChangeFilterInput = (data) => {
+    setFilterInput(data.target.value);
+  }
+
+  //filter
+  useEffect(() => {
+    if (!isLoading) {
+      const filteredData = data.filter((entry) => {
+        return entry[filterSelect].includes(filterInput)
+      });
+      setDataSource(filteredData);
+    }
+  }, [filterSelect, filterInput]);
+
     return (
         <> < div id = 'service_define_main' > 
-        <div style={{display:'flex'}} >
-          <h2>목록</h2>
-        <div align='right' style={{flex:1, display:'flex', justifyContent:'flex-end'}}> 
-          {/* <h2 >프로젝트 목록</h2>  */}
+        <div style={{ display: 'flex' }} >
+        <h2>목록</h2>
+        <Select defaultValue={defaultFilterSelect} style={{ width: '120px', margin: 'auto auto auto 40px' }} options={columns.filter(column => column.value != undefined)} onChange={onChangeFilterSelect} />
+        <Input placeholder="input search" style={{ width: '200px', margin: 'auto auto auto 6px' }} onChange={onChangeFilterInput} />
+        <div align='right' style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          
         </div>
-        </div>
+      </div>
 
     {
         !isLoading && (
-            <Table rowKey={"project_name"} columns={columns} dataSource={data} onRow={onRow} pagination={{ pageSize: 5, showSizeChanger:false}}/>
+            <Table rowKey={"project_name"} columns={columns} dataSource={dataSource} onRow={onRow} pagination={{ pageSize: 5, showSizeChanger:false}}/>
             // <h1>{data}</h1>
         )
 
