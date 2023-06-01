@@ -936,6 +936,9 @@ def getProject(userUUID, projectName):
                 returnResponse['projectDescription'] = response['data']['projectDescription']
                 returnResponse['created_at'] = response['data']['created_at']
                 returnResponse['clusterList'] = []
+                returnResponse['status'] = "Waiting"
+                if monitoringManager.getIsRunning(pid) is True:
+                    returnResponse['status'] = 'Running'
                 for cluster in response['data']['selectCluster']:
                     returnResponse['clusterList'].append(cluster['clusterName'])
 
@@ -1152,7 +1155,7 @@ def getProjectAllListForAdmin():
     mycon = get_db_connection()
 
     cursor=mycon.cursor(dictionary=True)
-    cursor.execute(f'select project_name, login_id, user_name from TB_USER inner join TB_PROJECT on TB_USER.user_uuid = TB_PROJECT.user_uuid')
+    cursor.execute(f'select project_name, project_uuid, login_id, user_name from TB_USER inner join TB_PROJECT on TB_USER.user_uuid = TB_PROJECT.user_uuid')
     rows= cursor.fetchall()
 
     if rows is not None:
@@ -1162,8 +1165,35 @@ def getProjectAllListForAdmin():
             data['project_name'] = row['project_name']
             data['login_id'] = row['login_id']
             data['user_name'] = row['user_name']
+            data['status'] = 'Waiting'
+            if monitoringManager.getIsRunning(getCenterProjectID(row['project_uuid'], row['project_name'])) is True:
+                data['status'] = 'Running'
             projectList.append(data)
         return jsonify(project_list=projectList), 200
     else:
         common.logger.get_logger().debug('[monitor_impl.getProjectList] failed to get from db')
         return jsonify(msg='Internal Server Error'), 500
+
+
+def getProjectForAdmin(loginID, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select user_uuid from TB_USER where login_id="{loginID}"')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) != 0:
+            return getProject(rows[0]['user_uuid'], projectName)
+
+    return jsonify(msg='no data'), 200
+
+
+def initProjectForAdmin(loginID, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select user_uuid, workspace_name from TB_USER where login_id="{loginID}"')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) != 0:
+            return initProject(rows[0]['user_uuid'], rows[0]['workspace_name'], projectName)
+
+    return jsonify(status='failed'), 200

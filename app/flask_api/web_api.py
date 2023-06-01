@@ -260,6 +260,18 @@ def deleteProject(projectName):
         return monitor_impl.deleteProject(user.userUUID, user.userLoginID, user.workspaceName, projectName)
 
 
+@app.route('/api/project/init/<string:login_id>/<string:projectName>', methods=['POST'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def initProjectForAdmin(login_id, projectName):
+    if request.method == 'POST':
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+
+        return monitor_impl.initProjectForAdmin(login_id, projectName)
+
+
 @app.route('/api/project/<string:projectName>', methods=['GET'])
 @auth_impl.needLogin()
 def getProject(projectName):
@@ -268,6 +280,17 @@ def getProject(projectName):
         if user is None:
             return flask.jsonify(status='failed', msg='auth failed'), 401
         return monitor_impl.getProject(user.userUUID, projectName)
+
+@app.route('/api/project/<string:login_id>/<string:projectName>', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getProjectForAdmin(login_id, projectName):
+    if request.method == 'GET':
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+
+        return monitor_impl.getProjectForAdmin(login_id, projectName)
 
 @app.route('/api/pod/env', methods=['GET'])
 @auth_impl.needLogin()
