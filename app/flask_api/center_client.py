@@ -213,11 +213,30 @@ def pvCreate(body, workspace : str, cluster : str, project : str):
     query['project'] = project
 
     response, code = send_api(path="/pvs", method="POST", params=query, body=body)
+
+    if code != 201 and code != 200:
+        return {'status' : "failed"}
+
     try:
         return response.json()
     except:
         return {}
 
+def pvDelete(pvName: str, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/pvs/" + pvName, method="DELETE", params=query, body={})
+
+    if code != 201 and code != 200:
+        return {'status' : "failed"}
+
+    try:
+        return response.json()
+    except:
+        return {'status' : "failed"}
 
 def pvcCreate(body, workspace : str, cluster : str, project : str):
     query = dict()

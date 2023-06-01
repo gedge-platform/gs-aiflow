@@ -51,6 +51,7 @@ function DagDefine(props) {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
+    const [modalType, setModalType] = useState('define');
     const [needFitView, setNeedFitView]=useState(true);
 
     var notificationData = { message : "", description : ""}
@@ -79,7 +80,7 @@ function DagDefine(props) {
     const navigate = useNavigate();
 
     const getProjectList = async ( id ) => {
-        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList/' + id, {withCredentials:true});
+        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
         var list = data.project_list;
         list.forEach(function(item){
             item.value = item.project_name;
@@ -184,12 +185,43 @@ function DagDefine(props) {
         [reactFlowInstance]
     );
 
+
+    const [editingNode, setEditingNode] = useState({});
+    const onNodeDoubleClick = (event, data) => {
+        const type = data.type;
+        if(type != undefined){
+            setEditingNode(data);
+            editNodeData(type, data.data)
+        }
+    }
+
     function addNewNodeData(type, node) {
         setTaskType(type);
+        setModalType('define');
         setTaskCreating(node);
-        form = {};
+        // form = {};
+        setForm({});
         setTaskOpen(true);
 
+    }
+
+    function editNodeData(type, data){
+        if(data != undefined){
+            setTaskType(type);
+            setModalType('edit');
+            const precondition = getPrecondition(data.label);
+            setForm({
+                type : data.type,
+                task : data.task,
+                name : data.label,
+                precondition : precondition,
+                model : data.model,
+                framework : data.framework,
+                runtime : data.runtime,
+                tensorRT : data.tensorRT
+            });
+            setTaskEditingOpen(true);
+        }
     }
 
     function checkNodeType(type) {
@@ -200,9 +232,17 @@ function DagDefine(props) {
             return false;
     }
 
+    function getPrecondition(id){
+        const precondition = [];
+        edges.forEach((edge) => {
+            if(edge.target == id)
+                precondition.push(edge.source);
+        }); 
+        return precondition;
+    }
+
     const [refresh, setRefresh] = useState(false);
     function sortGraph(nodes, edges) {
-        console.log(nodes)
         var layoutedElems = getLayoutedElements(
             nodes,
             edges
@@ -274,10 +314,12 @@ function DagDefine(props) {
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [modalText, setModalText] = useState('Content of the modal');
     const [taskOpen, setTaskOpen] = useState(false);
+    const [taskEditingOpen, setTaskEditingOpen] = useState(false);
     const [taskConfirmLoading, setTaskConfirmLoading] = useState(false);
     const [taskType, setTaskType] = useState(null);
     const [taskCreating, setTaskCreating] = useState(null);
-    var form = {}
+    const [form, setForm] = useState({});
+    // var form = {}
 
     const showModal = () => {
         setOpen(true);
@@ -299,6 +341,12 @@ function DagDefine(props) {
     function makeNode() {
         if (taskType == "Pod") {
             makeNodePod();
+        }
+    }
+
+    function editNode() {
+        if(taskType == "Pod"){
+            editNodePod();
         }
     }
 
@@ -357,6 +405,79 @@ function DagDefine(props) {
         setTaskOpen(false);
         setNodes((nds) => nds.concat(taskCreating));
         setEdges((egs) => egs.concat(newEdges));
+
+    }
+
+    function editNodePod() {
+        const id = editingNode.id;
+        const node = reactFlowInstance.getNode(id);
+
+        //delete edges
+        const newEdges = edges.filter(edge => edge.target != id);
+        const newNodes = nodes.filter(node => node.id != id);
+
+        const name = form.name;
+        const type = form.type;
+        const status = form.status;
+        const precondition = form.precondition;
+        const task = form.task;
+        const model = form.model;
+        const framework = form.framework;
+        const runtime = form.runtime;
+        const tensorRT = form.tensorRT;
+
+        if (!name) {
+            return;
+        }
+        if (!precondition) {
+            return;
+        }
+        if (!task) {
+            return;
+        }
+        if (!model) {
+            return;
+        }
+        if (!framework) {
+            return;
+        }
+        if (!runtime) {
+            return;
+        }
+        if (!tensorRT) {
+            return;
+        }
+        if (status != "success") {
+            return;
+        }
+
+        //set newEdges remain
+        newEdges.forEach((edge)=>{
+            if(edge.source == id){
+                edge.source = name;
+            }
+        })
+
+        node.id = name;
+        node.data.label = name;
+        node.data.task = task;
+        node.data.model = model;
+        node.data.framework = framework;
+        node.data.runtime = runtime;
+        node.data.tensorRT = tensorRT;
+        node.data.type = type;
+
+        newNodes.push(node);
+
+        precondition.forEach((prec) => {
+            newEdges.push({
+                id: name + "_" + prec, source: prec, target: name
+            });
+        })
+
+        setTaskEditingOpen(false);
+        setNodes((nds) => newNodes);
+        setEdges((egs) => newEdges);
 
     }
 
@@ -448,6 +569,8 @@ function DagDefine(props) {
                                         onDrop={onDrop}
                                         nodeTypes={nodeTypes}
                                         onNodesChange={onNodesChange}
+                                        // onNodeDoubleClick={(data, target) => {console.log(data, target);
+                                        onNodeDoubleClick={onNodeDoubleClick}
                                         onEdgesChange={onEdgesChange}
                                         onDragOver={onDragOver}
                                         onInit={setReactFlowInstance}
@@ -494,7 +617,19 @@ function DagDefine(props) {
                     onCancel={() => { setTaskOpen(false); }}
                     destroyOnClose={true}
                 >
-                    <DagDefineModal type={taskType} form={form} nodes={nodes} />
+                    <DagDefineModal type={taskType} form={form} nodes={nodes} modalType={modalType} />
+                </Modal>
+
+
+                <Modal
+                    title="Task 수정"
+                    open={taskEditingOpen}
+                    onOk={editNode}
+                    confirmLoading={taskConfirmLoading}
+                    onCancel={() => { setTaskEditingOpen(false); }}
+                    destroyOnClose={true}
+                >
+                    <DagDefineModal type={taskType} form={form} nodes={nodes} modalType={modalType}/>
                 </Modal>
             </QueryClientProvider>
 

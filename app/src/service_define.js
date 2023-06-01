@@ -30,6 +30,7 @@ const queryClient = new QueryClient();
 
 function ServiceDefine(props) {
     const setPage = props.setPage
+    const userID = props.userID;
     const [selectedProject, setSelectedProject] = useState("");
 
     return (
@@ -39,12 +40,12 @@ function ServiceDefine(props) {
     <QueryClientProvider client={queryClient}>
         <div className="content_box" >
         <Routes>
-            <Route path="" element={<ProjectList id='user1' setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
+            <Route path="" element={<ProjectList id={userID} setPage={setPage} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
         </div>
         <div className="content_box">
         <Routes>
-            <Route path="" element={<ProjectDetail id='user1' setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
+            <Route path="" element={<ProjectDetail id={userID} setSelectedProject={[selectedProject, setSelectedProject]}/>}></Route>
         </Routes>
         </div>
 

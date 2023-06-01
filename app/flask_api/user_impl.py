@@ -5,6 +5,7 @@ import flask_api.auth_impl
 from flask_api.monitoring_manager import get_db_connection
 import flask_api.center_client
 from flask_api.global_def import config
+from flask_api.runtime_helper import getBasicPVName
 
 class User:
     def __init__(self, userID, userLoginID, userName, workspaceName, isAdmin):
@@ -107,8 +108,8 @@ def getUser(loginID):
 
 
 def deleteUser(loginID):
-    def deleteUserData(uuid):
-        res = flask_api.center_client.workspacesDelete(uuid)
+    def deleteUserData(workspaceName):
+        res = flask_api.center_client.workspacesDelete(workspaceName)
 
         mycon = get_db_connection()
         cursor = mycon.cursor(dictionary=True)
@@ -117,17 +118,35 @@ def deleteUser(loginID):
         mycon.commit()
         return jsonify(status='success'), 200
 
+    def getCenterProjectID(projectID, projectName):
+        return projectName + "-" + projectID
+
+    def deletePV(workspaceName, pvName, centerProjectID):
+        response = flask_api.center_client.userProjectsNameGet(centerProjectID)
+        if response.get('data') is None:
+            return {'status': 'failed'}
+        if response.get('data').get('selectCluster') is None:
+            return {'status': 'failed'}
+
+        for cluster in response['data']['selectCluster']:
+            status = flask_api.center_client.pvDelete(pvName, workspaceName, cluster.get('clusterName'),
+                                                      centerProjectID)
+            if status.get('status') == 'failed':
+                return {'status': 'failed', 'msg' : 'cluster is wrong'}
+        return {'status' : 'success'}
+
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select TB_USER.user_uuid, user_name, project_uuid from TB_USER LEFT JOIN TB_PROJECT ON TB_USER.user_uuid = TB_PROJECT.user_uuid where login_id = "{loginID}";')
+    cursor.execute(f'select TB_USER.user_uuid, user_name, project_name, project_uuid, workspace_name from TB_USER LEFT JOIN TB_PROJECT ON TB_USER.user_uuid = TB_PROJECT.user_uuid where login_id = "{loginID}";')
     rows = cursor.fetchall()
 
     if rows is not None:
         if len(rows) >= 1:
             userUUID = rows[0]['user_uuid']
+            workspaceName = rows[0]['workspace_name']
 
             #get project list from server
-            workspaceInfo = flask_api.center_client.workspacesNameGet(userUUID)
+            workspaceInfo = flask_api.center_client.workspacesNameGet(workspaceName)
             serverProjectNameList = {}
             if workspaceInfo.get('projectList') != None:
                 serverProjectList = workspaceInfo.get('projectList')
@@ -135,25 +154,37 @@ def deleteUser(loginID):
                     if serverProject.get('projectName') is not None:
                         serverProjectNameList[serverProject['projectName']] = serverProject['projectName']
                 if len(serverProjectList) == 0:
-                    return deleteUserData(userUUID)
+                    return deleteUserData(workspaceName)
                 else:
                     for row in rows:
                         if row.get('project_uuid') is not None:
                             projectUUID = row.get('project_uuid')
+                            projectName = row.get('project_name')
+                            centerProjectID = getCenterProjectID(projectUUID, projectName)
 
                             if projectUUID is not None:
-                                res = flask_api.center_client.projectsDelete(projectUUID)
+                                pvName = getBasicPVName(loginID, projectName)
+                                res = deletePV(workspaceName, pvName, centerProjectID)
+                                if res['status'] == 'failed':
+                                    return jsonify(status="failed", msg="cant pv delete " + projectName), 200
 
-                                if serverProjectNameList.get(projectUUID) is not None:
-                                    del serverProjectNameList[projectUUID]
+                                res = flask_api.center_client.projectsDelete(centerProjectID)
+
+                                if serverProjectNameList.get(centerProjectID) is not None:
+                                    del serverProjectNameList[centerProjectID]
 
                     #delete rest server project
-                    for projectUUID in serverProjectNameList.keys():
-                        res = flask_api.center_client.projectsDelete(projectUUID)
+                    for projectName in serverProjectNameList.keys():
+                        pvName = getBasicPVName(loginID, projectName[:-37])
+                        res = deletePV(workspaceName, pvName, projectName)
+                        if res['status'] == 'failed':
+                            return jsonify(status="failed", msg="cant pv delete " + projectName), 200
 
-                    return deleteUserData(userUUID)
+                        res = flask_api.center_client.projectsDelete(projectName)
+
+                    return deleteUserData(workspaceName)
             else:
-                return deleteUserData(userUUID)
+                return deleteUserData(workspaceName)
     return jsonify(status="failed", msg="no user " + loginID), 200
 
 

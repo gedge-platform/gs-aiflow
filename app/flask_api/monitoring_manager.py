@@ -231,6 +231,12 @@ class MonitoringManager:
                 res = utils.create_from_dict(aApiClient, node.data['yaml'], verbose=True)
                 node.data['status'] = 'Pending'
 
+    def getIsRunning(self, id : str):
+        if id is not None:
+            if self.__monitoringList.get(id) is not None:
+                return True
+        return False
+
     def checkNodeNeededToStartWorkFlowFromServer(self):
         self.monitoringWorkFlowFromCenter()
 

@@ -6,8 +6,9 @@ import { useQuery } from 'react-query';
 const DagDefineModalPod = (props) => {
   const form = props.form;
   const nodes = props.nodes;
+  const originName = props.name;
 
-  const [nameStatus, setNameStatus] = useState({ status: "", help: "" })
+  const [nameStatus, setNameStatus] = useState( form.name != null && form.name != undefined && form.name != '' ? { status: "success", help: "" } : { status: "", help: "" })
   const [frameworkList, setFrameworkList] = useState([])
   const [runtimeList, setRuntimeList] = useState([])
   const [tensorRTList, setTensorRTList] = useState([])
@@ -38,6 +39,12 @@ const DagDefineModalPod = (props) => {
   const options = [];
   const ids = [];
   nodes.forEach((node) => {
+    if(originName != null && originName != undefined){
+      if(node.id == originName){
+        return;
+      }
+    }
+
     options.push({
       label: node.id,
       value: node.id
@@ -98,6 +105,17 @@ const DagDefineModalPod = (props) => {
 
   function checkName(data) {
     var status = "";
+    if(originName != null){
+      if(data.target.value == originName){
+        status = "success";
+        setNameStatus({ status: "success", help: "" })
+        
+        form.name = data.target.value;
+        form.status = status;
+        return;
+      }
+    }
+
     if (ids.includes(data.target.value)) {
       status = "error";
       setNameStatus({ status: "error", help: "name is duplicated" })
@@ -159,6 +177,73 @@ const DagDefineModalPod = (props) => {
     form.tensorRT = data;
   }
 
+  function getDefaultName(){
+    if(form.name != null && form.name != undefined){
+      var status = "success";
+      form.status = status;
+      return form.name;
+    }
+    else{
+      return '';
+    }
+  }
+
+  function getDefaultFrameworkList(){
+    if(form.model != null && form.model != undefined){
+      axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + form.model, {withCredentials:true})
+      .then((res) => {
+        setFrameworkList(res.data.framework);
+      })
+      .catch((error) => {
+        setFrameworkList([]);
+      });
+    }
+
+    if(form.framework != null && form.framework != undefined){
+      console.log(form.framework)
+      return form.framework;
+    }
+    return '';
+  }
+
+
+  function getDefaultRuntimeList(){
+    if(form.framework != null && form.framework != undefined
+      && form.model != null && form.model != undefined){
+      axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + form.framework, {withCredentials:true})
+      .then((res) => {
+        console.log(res)
+        setRuntimeList(res.data.runtime);
+      })
+      .catch((error) => {
+        setRuntimeList([]);
+      });
+    }
+
+    if(form.runtime != null && form.runtime != undefined){
+      return form.runtime;
+    }
+    return '';
+  }
+
+
+  function getDefaultTensorRTList(){
+    if(form.runtime != null && form.runtime != undefined){
+      axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + form.runtime, {withCredentials:true})
+      .then((res) => {
+        setTensorRTList(res.data.tensorrt)
+      })
+      .catch((error) => {
+        setTensorRTList([]);
+      });
+    }
+
+    if(form.tensorRT != null && form.tensorRT != undefined){
+      return form.tensorRT;
+    }
+    return '';
+  }
+
   return (
     <div>
       <Form
@@ -173,11 +258,11 @@ const DagDefineModalPod = (props) => {
         </Form.Item>
         <Form.Item label="Name" validateStatus={nameStatus.status}
           help={nameStatus.help} hasFeedback>
-          <Input placeholder='Task Name' onChange={checkName} />
+          <Input placeholder='Task Name' value={getDefaultName()} onChange={checkName} />
           <label>알파벳과 숫자, 특수문자 - 만 가능합니다.</label>
         </Form.Item>
         <Form.Item label="Task">
-          <Select onChange={onChangeTask}>
+          <Select onChange={onChangeTask} defaultValue={form.task != null && form.task != undefined ? form.task : ''}>
             <Select.Option value="Train">Train</Select.Option>
             <Select.Option value="Validate">Validate</Select.Option>
             <Select.Option value="Optimization">Optimization</Select.Option>
@@ -189,28 +274,29 @@ const DagDefineModalPod = (props) => {
             mode="multiple"
             style={{ width: '100%' }}
             placeholder="Please select"
-            defaultValue={[]}
+            defaultValue={form.precondition != null && form.precondition != undefined ? form.precondition : [] }
             options={options}
             onChange={onChangePrecondition}
           />
         </Form.Item>
         <Form.Item label="Model">
-          <Select onChange={onChangeModel}>
+          <Select onChange={onChangeModel}
+          defaultValue={form.model != null && form.model != undefined ? form.model : null }>
             {!isLoading && getModels()}
           </Select>
         </Form.Item>
          <Form.Item label="Framework">
-          <Select onChange={onChangeFrameWorks}>
+          <Select onChange={onChangeFrameWorks} defaultValue={getDefaultFrameworkList}>
             {!isLoading && getFrameworks()}
           </Select>
         </Form.Item>
          <Form.Item label="Runtime">
-          <Select onChange={onChangeRuntime}>
+          <Select onChange={onChangeRuntime} defaultValue={getDefaultRuntimeList }>
             {!isLoading && getRuntimes()}
           </Select>
         </Form.Item>
         <Form.Item label="TensorRT">
-          <Select onChange={onChangeTensorRT}>
+          <Select onChange={onChangeTensorRT} defaultValue={getDefaultTensorRTList} >
             {!isLoading && getTensorRTs()}
           </Select>
         </Form.Item>
