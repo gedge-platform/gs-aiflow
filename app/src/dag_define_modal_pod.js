@@ -13,6 +13,10 @@ const DagDefineModalPod = (props) => {
   const [runtimeList, setRuntimeList] = useState([])
   const [tensorRTList, setTensorRTList] = useState([])
 
+  const [selectedModel, setSelectedModel] = useState(form.model ? form.model : null);
+  const [selectedFramework, setSelectedFramework] = useState(getDefaultFrameworkList);
+  const [selectedRuntime, setSelectedRuntime] = useState(getDefaultRuntimeList);
+  const [selectedTensorRT, setSelectedTensorRT] = useState(getDefaultTensorRTList);
 
   const getEnv = async () => {
     const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env', {withCredentials:true});
@@ -138,6 +142,8 @@ const DagDefineModalPod = (props) => {
 
   function onChangeModel(data) {
     form.model = data;
+    setSelectedModel(data);
+
     axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data, {withCredentials:true})
     .then((res) => {
       setFrameworkList(res.data.framework);
@@ -145,6 +151,8 @@ const DagDefineModalPod = (props) => {
     .catch((error) => {
       setFrameworkList([]);
     });
+
+    onChangeFrameWorks(null);
   }
   
   function onChangeTask(data) {
@@ -153,6 +161,8 @@ const DagDefineModalPod = (props) => {
 
   function onChangeFrameWorks(data) {
     form.framework = data;
+    setSelectedFramework(data);
+
     axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data, {withCredentials:true})
     .then((res) => {
       setRuntimeList(res.data.runtime)
@@ -160,10 +170,15 @@ const DagDefineModalPod = (props) => {
     .catch((error) => {
       setRuntimeList([]);
     });
+
+
+    onChangeRuntime(null);
   }
 
   function onChangeRuntime(data) {
     form.runtime = data;
+    setSelectedRuntime(data);
+
     axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data, {withCredentials:true})
     .then((res) => {
       setTensorRTList(res.data.tensorrt)
@@ -171,10 +186,13 @@ const DagDefineModalPod = (props) => {
     .catch((error) => {
       setTensorRTList([]);
     });
+
+    onChangeTensorRT(null);
   }
 
   function onChangeTensorRT(data) {
     form.tensorRT = data;
+    setSelectedTensorRT(data);
   }
 
   function getDefaultName(){
@@ -200,7 +218,6 @@ const DagDefineModalPod = (props) => {
     }
 
     if(form.framework != null && form.framework != undefined){
-      console.log(form.framework)
       return form.framework;
     }
     return '';
@@ -281,22 +298,24 @@ const DagDefineModalPod = (props) => {
         </Form.Item>
         <Form.Item label="Model">
           <Select onChange={onChangeModel}
-          defaultValue={form.model != null && form.model != undefined ? form.model : null }>
+          // defaultValue={form.model != null && form.model != undefined ? form.model : null }>
+          value={selectedModel}
+          >
             {!isLoading && getModels()}
           </Select>
         </Form.Item>
          <Form.Item label="Framework">
-          <Select onChange={onChangeFrameWorks} defaultValue={getDefaultFrameworkList}>
+          <Select onChange={onChangeFrameWorks} defaultValue={getDefaultFrameworkList} value={selectedFramework}>
             {!isLoading && getFrameworks()}
           </Select>
         </Form.Item>
          <Form.Item label="Runtime">
-          <Select onChange={onChangeRuntime} defaultValue={getDefaultRuntimeList }>
+          <Select onChange={onChangeRuntime} defaultValue={getDefaultRuntimeList } value={selectedRuntime}>
             {!isLoading && getRuntimes()}
           </Select>
         </Form.Item>
         <Form.Item label="TensorRT">
-          <Select onChange={onChangeTensorRT} defaultValue={getDefaultTensorRTList} >
+          <Select onChange={onChangeTensorRT} defaultValue={getDefaultTensorRTList} value={selectedTensorRT} >
             {!isLoading && getTensorRTs()}
           </Select>
         </Form.Item>

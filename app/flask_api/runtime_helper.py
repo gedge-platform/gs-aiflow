@@ -1,14 +1,25 @@
 import flask_api.global_def
 from flask_api.database import get_db_connection
 
+def getRuntimePathAndImage(runtime, model):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    c = cursor.execute(
+        f'select path, image_name from TB_RUNTIME where runtime_name = "{runtime}" and model = "{model}"')
+    rows = cursor.fetchall()
+    if rows is not None:
+        if len(rows) != 0:
+            return rows[0]['path'], rows[0]['image_name']
 
-def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID):
+def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework):
+    runtimePath, imageName = getRuntimePathAndImage(runtime, model)
+
     data = {'apiVersion': 'v1', 'kind': 'Pod',
             'metadata': {'name': nodeID, 'labels': {'app': 'nfs-test'}},
             'spec': {'restartPolicy': 'Never', 'containers': [
-                {'name': 'ubuntu', 'image': 'yolov5:v0.0.230511', 'imagePullPolicy': 'IfNotPresent',
+                {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
                  'command': ['/bin/bash', '-c'], 'args': [
-                    'source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python train.py --project /root/user --name yolo_coco128_train --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + nodeID + '.log'],
+                    'source /root/path.sh; PATH=/opt/conda/envs/' + runtimePath + '/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python train.py --project /root/user --name yolo_coco128_train --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + nodeID + '.log'],
                  'env': [{'name': 'LD_LIBRARY_PATH',
                           'value': '/root/volume/cuda/cuda-11.3/lib64:/root/volume/cudnn/cuda-cudnn-8.3/lib64:/root/volume/tensorrt/TensorRT-8.4.3.1-cuda-11/lib'}],
                  'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
@@ -16,8 +27,8 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID):
                      'subPath': 'cuda/cuda-11.3',
                      'readOnly': True}, {'mountPath': '/root/volume/cudnn/cuda-cudnn-8.3', 'name': 'nfs-volume-total',
                                          'subPath': 'cudnn/cuda-cudnn-8.3', 'readOnly': True},
-                    {'mountPath': '/opt/conda/envs/pt1.12.1_py38', 'name': 'nfs-volume-total',
-                     'subPath': 'envs/pt1.12.1_py38',
+                    {'mountPath': '/opt/conda/envs/' + runtimePath , 'name': 'nfs-volume-total',
+                     'subPath': 'envs/' + runtimePath,
                      'readOnly': True},
                     {'mountPath': '/root/volume/tensorrt/TensorRT-8.4.3.1-cuda-11/', 'name': 'nfs-volume-total',
                      'subPath': 'tensorrt/TensorRT-8.4.3.1-cuda-11', 'readOnly': True},
@@ -99,23 +110,23 @@ def getBasicPVCYaml(userLoginID, projectName):
 
 
 def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework)
 
     return data
 
 def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_validate --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights /root/user/yolo_coco128_train/weights/best.pt --batch-size 1 &>> /root/user/logs/' + node_id + '.log']
 
     return data
 def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python export.py --weights /root/user/yolo_coco128_train/weights/best.pt --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log']
 
     return data
 
 def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id)
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework)
     data['spec']['containers'][0]['args'] = ['source /root/path.sh; PATH=/opt/conda/envs/pt1.12.1_py38/bin:/root/volume/cuda/cuda-11.3/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; nohup python val.py --project /root/user --name yolo_coco128_opt_validate --weights /root/user/yolo_coco128_train/weights/best.engine --data ~/volume/dataset/coco128/coco128.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log']
 
     return data

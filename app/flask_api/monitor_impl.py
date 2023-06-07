@@ -748,9 +748,9 @@ def launchProject(user, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{user.userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectID = rows[0]['project_uuid']
     dag = getDag(user, projectName, True)
@@ -760,7 +760,7 @@ def launchProject(user, projectName):
     if res is True:
         return jsonify(status="success"), 200
     else:
-        return jsonify(status="failed"), 200
+        return jsonify(status="failed"), 400
 # return None
 def initProject(userUUID, workspaceName, projectName):
     mycon = get_db_connection()
@@ -768,9 +768,9 @@ def initProject(userUUID, workspaceName, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectID = rows[0]['project_uuid']
 
@@ -836,6 +836,9 @@ def createProject(userUUID, userLoginID, projectName, projectDesc, clusterName):
             workspaceName = row.get("workspace_name")
             break
 
+    if workspaceName is None:
+        return jsonify(status='failed', msg='can not find userUUID'), 404
+
     if workspaceName is not None:
         status = flask_api.center_client.projectsPost(workspaceName, config.api_id, centerProjectID, projectDesc,
                                                       clusterName=clusterName)
@@ -845,23 +848,23 @@ def createProject(userUUID, userLoginID, projectName, projectDesc, clusterName):
                 status = flask_api.center_client.pvCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PV'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
-                    return jsonify(status='failed', msg='pv make failed'), 200
+                    return jsonify(status='failed', msg='pv make failed'), 400
 
                 status = flask_api.center_client.pvcCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PVC'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
                     # TODO: PV 제거
-                    return jsonify(status='failed', msg='pvc make failed'), 200
+                    return jsonify(status='failed', msg='pvc make failed'), 400
 
             cursor.execute(
                 f'insert into TB_PROJECT (project_uuid, project_name, user_uuid, pv_name) value ("{projectID}", "{projectName}", "{userUUID}", "testPV");')
             mycon.commit()
             return jsonify(status='success'), 200
         else:
-            return jsonify(status='failed'), 200
+            return jsonify(status='failed'), 400
 
 
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
 
 
 def deletePV(userUUID, userLoginID, workspaceName, projectName):
@@ -900,14 +903,14 @@ def deleteProject(userUUID, userLoginID, workspaceName, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     #pv 지우기
     status = deletePV(userUUID, userLoginID, workspaceName, projectName)
     if status['status'] == 'failed':
-        return jsonify(status = 'failed', msg = 'cant delete pv'), 200
+        return jsonify(status = 'failed', msg = 'cant delete pv'), 400
 
     projectUUID = rows[0]['project_uuid']
     centerProjectID = getCenterProjectID(projectUUID, projectName)
@@ -918,7 +921,7 @@ def deleteProject(userUUID, userLoginID, workspaceName, projectName):
             f'delete from TB_PROJECT where project_uuid = "{projectUUID}";')
         mycon.commit()
         return jsonify(status='success'), 200
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
 
 
 def getProject(userUUID, projectName):
@@ -963,12 +966,12 @@ def getProject(userUUID, projectName):
                 return returnResponse, 200
             else:
                 #TODO: db 동기화 필요
-                return jsonify(msg='no data'), 200
+                return jsonify(msg='no data'), 404
         #db에 없음
         else:
-            return jsonify(msg='no data'), 200
+            return jsonify(msg='no data'), 404
 
-    return jsonify(msg='error'), 404
+    return jsonify(msg='error'), 400
 
 
 def getPodEnv():
@@ -998,16 +1001,16 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
     data = request.json
 
     if data['projectID'] is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
 
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
     cursor.execute(f'select project_uuid, project_name from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{data["projectID"]}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectUUID = rows[0]['project_uuid']
     projectName = rows[0]['project_name']
@@ -1196,4 +1199,4 @@ def initProjectForAdmin(loginID, projectName):
         if len(rows) != 0:
             return initProject(rows[0]['user_uuid'], rows[0]['workspace_name'], projectName)
 
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
