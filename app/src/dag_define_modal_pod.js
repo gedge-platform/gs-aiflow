@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from 'react';
-import { Form, Input, Select } from 'antd';
+import { Form, Input, Select, Button, Modal } from 'antd';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -13,10 +13,17 @@ const DagDefineModalPod = (props) => {
   const [runtimeList, setRuntimeList] = useState([])
   const [tensorRTList, setTensorRTList] = useState([])
 
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailEnabled, setDetailEnabled] = useState(false);
+  const [detailInputPath, setDetailInputPath] = useState(form.inputPath ? form.inputPath : null);
+  const [detailOutputPath, setDetailOutputPath] = useState(form.outputPath ? form.outputPath : null);
   const [selectedModel, setSelectedModel] = useState(form.model ? form.model : null);
   const [selectedFramework, setSelectedFramework] = useState(getDefaultFrameworkList);
   const [selectedRuntime, setSelectedRuntime] = useState(getDefaultRuntimeList);
   const [selectedTensorRT, setSelectedTensorRT] = useState(getDefaultTensorRTList);
+  useEffect(()=>{
+
+  }, [detailEnabled]);
 
   const getEnv = async () => {
     const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env', {withCredentials:true});
@@ -51,7 +58,8 @@ const DagDefineModalPod = (props) => {
 
     options.push({
       label: node.id,
-      value: node.id
+      value: node.id,
+      key: node.id
     });
     ids.push(node.id);
   });
@@ -187,12 +195,19 @@ const DagDefineModalPod = (props) => {
       setTensorRTList([]);
     });
 
+    setDetailEnabled(false);
     onChangeTensorRT(null);
   }
 
   function onChangeTensorRT(data) {
     form.tensorRT = data;
     setSelectedTensorRT(data);
+    if(data == null){
+      setDetailEnabled(false);
+    }
+    else{
+      setDetailEnabled(true);
+    }
   }
 
   function getDefaultName(){
@@ -256,9 +271,19 @@ const DagDefineModalPod = (props) => {
     }
 
     if(form.tensorRT != null && form.tensorRT != undefined){
+      setDetailEnabled(true);
       return form.tensorRT;
     }
+    setDetailEnabled(false);
     return '';
+  }
+
+  function onChangeInputPath(data){
+    form.inputPath = data.target.value;
+  }
+
+  function onChangeOutputPath(data){
+    form.outputPath = data.target.value;
   }
 
   return (
@@ -305,21 +330,46 @@ const DagDefineModalPod = (props) => {
           </Select>
         </Form.Item>
          <Form.Item label="Framework">
-          <Select onChange={onChangeFrameWorks} defaultValue={getDefaultFrameworkList} value={selectedFramework}>
+          <Select onChange={onChangeFrameWorks} value={selectedFramework}>
             {!isLoading && getFrameworks()}
           </Select>
         </Form.Item>
          <Form.Item label="Runtime">
-          <Select onChange={onChangeRuntime} defaultValue={getDefaultRuntimeList } value={selectedRuntime}>
+          <Select onChange={onChangeRuntime}  value={selectedRuntime}>
             {!isLoading && getRuntimes()}
           </Select>
         </Form.Item>
         <Form.Item label="TensorRT">
-          <Select onChange={onChangeTensorRT} defaultValue={getDefaultTensorRTList} value={selectedTensorRT} >
+          <Select onChange={onChangeTensorRT} value={selectedTensorRT} >
             {!isLoading && getTensorRTs()}
           </Select>
         </Form.Item>
-      </Form>
+        <Form.Item>
+          <Button type='primary' disabled={!detailEnabled} onClick={()=>{setDetailOpen(true)}}>Detail</Button>
+        </Form.Item>
+      <Modal title="세부 사항"
+                    open={detailOpen}
+                    onOk={()=>{setDetailOpen(false)}}
+                    onCancel={() => { setDetailOpen(false); }}
+                    footer={
+                        <div>
+                            <Button type="primary" onClick={() => { setDetailOpen(false); }}>
+                                확인
+                            </Button>
+                        </div>
+                    }
+                // onCancel={handleCancel}
+                >
+
+<Form.Item label="Input Path">
+          <Input disabled={false} onChange={onChangeInputPath} placeholder={"Input Path"} defaultValue={detailInputPath}/>
+        </Form.Item>
+        <Form.Item label="Output Path">
+          <Input disabled={false} onChange={onChangeOutputPath} placeholder={"Output Path"} defaultValue={detailOutputPath}/>
+        </Form.Item>
+                </Modal>
+      
+                </Form>
     </div>
   );
 }

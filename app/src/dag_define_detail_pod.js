@@ -1,12 +1,13 @@
 import { React, useEffect, useState } from 'react';
-import { Row, Col } from 'antd';
+import { Row, Col, Button, Modal } from 'antd';
+import axios from 'axios';
 
 const DagDefineDetailPod = (props) => {
   const data = props.data;
   const edges = props.edges;
   const projectID = props.projectID;
-
-
+  const [open, setOpen] = useState(false);
+  const [yaml, setYaml] = useState("");
   function getType(){
     if(data.data){
       if(data.data.type){
@@ -94,6 +95,20 @@ const DagDefineDetailPod = (props) => {
     return "";
   }
 
+  function onClickYaml(){
+    setOpen(true)
+    axios.get('/api/project/' + projectID + '/' + getPodName() + '/yaml', {withCredentials:true})
+    .then((res) => {
+      console.log(res.data.yaml)
+      if(res.data.yaml){
+        setYaml(res.data.yaml);
+      }
+    })
+    .catch((err)=>{
+
+    });
+  }
+
   return (
     // 모달이 열릴때 openModal 클래스가 생성된다.
     <div id='dag_define_detail'>
@@ -125,7 +140,23 @@ const DagDefineDetailPod = (props) => {
         <Col className='dag_define_detail_col head' span={6}><h4>TensorRT Ver.</h4></Col>
         <Col className='dag_define_detail_col data' span={6}><h4>{getTensorRT()}</h4></Col>
       </Row>
-   
+      <Row className='dag_define_detail_row'>
+        <Col className='dag_define_detail_col head' span={6}><h4>Yaml</h4></Col>
+        <Col className='dag_define_detail_col data' span={6}>
+          <Button type='primary' onClick={onClickYaml}>See</Button>
+        </Col>
+
+      </Row>
+      <Modal 
+      title={'yaml'}
+      open={open}
+      onOk={()=>{setOpen(false)}}
+      onCancel={()=>{setOpen(false)}}
+      >
+        {
+          yaml
+        }
+      </Modal>
     </div>
   );
 }
