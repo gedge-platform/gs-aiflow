@@ -179,7 +179,7 @@ def getTaskYaml(projectName, taskName):
     user = user_impl.getUserInSession()
     if user is None:
         return flask.jsonify(status='failed', msg = 'auth failed'), 401
-    return monitor_impl.testYaml(projectName, taskName, user.userUUID)
+    return monitor_impl.getPodYaml(projectName, taskName, user.userUUID)
 @app.route('/api/testget', methods=['GET'])
 def testget1():
     return monitor_impl.getTest()

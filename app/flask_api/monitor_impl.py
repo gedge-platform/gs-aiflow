@@ -1000,8 +1000,8 @@ def getPodEnv():
 def postDag(userUUID, userLoginID, userName, workspaceName):
     data = request.json
 
-    if data['projectID'] is None:
-        return jsonify(status = 'failed'), 400
+    if data.get('projectID') is None:
+        return jsonify(status = 'failed', msg="project ID is None"), 400
 
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
@@ -1047,21 +1047,57 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
             preCond = preCond.__str__()
             task = node['data']['task']
 
-            if node['data'].get('inputPath') is None:
-                node['data']['inputPath'] = ''
-            if node['data'].get('outputPath') is None:
-                node['data']['outputPath'] =''
+            model = node['data']['model']
+
+            datasetPath = ''
+            modelPath = ''
+            outputPath = ''
+            if model == 'yolov5':
+                datasetPath = '~/volume/dataset/coco128/'
+
+                if task == 'Validate' or task == 'Optimization':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.pt'
+                elif task == 'Opt_Validate':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.engine'
+
+                if task == 'Train':
+                    outputPath = 'yolo_coco128_train'
+                elif task == 'Validate':
+                    outputPath = 'yolo_coco128_validate'
+                elif task == 'Opt_Validate':
+                    outputPath = 'yolo_coco128_opt_validate'
+            elif model == 'retinaface':
+                datasetPath = '~/volume/dataset/coco128/'
+
+                if task == 'Validate' or task == 'Optimization':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.pt'
+                elif task == 'Opt_Validate':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.engine'
+
+                if task == 'Train':
+                    outputPath = 'yolo_coco128_train'
+                elif task == 'Validate':
+                    outputPath = 'yolo_coco128_validate'
+                elif task == 'Opt_Validate':
+                    outputPath = 'yolo_coco128_opt_validate'
+
+            if node['data'].get('datasetPath'):
+                datasetPath = '/root/user/' + node['data'].get('datasetPath')
+            if node['data'].get('modelPath'):
+                modelPath = '/root/user/' + node['data'].get('modelPath')
+            if node['data'].get('outputPath'):
+                outputPath = node['data'].get('outputPath')
 
 
             yaml = {}
             if task == 'Train':
-                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], node['data']['inputPath'], node['data']['outputPath'])
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, outputPath)
             elif task == 'Validate':
-                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], node['data']['inputPath'], node['data']['outputPath'])
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
             elif(task == 'Optimization'):
-                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], node['data']['inputPath'], node['data']['outputPath'])
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], modelPath)
             elif(task == 'Opt_Validate'):
-                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], node['data']['inputPath'], node['data']['outputPath'])
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
 
             yaml = yaml.__str__()
             d = node['data'].__str__()
@@ -1209,15 +1245,25 @@ def initProjectForAdmin(loginID, projectName):
     return jsonify(status='failed'), 400
 
 
-def testYaml(projectName, taskName, userUUID):
+def getPodYaml(projectName, taskName, userUUID):
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
     cursor.execute(f'select yaml from TB_NODE INNER JOIN TB_PROJECT ON TB_PROJECT.project_uuid = TB_NODE.project_uuid where user_uuid = "{userUUID}" and node_name = "{taskName}" and project_name = "{projectName}";')
     rows = cursor.fetchall()
+
+
     if rows is not None:
         if len(rows) != 0:
-            return jsonify(yaml = rows[0]['yaml']), 200
+            try:
+                resultJson = json.loads(stringToJsonAvailableStr(rows[0]['yaml']))
+                return jsonify(yaml=resultJson), 200
+            except json.decoder.JSONDecodeError as e:
+                return jsonify(status='failed'), 404
+
         else:
             return jsonify(status='failed'), 404
     else:
         jsonify(status='failed'), 400
+
+def stringToJsonAvailableStr(str : str):
+    return str.replace("\'", "\"").replace("True", "true")

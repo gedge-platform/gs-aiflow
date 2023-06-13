@@ -92,13 +92,21 @@ const validateProjectFromServer = (name) => {
   .then(response => {
     if(response['data']['data'] != undefined){
         setValidation(false);
-        console.log(response['data']['data']);
     }
     else{
         setValidation(true);
-        console.log(response['data']['data']);
     }
     
+    setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[0] = false;
+      return newLoadings;
+    });
+  })
+  .catch(err => {
+    if(err.response.status == 404){
+      setValidation(true);
+    }
     setLoadings((prevLoadings) => {
       const newLoadings = [...prevLoadings];
       newLoadings[0] = false;

@@ -121,25 +121,25 @@ def getBasicPVCYaml(userLoginID, projectName):
     return data
 
 
-def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python train.py --project /root/user --name yolo_coco128_train --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
+def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
+    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python train.py --project /root/user --name ' + outputPath + ' --data  ' + datasetPath + '/dataset.yaml --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
     return data
 
-def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python val.py --project /root/user --name yolo_coco128_validate --data ~/volume/dataset/coco128/coco128.yaml --device 0 --weights /root/user/yolo_coco128_train/weights/best.pt --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
+def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
+    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python val.py --project /root/user --name ' + outputPath +  ' --data ' + datasetPath + '/dataset.yaml --device 0 --weights ' + modelPath + ' --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
 
     return data
-def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights /root/user/yolo_coco128_train/weights/best.pt --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
+def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath, modelPath)
+    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights ' + modelPath + ' --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
 
     return data
 
-def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath):
-    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, inputPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python val.py --project /root/user --name yolo_coco128_opt_validate --weights /root/user/yolo_coco128_train/weights/best.engine --data ~/volume/dataset/coco128/coco128.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
+def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
+    data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
+    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python val.py --project /root/user --name ' + outputPath +  ' --weights ' + modelPath + ' --data ' + datasetPath + '/dataset.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
 
     return data
 

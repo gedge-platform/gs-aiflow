@@ -7,7 +7,7 @@ const DagDefineDetailPod = (props) => {
   const edges = props.edges;
   const projectID = props.projectID;
   const [open, setOpen] = useState(false);
-  const [yaml, setYaml] = useState("");
+  const [yaml, setYaml] = useState({});
   function getType(){
     if(data.data){
       if(data.data.type){
@@ -99,13 +99,12 @@ const DagDefineDetailPod = (props) => {
     setOpen(true)
     axios.get('/api/project/' + projectID + '/' + getPodName() + '/yaml', {withCredentials:true})
     .then((res) => {
-      console.log(res.data.yaml)
       if(res.data.yaml){
         setYaml(res.data.yaml);
       }
     })
     .catch((err)=>{
-
+      console.log(err)
     });
   }
 
@@ -152,10 +151,14 @@ const DagDefineDetailPod = (props) => {
       open={open}
       onOk={()=>{setOpen(false)}}
       onCancel={()=>{setOpen(false)}}
+      destroyOnClose={true}
       >
+        <div 
+          style={{width:'100%', height:'600px', whiteSpace:'pre-wrap', wordBreak:'break-all', overflowY:'auto'}}>
         {
-          yaml
+          typeof yaml == 'object' ? JSON.stringify(yaml, null, 4) : yaml
         }
+        </div>
       </Modal>
     </div>
   );

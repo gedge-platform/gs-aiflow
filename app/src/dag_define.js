@@ -219,7 +219,8 @@ function DagDefine(props) {
                 framework : data.framework,
                 runtime : data.runtime,
                 tensorRT : data.tensorRT,
-                inputPath : data.inputPath,
+                datasetPath : data.datasetPath,
+                modelPath : data.modelPath,
                 outputPath : data.outputPath
             });
             setTaskEditingOpen(true);
@@ -362,7 +363,8 @@ function DagDefine(props) {
         const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
-        const inputPath = form.inputPath;
+        const datasetPath = form.datasetPath;
+        const modelPath = form.modelPath;
         const outputPath = form.outputPath;
 
         if (!name) {
@@ -398,8 +400,21 @@ function DagDefine(props) {
         taskCreating.data.runtime = runtime;
         taskCreating.data.tensorRT = tensorRT;
         taskCreating.data.type = type;
-        taskCreating.data.inputPath = inputPath;
-        taskCreating.data.outputPath = outputPath;
+        if(datasetPath)
+            taskCreating.data.datasetPath = datasetPath;
+        else if(taskCreating.data.datasetPath)
+            delete taskCreating.data.datasetPath;
+
+        if(modelPath)
+            taskCreating.data.modelPath = modelPath;
+        else if(taskCreating.data.modelPath)
+            delete taskCreating.data.modelPath;
+            
+        if(outputPath)
+            taskCreating.data.outputPath = outputPath;
+        else if(taskCreating.data.outputPath)
+            delete taskCreating.data.outputPath;
+                
 
         const newEdges = [];
         precondition.forEach((prec) => {
@@ -418,8 +433,6 @@ function DagDefine(props) {
         const id = editingNode.id;
         const node = reactFlowInstance.getNode(id);
 
-        console.log(form)
-
         //delete edges
         const newEdges = edges.filter(edge => edge.target != id);
         const newNodes = nodes.filter(node => node.id != id);
@@ -433,7 +446,8 @@ function DagDefine(props) {
         const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
-        const inputPath = form.inputPath;
+        const datasetPath = form.datasetPath;
+        const modelPath = form.modelPath;
         const outputPath = form.outputPath;
 
         if (!name) {
@@ -476,8 +490,20 @@ function DagDefine(props) {
         node.data.runtime = runtime;
         node.data.tensorRT = tensorRT;
         node.data.type = type;
-        node.data.inputPath = inputPath;
-        node.data.outputPath = outputPath;
+        if(datasetPath)
+            node.data.datasetPath = datasetPath;
+        else if(node.data.datasetPath)
+            delete node.data.datasetPath
+            
+        if(modelPath)
+            node.data.modelPath = modelPath;
+        else if(node.data.modelPath)
+            delete node.data.modelPath
+
+        if(outputPath)
+            node.data.outputPath = outputPath;
+        else if(node.data.outputPath)
+            delete node.data.outputPath
 
         newNodes.push(node);
 
