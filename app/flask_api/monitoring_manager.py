@@ -75,7 +75,7 @@ class MonitoringManager:
             for detailInfo in detailInfoList:
                 resourceData : dict = detailInfo['resource']
                 for res in resourceData.items():
-                    if res[0] != 'namespace_count' and res[0] != 'pv_count' and res[1] != 0:
+                    if res[0] != 'namespace_count' and res[0] != 'pv_count' and res[0] != 'service_count' and res[1] != 0:
                         return False
 
             self.__monitoringList[data.id] = data
@@ -284,6 +284,9 @@ class MonitoringManager:
                 # node 실행
                 # TODO: yaml 찾아야 함
 
+                # if node.data['task'] == 'Inference':
+                #     res = flask_api.center_client.podsPost(node.data['yaml'], workflow.workspace, "mec(ilsan)", 'default')
+                # else:
                 res = flask_api.center_client.podsPost(node.data['yaml'], workflow.workspace, "mec(ilsan)", id)
                 node.data['status'] = 'Pending'
 

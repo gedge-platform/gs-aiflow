@@ -17,17 +17,19 @@ import { useQuery } from 'react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
+import { catchError } from './utils/network';
 import Sidebar from './service_define_sidebar';
 import NodeInfo from './service_define_node_info';
 import TextUpdaterNode from './textUpdaterNode';
 import PodNode from './pod_node_small';
 import './css/textUpdaterNode.scss'
 import axios from 'axios';
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
+// import Modal from 'antd';
 import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
-import { Button, Row, Col, Divider, Select , notification} from 'antd';
+import { Button, Row, Col, Divider, Select , notification, Modal} from 'antd';
 import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
@@ -130,6 +132,9 @@ function Flow(props) {
           //fit view
           return res['data']
         })
+        .catch((error) => {
+          catchError(error, navigate);
+        });
     }, {
     refetchInterval: 5000,
   }
@@ -188,6 +193,12 @@ const getProjectList = async ( id ) => {
     setSelectedNodeData(node);
     // openModal();
   };
+
+  const onNodeContextMenu = (target, node) => {
+    setTitle(node.id);
+    openModal();
+    
+  }
 
   const onPaneClick = (e) => {
     setToggleFlag(false);
@@ -391,10 +402,11 @@ const getProjectList = async ( id ) => {
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            onContextMenu={(e)=>{e.preventDefault();}}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={onNodeClick}
-            // onEdgeClick={onEdgeClick}
+            onNodeContextMenu={onNodeContextMenu}
             onPaneClick={onPaneClick}
             onConnect={onConnect}
             onEdgeUpdate={onEdgeUpdate}
@@ -418,17 +430,21 @@ const getProjectList = async ( id ) => {
 
 
       <div>
+
         <Modal
-          isOpen={modalIsOpen}
-          onAfterOpen={afterOpenModal}
-          onRequestClose={closeModal}
-          contentLabel="Example Modal"
-          className="layer_event"
-          ariaHideApp={false}
+          title = "Log 보기"
+          open={modalIsOpen}
+          onCancel={closeModal}
+          onOk={afterOpenModal}
+          destroyOnClose={true}
         >
-          <h3 ref={(_subtitle) => (subtitle = _subtitle)}>{title}</h3>
-          <button onClick={closeModal}>close</button>
-          <DagModal nodeType={"Pod"} data={selectedNodeData} />
+          <div
+            style={{ height: '400px' }}>
+
+            <h3 ref={(_subtitle) => (subtitle = _subtitle)}>이름 : {title}</h3>
+            {/* <DagModal nodeType={"Pod"} data={selectedNodeData} /> */}
+            "이부분은 로그가 출력될 부분입니다."
+          </div>
         </Modal>
         <Modal
           isOpen={popUpModalIsOpen}

@@ -1,6 +1,8 @@
 import { React, useEffect, useState } from 'react';
 import { Row, Col, Button, Modal } from 'antd';
 import axios from 'axios';
+import { catchError } from './utils/network';
+import { useNavigate } from 'react-router';
 
 const DagDefineDetailPod = (props) => {
   const data = props.data;
@@ -8,6 +10,7 @@ const DagDefineDetailPod = (props) => {
   const projectID = props.projectID;
   const [open, setOpen] = useState(false);
   const [yaml, setYaml] = useState({});
+  const navigate = useNavigate();
   function getType(){
     if(data.data){
       if(data.data.type){
@@ -104,7 +107,7 @@ const DagDefineDetailPod = (props) => {
       }
     })
     .catch((err)=>{
-      console.log(err)
+      catchError(err, navigate);
     });
   }
 

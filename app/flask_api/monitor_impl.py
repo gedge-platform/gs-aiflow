@@ -1098,7 +1098,8 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
                 yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], modelPath)
             elif(task == 'Opt_Validate'):
                 yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
-
+            elif(task == 'Inference'):
+                yaml = flask_api.runtime_helper.makeYamlInferenceRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             yaml = yaml.__str__()
             d = node['data'].__str__()
             #TODO: yaml 생성

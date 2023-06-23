@@ -34,7 +34,6 @@ const DagDefineModalPod = (props) => {
 
   const getModelsAPI = async () => {
     const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model', {withCredentials:true})
-    console.log(data)
     return data;
   };
 
@@ -302,7 +301,6 @@ const DagDefineModalPod = (props) => {
       && form.model != null && form.model != undefined){
       axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + form.framework, {withCredentials:true})
       .then((res) => {
-        console.log(res)
         setRuntimeList(res.data.runtime);
       })
       .catch((error) => {
@@ -393,6 +391,7 @@ const DagDefineModalPod = (props) => {
             <Select.Option value="Validate">Validate</Select.Option>
             <Select.Option value="Optimization">Optimization</Select.Option>
             <Select.Option value="Opt_Validate">Opt_Validate</Select.Option>
+            <Select.Option value="Inference">Inference</Select.Option>
           </Select>
         </Form.Item>
         <div style={{ display: selectedTask ? '' : 'none'}}>

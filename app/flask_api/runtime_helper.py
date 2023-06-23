@@ -150,3 +150,76 @@ def getProjectYaml(userLoginID, projectName):
     yaml['PVC'] = getBasicPVCYaml(userLoginID, projectName)
 
     return yaml
+
+
+def makeYamlInferenceRuntime(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework):
+    runtimePath, imageName, cudaPath, cudnnPath = getRuntimePathAndImage(runtime, model)
+    tensorRTPath = getTensorRTPath(runtime, tensorRT)
+
+    appLabel = 'yolo-test'
+    if(model == 'yolov5'):
+        appLabel = 'yolo-test'
+        imageName = 'softonnet/yolov5/inference_test:v0.0.1.230616'
+    elif(model == 'RetinaFace'):
+        appLabel = 'retina-test'
+        imageName = 'softonnet/retinaface/inference_test:v0.0.1.230616'
+
+    data = {'apiVersion': 'v1', 'kind': 'Pod',
+            'metadata': {'name': nodeID, 'labels': {'app': appLabel}},
+            'spec': {'restartPolicy': 'Never', 'containers': [
+                {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
+                 'command': ['/bin/bash', '-c'], 'args': [
+                    'source /root/path.sh; PATH=/opt/conda/envs/' + runtimePath + '/bin:/root/volume/cuda/' + cudaPath + '/bin:$PATH; env; sh /script.sh;tail -f /dev/null'],
+                 'env': [{'name': 'LD_LIBRARY_PATH',
+                          'value': '/root/volume/cuda/' + cudaPath + '/lib64:/root/volume/cudnn/' + cudnnPath + '/lib64:/root/volume/tensorrt/' + tensorRTPath + '/lib'}],
+                 'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
+                    {'mountPath': '/root/volume/cuda/' + cudaPath, 'name': 'nfs-volume-total',
+                     'subPath': 'cuda/' + cudaPath,
+                     'readOnly': True}, {'mountPath': '/root/volume/cudnn/' + cudnnPath, 'name': 'nfs-volume-total',
+                                         'subPath': 'cudnn/' + cudnnPath, 'readOnly': True},
+                    {'mountPath': '/opt/conda/envs/' + runtimePath, 'name': 'nfs-volume-total',
+                     'subPath': 'envs/' + runtimePath,
+                     'readOnly': True},
+                    {'mountPath': '/root/volume/tensorrt/' + tensorRTPath + '/', 'name': 'nfs-volume-total',
+                     'subPath': 'tensorrt/' + tensorRTPath, 'readOnly': True},
+                    {'mountPath': '/root/volume/dataset/coco128', 'name': 'nfs-volume-total',
+                     'subPath': 'dataset/coco128',
+                     'readOnly': True},
+                    {'mountPath': '/root/user', 'name': 'nfs-volume-total',
+                     'subPath': 'users/' + userLoginID + "/" + projectName}]}],
+                     'volumes': [
+                         {'name': 'nfs-volume-total',
+                          'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
+
+    if model == 'RetinaFace':
+        data = {'apiVersion': 'v1', 'kind': 'Pod',
+                'metadata': {'name': nodeID, 'labels': {'app': appLabel}},
+                'spec': {'restartPolicy': 'Never', 'containers': [
+                    {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
+                     'command': ['/bin/bash', '-c'], 'args': [
+                        'source /root/path.sh; PATH=/opt/conda/envs/' + runtimePath + '/bin:/root/volume/cuda/' + cudaPath + '/bin:$PATH; env; sh /script.sh;tail -f /dev/null'],
+                     'env': [{'name': 'LD_LIBRARY_PATH',
+                              'value': '/root/volume/cuda/' + cudaPath + '/lib64:/root/volume/cudnn/' + cudnnPath + '/lib:/root/volume/tensorrt/' + tensorRTPath + '/lib:/root/volume/nccl/nccl_2.17.1-1+cuda11.0_x86_64/lib'}],
+                     'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
+                        {'mountPath': '/root/volume/cuda/' + cudaPath, 'name': 'nfs-volume-total',
+                         'subPath': 'cuda/' + cudaPath,
+                         'readOnly': True}, {'mountPath': '/root/volume/cudnn/' + cudnnPath, 'name': 'nfs-volume-total',
+                                             'subPath': 'cudnn/' + cudnnPath, 'readOnly': True},
+                        {'mountPath': '/opt/conda/envs/' + runtimePath, 'name': 'nfs-volume-total',
+                         'subPath': 'envs/' + runtimePath,
+                         'readOnly': True},
+                        {'mountPath': '/root/volume/tensorrt/' + tensorRTPath + '/', 'name': 'nfs-volume-total',
+                         'subPath': 'tensorrt/' + tensorRTPath, 'readOnly': True},
+                        {'mountPath': '/root/volume/nccl/nccl_2.17.1-1+cuda11.0_x86_64', 'name': 'nfs-volume-total',
+                         'subPath': 'nccl/nccl_2.17.1-1+cuda11.0_x86_64', 'readOnly': True},
+                        {'mountPath': '/root/volume/dataset/retinaface', 'name': 'nfs-volume-total',
+                         'subPath': 'dataset/retinaface',
+                         'readOnly': True},
+                        {'mountPath': '/root/user', 'name': 'nfs-volume-total',
+                         'subPath': 'users/' + userLoginID + "/" + projectName}]}],
+                         'volumes': [
+                             {'name': 'nfs-volume-total',
+                              'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
+
+
+    return data

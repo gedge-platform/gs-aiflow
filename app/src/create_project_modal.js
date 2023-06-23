@@ -30,7 +30,6 @@ const CreateProjectModal = (props) => {
       const { data } = await axios.get(process.env.REACT_APP_API+'/api/clusters', {withCredentials:true});
       var list = data.cluster_list;
       var count = 0;
-      console.log(data)
       list.forEach(function(item){
           item.key = count;
           count++;
@@ -48,7 +47,6 @@ const CreateProjectModal = (props) => {
 const rowSelection = {
   onChange: (selectedRowKeys, selectedRows) => {
     setClusterList(selectedRows);
-    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
   },
   getCheckboxProps: (record) => ({
     disabled: record.name === 'Disabled User',

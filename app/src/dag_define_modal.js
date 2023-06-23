@@ -5,7 +5,6 @@ const DagDefineModal = (props) => {
   const type = props.type;
   const modalType = props.modalType;
   const form = props.form;
-  console.log(form, props)
   const nodes = props.nodes;
   var modal = null;
   if(modalType == 'define'){

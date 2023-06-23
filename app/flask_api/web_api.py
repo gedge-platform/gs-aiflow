@@ -8,6 +8,7 @@ from flask import request, redirect, session
 from flask_sockets import Sockets
 from flask_cors import CORS
 
+import flask_api.global_def
 # from flask_restful import reqparse
 
 from flask_api import monitor_impl, auth_impl, user_impl
@@ -334,7 +335,7 @@ def getPodEnvTensor(runtimeName):
 @auth_impl.needLogin()
 def getStorageSite():
     if request.method == 'GET':
-        return redirect ('http://223.62.156.241:32223')
+        return redirect (flask_api.global_def.config.database_server )
 
 
 @app.route('/api/project/<string:projectName>/storage', methods=['GET'])
@@ -344,7 +345,7 @@ def getProjectStorage(projectName):
         user = user_impl.getUserInSession()
         if user is None:
             return flask.jsonify(status='failed', msg='auth failed'), 401
-        return flask.jsonify(link='http://223.62.156.241:32223/' + projectName), 200
+        return flask.jsonify(link= flask_api.global_def.config.database_server + '/files/' + projectName), 200
 
 @app.route('/api/project/dag', methods=['POST'])
 @auth_impl.needLogin()
