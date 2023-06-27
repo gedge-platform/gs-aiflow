@@ -249,3 +249,48 @@ def pvcCreate(body, workspace : str, cluster : str, project : str):
         return response.json()
     except:
         return {}
+
+
+def serviceDelete(name, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/services/" + name, method="DELETE", params=query)
+    if code != 201 and code != 200:
+        return {'status' : "Failure"}
+    try:
+        return response.json()
+    except:
+        return {'status' : "Failure"}
+
+
+def servicePost(body, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/services", method="POST", params=query, body=body)
+    if code != 201 and code != 200:
+        return {'status' : "Failure"}
+    try:
+        return json.loads(response.json()['data'])
+    except:
+        return {'status' : "Failure"}
+
+
+def pvcDelete(name, workspace : str, cluster : str, project : str):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/pvcs/" + name, method="DELETE", params=query)
+    if code != 201 and code != 200:
+        return {'status' : "Failure"}
+    try:
+        return response.json()
+    except:
+        return {'status' : "Failure"}

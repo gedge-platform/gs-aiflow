@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS TB_USER (
   user_uuid VARCHAR(36) NOT NULL PRIMARY KEY,
   login_id VARCHAR(30) NOT NULL UNIQUE,
   login_pass VARCHAR(64),
+  jupyter_pass VARCHAR(84),
+  jupyter_port SMALLINT(5) UNSIGNED NULL DEFAULT NULL,
   user_name VARCHAR(30),
   workspace_name VARCHAR(36),
   is_admin BOOL NOT NULL DEFAULT 0,

@@ -115,3 +115,8 @@ def isLogin():
     }
 
     return jsonify(status="success", data=data), 200
+
+#make password for jupyter notebook
+def makePassNotebook(pw : str = ''):
+    from notebook.auth import passwd
+    return passwd(pw, 'sha256')

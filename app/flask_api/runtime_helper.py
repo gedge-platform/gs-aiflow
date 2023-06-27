@@ -1,5 +1,6 @@
 import flask_api.global_def
 from flask_api.database import get_db_connection
+import os
 
 def getRuntimePathAndImage(runtime, model):
     conn = get_db_connection()
@@ -48,18 +49,18 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                      'subPath': 'dataset/coco128',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                     'subPath': 'users/' + userLoginID + "/" + projectName}]}],
+                     'subPath': 'user/' + userLoginID + "/" + projectName}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
     return data
 
 
 def getBasicPVName(userLoginID, projectName):
-    return "pv." + flask_api.global_def.config.api_id + "." + userLoginID + "." + projectName
+    return "pv-project-" + flask_api.global_def.config.api_id + "-" + userLoginID + "-" + projectName
 
 
 def getBasicPVCName(userLoginID, projectName):
-    return "pvc." + flask_api.global_def.config.api_id + "." + userLoginID + "." + projectName
+    return "pvc-project-" + flask_api.global_def.config.api_id + "-" + userLoginID + "-" + projectName
 
 
 def getBasicPVYaml(userLoginID, projectName):
@@ -186,7 +187,7 @@ def makeYamlInferenceRuntime(userLoginID, userName, projectName, projectID, node
                      'subPath': 'dataset/coco128',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                     'subPath': 'users/' + userLoginID + "/" + projectName}]}],
+                     'subPath': 'user/' + userLoginID + "/" + projectName}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total',
                           'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
@@ -216,10 +217,151 @@ def makeYamlInferenceRuntime(userLoginID, userName, projectName, projectID, node
                          'subPath': 'dataset/retinaface',
                          'readOnly': True},
                         {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                         'subPath': 'users/' + userLoginID + "/" + projectName}]}],
+                         'subPath': 'user/' + userLoginID + "/" + projectName}]}],
                          'volumes': [
                              {'name': 'nfs-volume-total',
                               'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
 
 
+    return data
+
+def getUserJupyterNodeportName(loginID):
+    return 'np-' + flask_api.global_def.config.api_id + '-' + loginID
+
+def getUserJupyterLabelName(loginID):
+    return 'jupyter-' + flask_api.global_def.config.api_id + '-' + loginID
+
+def getUserJupyterPVName(loginID):
+    return 'pv-user-' + flask_api.global_def.config.api_id + '-' + loginID
+
+def getUserJupyterPVCName(loginID):
+    return 'pvc-user-' + flask_api.global_def.config.api_id + '-' + loginID
+
+
+
+def makeUserJupyterNodeportYaml(loginID):
+    return {
+        "apiVersion": "v1",
+        "kind": "Service",
+        "metadata": {
+            "name": getUserJupyterNodeportName(loginID),
+            "namespace": "softonnet-system"
+        },
+        "spec": {
+            "type": "NodePort",
+            "ports": [
+                {
+                    "port": 8888,
+                    "targetPort": 8888,
+                    "name": "jupyter"
+                }
+            ],
+            "selector": {
+                "app": getUserJupyterLabelName(loginID)
+            }
+        }
+    }
+
+# def makeUserJupyterNodeportYaml(loginID, passwd):
+def makeUserJupyterPVYaml(loginID):
+    data = {
+        "apiVersion": "v1",
+        "kind": "PersistentVolume",
+        "metadata": {
+            "name": getUserJupyterPVName(loginID),
+            "labels": {
+                "type": "local"
+            }
+        },
+        "spec": {
+            "storageClassName": "",
+            "persistentVolumeReclaimPolicy": "Retain",
+            "capacity": {
+                "storage": "20Gi"
+            },
+            "accessModes": [
+                "ReadWriteMany"
+            ],
+            "nfs": {
+                "path": flask_api.global_def.config.nfs_path + "/user/" + loginID,
+                "server": flask_api.global_def.config.nfs_server
+            }
+        }
+    }
+    return data
+
+def makeUserJupyterPVCYaml(loginID):
+    data = {
+          "apiVersion": "v1",
+          "kind": "PersistentVolumeClaim",
+          "metadata": {
+            "name": getUserJupyterPVCName(loginID),
+            "namespace": "softonnet-system"
+          },
+          "spec": {
+            "accessModes": [
+              "ReadWriteMany"
+            ],
+            "volumeMode": "Filesystem",
+            "storageClassName": "",
+            "resources": {
+              "requests": {
+                "storage": "10Gi"
+              }
+            },
+            "volumeName": getUserJupyterPVName(loginID),
+            "selector": {
+              "matchLabels": {
+                "app": getUserJupyterLabelName(loginID)
+              }
+            }
+          }
+    }
+    return data
+
+def makeUserJupyterPodYaml(loginID, jupyterPW):
+    data = {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": getUserJupyterLabelName(loginID),
+        "namespace": "softonnet-system",
+        "labels": {
+          "app": getUserJupyterLabelName(loginID)
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "image": "jupyter/base-notebook",
+            "command": [
+              "sh",
+              "-c",
+              "start-notebook.sh --NotebookApp.allow_origin=* --NotebookApp.password=" + jupyterPW + " --ip=0.0.0.0 --NotebookApp.base_url=/storage/" + loginID
+            ],
+            "name": "jupyter",
+            "volumeMounts": [
+              {
+                "name": "user-nfs-volume",
+                "mountPath": "/home/jovyan"
+              }
+            ],
+            "ports": [
+              {
+                "containerPort": 8888,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "user-nfs-volume",
+            "persistentVolumeClaim": {
+              "claimName": getUserJupyterPVCName(loginID)
+            }
+          }
+        ]
+      }
+    }
     return data

@@ -16,6 +16,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import common.logger
 import flask_api.center_client
 import flask_api.runtime_helper
+import flask_api.filesystem_impl
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -425,7 +426,7 @@ def setMonitor(result):
     return str('success')
 
 
-def abstractMonitor(clusterName):
+def abstractMonitor(clusterName: object) -> object:
     try:
         mycon = get_db_connection()
 
@@ -843,16 +844,21 @@ def createProject(userUUID, userLoginID, projectName, projectDesc, clusterName):
         status = flask_api.center_client.projectsPost(workspaceName, config.api_id, centerProjectID, projectDesc,
                                                       clusterName=clusterName)
         if status['status'] != 'failed':
+            #make folder
+            flask_api.filesystem_impl.makeFolderToNFS('user/' + userLoginID + '/' + projectName)
+
             for cluster in clusterName:
                 # pv 부터 pvc는 프로젝트 생성후
                 status = flask_api.center_client.pvCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PV'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
+                    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
                     return jsonify(status='failed', msg='pv make failed'), 400
 
                 status = flask_api.center_client.pvcCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PVC'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
+                    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
                     # TODO: PV 제거
                     return jsonify(status='failed', msg='pvc make failed'), 400
 
@@ -906,6 +912,9 @@ def deleteProject(userUUID, userLoginID, workspaceName, projectName):
         return jsonify(status = 'failed'), 400
     if len(rows) == 0:
         return jsonify(status = 'failed'), 404
+
+    #delete folder
+    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
 
     #pv 지우기
     status = deletePV(userUUID, userLoginID, workspaceName, projectName)

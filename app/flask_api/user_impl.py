@@ -5,7 +5,8 @@ import flask_api.auth_impl
 from flask_api.monitoring_manager import get_db_connection
 import flask_api.center_client
 from flask_api.global_def import config
-from flask_api.runtime_helper import getBasicPVName
+from flask_api.runtime_helper import getBasicPVName, makeUserJupyterNodeportYaml
+from flask_api.filesystem_impl import makeFolderToNFS, removeFolderFromNFS
 
 class User:
     def __init__(self, userID, userLoginID, userName, workspaceName, isAdmin):
@@ -43,20 +44,20 @@ def getCenterUserName(loginID):
 def createUser():
     data = request.json
     if data is None:
-        return jsonify(status='failed', msg='body is not json'), 200
+        return jsonify(status='failed', msg='body is not json'), 400
     if data.get('login_id') is None or type( data.get('login_id')) != str:
-        return jsonify(status='failed', msg='login_id is wrong'), 200
+        return jsonify(status='failed', msg='login_id is wrong'), 400
     if data.get('user_name') is None or type( data.get('user_name')) != str:
-        return jsonify(status='failed', msg='user_name is wrong'), 200
+        return jsonify(status='failed', msg='user_name is wrong'), 400
     if data.get('login_pass') is None or type( data.get('login_pass')) != str:
-        return jsonify(status='failed', msg='login_pass is wrong'), 200
+        return jsonify(status='failed', msg='login_pass is wrong'), 400
     if data.get('is_admin') is None or type( data.get('is_admin')) != int:
-        return jsonify(status='failed', msg='is_admin is wrong'), 200
+        return jsonify(status='failed', msg='is_admin is wrong'), 400
     if data.get('cluster_list') is None or type( data.get('cluster_list')) != list:
-        return jsonify(status='failed', msg='cluster_list is wrong'), 200
+        return jsonify(status='failed', msg='cluster_list is wrong'), 400
     for item in data.get('cluster_list'):
         if type(item) != str:
-            return jsonify(status='failed', msg='cluster_list is wrong'), 200
+            return jsonify(status='failed', msg='cluster_list is wrong'), 400
 
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
@@ -64,9 +65,54 @@ def createUser():
     rows = cursor.fetchall()
 
     if rows is None:
-        return jsonify(status='failed', msg='server error'), 200
+        return jsonify(status='failed', msg='server error'), 201
     elif len(rows) >= 1:
-        return jsonify(status='failed', msg='login_id is already exist'), 200
+        return jsonify(status='failed', msg='login_id is already exist'), 201
+
+    #system
+    #make user dir
+    makeFolderToNFS('user/' + data.get("login_id"))
+
+    #make nodeport first
+    # jupyter pass
+    jupyterPW = flask_api.auth_impl.makePassNotebook(data.get('login_pass'))
+
+    res = flask_api.center_client.servicePost(makeUserJupyterNodeportYaml(data.get("login_id")), flask_api.global_def.config.api_id,
+                                              flask_api.global_def.config.system_cluster, "softonnet-system")
+
+    port = -1
+    if res:
+        if res.get('spec'):
+            if res.get('spec').get('ports'):
+                if res.get('spec').get('ports')[0].get('nodePort'):
+                    port = res.get('spec').get('ports')[0].get('nodePort')
+
+    # service failed
+    if port == -1:
+        res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
+                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+        return jsonify(status='failed', msg='server error : service failed'), 201
+
+    # jupyter pv
+    status = flask_api.center_client.pvCreate(flask_api.runtime_helper.makeUserJupyterPVYaml(data.get("login_id")), flask_api.global_def.config.api_id, flask_api.global_def.config.system_cluster, None)
+    import ast
+    if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+        res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
+                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+        return jsonify(status='failed', msg='pv make failed'), 400
+
+    # jupyter pvc
+    status = flask_api.center_client.pvcCreate(flask_api.runtime_helper.makeUserJupyterPVCYaml(data.get("login_id")),
+                                               flask_api.global_def.config.api_id, flask_api.global_def.config.system_cluster, "softonnet-system")
+    if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
+        res = flask_api.center_client.pvDelete(flask_api.runtime_helper.getUserJupyterPVName(data.get("login_id")), flask_api.global_def.config.api_id,
+                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+        res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
+                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+        return jsonify(status='failed', msg='pvc make failed'), 400
+
+    # jupyter pod
+    flask_api.center_client.podsPost(flask_api.runtime_helper.makeUserJupyterPodYaml(data.get("login_id"), jupyterPW), flask_api.global_def.config.api_id, "mec(ilsan)", "softonnet-system")
 
     #uuid
     import uuid
@@ -75,9 +121,11 @@ def createUser():
     #make workspace
     res = flask_api.center_client.workspacesPost(getCenterUserName(data.get("login_id")), config.api_id + "_" + data.get("user_name"), data.get("cluster_list"))
     if res.get('status') is None:
-        return jsonify(status='failed', msg='server error : workspace'), 200
+        deleteUserSystem(data.get('login_id'))
+        return jsonify(status='failed', msg='server error : workspace'), 201
     if res.get('status') != 'Created':
-        return jsonify(status='failed', msg='server error : workspace duplicated'), 200
+        deleteUserSystem(data.get('login_id'))
+        return jsonify(status='failed', msg='server error : workspace duplicated'), 201
 
     #pass
     saltedPW = flask_api.auth_impl.salt(data.get('login_pass'));
@@ -85,13 +133,14 @@ def createUser():
 
     #insert to db
     try:
-        cursor.execute(f'insert into TB_USER (user_uuid, login_id, login_pass, user_name, workspace_name, is_admin) '
-                   f'values("{uuid}", "{data.get("login_id")}", "{encodedPW}", "{data.get("user_name")}", "{getCenterUserName(data.get("login_id"))}", {data.get("is_admin")});')
+        cursor.execute(f'insert into TB_USER (user_uuid, login_id, login_pass, jupyter_pass, jupyter_port, user_name, workspace_name, is_admin) '
+                   f'values("{uuid}", "{data.get("login_id")}", "{encodedPW}", "{jupyterPW}", {port},"{data.get("user_name")}", "{getCenterUserName(data.get("login_id"))}", {data.get("is_admin")});')
         mycon.commit()
     except:
-        return jsonify(status='failed', msg='server error'), 200
+        deleteUserSystem(data.get('login_id'))
+        return jsonify(status='failed', msg='server error'), 201
 
-    return jsonify(status="success"), 200
+    return jsonify(status="success"), 201
 
 
 def getUser(loginID):
@@ -109,13 +158,17 @@ def getUser(loginID):
 
 def deleteUser(loginID):
     def deleteUserData(workspaceName):
+        deleteUserSystem(loginID)
         res = flask_api.center_client.workspacesDelete(workspaceName)
+
+        flask_api.filesystem_impl.removeFolderFromNFS('user/' + loginID)
 
         mycon = get_db_connection()
         cursor = mycon.cursor(dictionary=True)
         cursor.execute(
             f'delete from TB_USER where login_id = "{loginID}";')
         mycon.commit()
+
         return jsonify(status='success'), 200
 
     def getCenterProjectID(projectID, projectName):
@@ -188,7 +241,6 @@ def deleteUser(loginID):
     return jsonify(status="failed", msg="no user " + loginID), 200
 
 
-
 def updateUser(loginID):
     data = request.json
     if data is None:
@@ -211,3 +263,34 @@ def updateUser(loginID):
         except:
             return jsonify(status="failed", msg="update error"), 200
         return jsonify(status="success"), 200
+
+
+def getuserStoragePort(user : User):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select jupyter_port from TB_USER where login_id = "{user.userLoginID}";')
+    rows = cursor.fetchall()
+    if rows:
+        return rows[0]['jupyter_port']
+
+    return None
+
+def getUserStorageURL(user : User, path : str = ''):
+    port = getuserStoragePort(user)
+    if port:
+        if path:
+            path = 'tree/' + path
+        return flask.redirect(flask_api.global_def.config.storage_server + ":" + str(port) + "/storage/" + user.userLoginID + '/' + path)
+    return jsonify(msg="not found port"), 404
+
+
+
+def deleteUserSystem(loginID):
+    res = flask_api.center_client.podsNameDelete(flask_api.runtime_helper.getUserJupyterLabelName(loginID), flask_api.global_def.config.api_id,
+                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+    res = flask_api.center_client.pvcDelete(flask_api.runtime_helper.getUserJupyterPVCName(loginID), flask_api.global_def.config.api_id,
+                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+    res = flask_api.center_client.pvDelete(flask_api.runtime_helper.getUserJupyterPVName(loginID), flask_api.global_def.config.api_id,
+                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+    res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(loginID), flask_api.global_def.config.api_id,
+                                           flask_api.global_def.config.system_cluster, 'softonnet-system')

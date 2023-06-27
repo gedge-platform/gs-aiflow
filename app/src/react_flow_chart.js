@@ -329,17 +329,6 @@ const getProjectList = async ( id ) => {
     }
     return '#666666'
   }
-
-  const getProjectStoargeLink = () => {
-    if(id == undefined || id == null || id == ""){
-      return;
-    }
-
-    axios.get(process.env.REACT_APP_API + '/api/project/' + id + '/storage', {withCredentials:true})
-      .then(response => {
-        window.open(response.data.link)
-      })
-  } 
   const openNotificationWithIcon = (type, data) => {
     console.log(api, type, api[type])
     api[type](data);
@@ -353,8 +342,10 @@ const getProjectList = async ( id ) => {
         options={pjList}></Select>
 
         <div style={{marginLeft:'auto'}}>
-          <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<FileSearchOutlined />} onClick={getProjectStoargeLink}>Storage</Button>
-        </div>
+          <a href={'/api/storage/' + id} target="_blank">
+            <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<FileSearchOutlined />}>Storage</Button>
+          </a>
+          </div>
       </div>
       <div className='content_box' style={{minHeight:'200px'}}>
         <DagMonitoringDetail nodes={nodes} data={selectedNodeData} edges={edges} projectID={id} />
