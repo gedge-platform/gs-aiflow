@@ -18,7 +18,7 @@ const EditUserModal = (props) => {
   const onFinish = (values) => {
       axios.put(process.env.REACT_APP_API + '/api/users/' + id , {
         user_name: values.nickname,
-        is_admin : role
+        is_admin : values.Role
       }, { withCredentials: true })
         .then((res) => {
           if (res.data.status == 'success') {
@@ -101,6 +101,7 @@ const EditUserModal = (props) => {
         <Form.Item
           name="id"
           label="ID"
+          initialValue={id}
         >
           <div style={{ display: 'flex' }}>
             <Input defaultValue={id} disabled={true} />
@@ -112,6 +113,7 @@ const EditUserModal = (props) => {
           name="nickname"
           label="Nickname"
           tooltip="What do you want others to call you?"
+          initialValue={userName}
           rules={[
             {
               required: true,
@@ -133,7 +135,8 @@ const EditUserModal = (props) => {
 
         <Form.Item
           name="Role"
-          label="Role">
+          label="Role"
+          initialValue={isAdmin}>
           <Select 
             defaultValue={isAdmin} 
             options={adminOption} 

@@ -51,6 +51,7 @@ const App = () => {
   } = theme.useToken();
   const storage = window.localStorage;
 
+  const storageKeyStr = 'my_storage'
 
   const items = [
     getItem('AI-Project', '1', <PieChartOutlined />, [
@@ -58,7 +59,7 @@ const App = () => {
       getItem(<Link to='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
       getItem(<Link to='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
     ]),
-    getItem(<a href={process.env.REACT_APP_API + '/api/storage'}  target="_blank">MY Storage</a>, 'my_storage', <FileSearchOutlined />),
+    getItem(<a href={process.env.REACT_APP_API + '/api/storage'}  target="_blank">MY Storage</a>, storageKeyStr, <FileSearchOutlined />),
   ];
   if (isAdmin == true) {
     items.push(getItem(<Link to='users/'>Users Management</Link>, 'user_management', <TeamOutlined />));
@@ -154,7 +155,9 @@ const App = () => {
 
   const pageOnClick = (data) => {
     var key = data.key
-    setSelectedKey(key)
+    if(key != storageKeyStr){
+      setSelectedKey(key)
+    }
   }
   return (
     <Content style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -231,7 +234,6 @@ const App = () => {
                 </Content>
               </Layout>
             </Layout></>
-            //  : <Navigate to='/login' />)}
                 }
         />
       </Routes>
