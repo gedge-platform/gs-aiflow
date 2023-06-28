@@ -93,7 +93,10 @@ function Flow(props) {
   const [needFitView, setNeedFitView]=useState(true);
   const { isLoading, error, data, isFetching, refetch} = useQuery(
     ["dag" + id], () => {
-      return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + id, {withCredentials:true})
+      if(id == undefined){
+        return ;
+      }
+      return axios.get(process.env.REACT_APP_API + '/api/project/dag/' + id, {withCredentials:true})
         .then((res) => {
           var nodes = res['data']['nodes'];
           var edges = res['data']['edges'];
@@ -142,7 +145,7 @@ function Flow(props) {
 
 
 const getProjectList = async ( id ) => {
-  const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
+  const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
   var list = data.project_list;
   list.forEach(function(item){
       item.value = item.project_name;

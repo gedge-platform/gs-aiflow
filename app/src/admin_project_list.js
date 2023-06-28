@@ -11,7 +11,7 @@ import StopProjectModal from "./stop_project_modal";
 
 function AdminProjectList(props) {
   const getProjectList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/getProjectList/all', { withCredentials: true });
+    const { data } = await axios.get(process.env.REACT_APP_API + '/api/admin/project', { withCredentials: true });
     var list = data.project_list;
     var count = 0;
     list.forEach(function (item) {
@@ -133,7 +133,7 @@ function AdminProjectList(props) {
   function sendDeleteProject() {
     setConfirmDeleteLoading(true);
 
-    axios.post(process.env.REACT_APP_API + '/api/project/init/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
+    axios.post(process.env.REACT_APP_API + '/api/admin/project/init/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
       .then(response => {
 
         if (response.data['status'] == 'success') {

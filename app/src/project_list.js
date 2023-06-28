@@ -9,7 +9,7 @@ import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
 import { catchError } from "./utils/network";
 const getProjectList = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
+    const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
     var list = data.project_list;
     var count = 0;
     list.forEach(function(item){

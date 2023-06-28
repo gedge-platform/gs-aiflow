@@ -33,7 +33,7 @@ const CreateUserModal = (props) => {
   ];
 
   const getAllClusterList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/clusters/all', { withCredentials: true });
+    const { data } = await axios.get(process.env.REACT_APP_API + '/api/admin/clusters', { withCredentials: true });
     var list = data.cluster_list;
     var count = 0;
     list.forEach(function (item) {

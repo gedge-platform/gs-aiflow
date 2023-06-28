@@ -4,7 +4,7 @@ import axios from "axios";
 
 var printLog = ""
 const getUserWithAxios = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getPodDetail/' + id, {withCredentials:true});
+    const { data } = await axios.get(process.env.REACT_APP_API+'/api/pod/' + id + '/detail', {withCredentials:true});
     return JSON.stringify(data.data);
   };
 
