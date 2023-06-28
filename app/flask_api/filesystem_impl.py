@@ -20,3 +20,12 @@ def removeFolderFromNFS(path):
         return True
     except:
         return False
+
+
+def pathJoin(path, *addPaths):
+    import re
+    for item in addPaths:
+        if(type(item) == str):
+            path = os.path.join(path, re.sub('^[\s/\\\]*', "", item))
+
+    return path

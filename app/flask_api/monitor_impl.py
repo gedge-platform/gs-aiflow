@@ -1062,7 +1062,7 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
             modelPath = ''
             outputPath = ''
             if model == 'yolov5':
-                datasetPath = '~/volume/dataset/coco128/'
+                datasetPath = '~/volume/dataset/coco128'
 
                 if task == 'Validate' or task == 'Optimization':
                     modelPath = '/root/user/yolo_coco128_train/weights/best.pt'
@@ -1076,7 +1076,7 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
                 elif task == 'Opt_Validate':
                     outputPath = 'yolo_coco128_opt_validate'
             elif model == 'retinaface':
-                datasetPath = '~/volume/dataset/coco128/'
+                datasetPath = '~/volume/dataset/widerface'
 
                 if task == 'Validate' or task == 'Optimization':
                     modelPath = '/root/user/yolo_coco128_train/weights/best.pt'

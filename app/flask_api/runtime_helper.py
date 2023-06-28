@@ -1,5 +1,6 @@
 import flask_api.global_def
 from flask_api.database import get_db_connection
+from flask_api.filesystem_impl import pathJoin
 import os
 
 def getRuntimePathAndImage(runtime, model):
@@ -32,24 +33,27 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
             'spec': {'restartPolicy': 'Never', 'containers': [
                 {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
                  'command': ['/bin/bash', '-c'], 'args': [
-                    'source /root/path.sh; PATH=/opt/conda/envs/' + runtimePath + '/bin:/root/volume/cuda/' + cudaPath + '/bin:$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; '],
+                    'source /root/path.sh; PATH=' + pathJoin('/opt/conda/envs/' , runtimePath , '/bin') + ':' +
+                    pathJoin('/root/volume/cuda/', cudaPath ,'/bin') + ':$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; '],
                  'env': [{'name': 'LD_LIBRARY_PATH',
-                          'value': '/root/volume/cuda/' + cudaPath + '/lib64:/root/volume/cudnn/' + cudnnPath + '/lib64:/root/volume/tensorrt/' + tensorRTPath + '/lib'}],
+                          'value': pathJoin('/root/volume/cuda/', cudaPath , '/lib64') + ':' +
+                                   pathJoin('/root/volume/cudnn/', cudnnPath, '/lib64') + ':' +
+                                   pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib')}],
                  'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
-                    {'mountPath': '/root/volume/cuda/' + cudaPath, 'name': 'nfs-volume-total',
-                     'subPath': 'cuda/' + cudaPath,
-                     'readOnly': True}, {'mountPath': '/root/volume/cudnn/' + cudnnPath, 'name': 'nfs-volume-total',
-                                         'subPath': 'cudnn/' + cudnnPath, 'readOnly': True},
-                    {'mountPath': '/opt/conda/envs/' + runtimePath , 'name': 'nfs-volume-total',
-                     'subPath': 'envs/' + runtimePath,
+                    {'mountPath': pathJoin('/root/volume/cuda/', cudaPath), 'name': 'nfs-volume-total',
+                     'subPath': pathJoin('cuda/', cudaPath),
+                     'readOnly': True}, {'mountPath': pathJoin('/root/volume/cudnn/', cudnnPath), 'name': 'nfs-volume-total',
+                                         'subPath': pathJoin('cudnn/', cudnnPath), 'readOnly': True},
+                    {'mountPath': pathJoin('/opt/conda/envs/', runtimePath), 'name': 'nfs-volume-total',
+                     'subPath': pathJoin('envs/', runtimePath),
                      'readOnly': True},
-                    {'mountPath': '/root/volume/tensorrt/' + tensorRTPath + '/', 'name': 'nfs-volume-total',
-                     'subPath': 'tensorrt/' + tensorRTPath, 'readOnly': True},
+                    {'mountPath': pathJoin('/root/volume/tensorrt/', tensorRTPath), 'name': 'nfs-volume-total',
+                     'subPath': pathJoin('tensorrt/', tensorRTPath), 'readOnly': True},
                     {'mountPath': '/root/volume/dataset/coco128', 'name': 'nfs-volume-total',
                      'subPath': 'dataset/coco128',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
-                     'subPath': 'user/' + userLoginID + "/" + projectName}]}],
+                     'subPath': pathJoin('user/', userLoginID, projectName)}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
     return data
@@ -124,23 +128,33 @@ def getBasicPVCYaml(userLoginID, projectName):
 
 def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python train.py --project /root/user --name ' + outputPath + ' --data  ' + datasetPath + '/dataset.yaml --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+                                                + '; nohup python train.py --project /root/user --name ' + outputPath \
+                                                + ' --data  ' + pathJoin(datasetPath + '/dataset.yaml') \
+                                                + ' --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
     return data
 
 def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python val.py --project /root/user --name ' + outputPath +  ' --data ' + datasetPath + '/dataset.yaml --device 0 --weights ' + modelPath + ' --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
+                                                +  ' --data ' + pathJoin(datasetPath + '/dataset.yaml') + ' --device 0 --weights ' + modelPath \
+                                                + ' --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
 
     return data
 def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath, modelPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights ' + modelPath + ' --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
+    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights ' + modelPath \
+                                                + ' --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
 
     return data
 
 def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf /root/user/' + outputPath + '; nohup python val.py --project /root/user --name ' + outputPath +  ' --weights ' + modelPath + ' --data ' + datasetPath + '/dataset.yaml --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
+                                                +  ' --weights ' + modelPath + ' --data ' + pathJoin(datasetPath, '/dataset.yaml') \
+                                                + ' --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
 
     return data
 
@@ -283,7 +297,7 @@ def makeUserJupyterPVYaml(loginID):
                 "ReadWriteMany"
             ],
             "nfs": {
-                "path": flask_api.global_def.config.nfs_path + "/user/" + loginID,
+                "path": pathJoin(flask_api.global_def.config.nfs_path, "/user/", loginID),
                 "server": flask_api.global_def.config.nfs_server
             }
         }
