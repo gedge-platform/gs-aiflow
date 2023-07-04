@@ -259,7 +259,7 @@ def makeUserJupyterNodeportYaml(loginID):
         "kind": "Service",
         "metadata": {
             "name": getUserJupyterNodeportName(loginID),
-            "namespace": "softonnet-system"
+            "namespace": flask_api.global_def.config.system_namespace
         },
         "spec": {
             "type": "NodePort",
@@ -310,7 +310,7 @@ def makeUserJupyterPVCYaml(loginID):
           "kind": "PersistentVolumeClaim",
           "metadata": {
             "name": getUserJupyterPVCName(loginID),
-            "namespace": "softonnet-system"
+            "namespace": flask_api.global_def.config.system_namespace
           },
           "spec": {
             "accessModes": [
@@ -339,7 +339,7 @@ def makeUserJupyterPodYaml(loginID, jupyterPW):
       "kind": "Pod",
       "metadata": {
         "name": getUserJupyterLabelName(loginID),
-        "namespace": "softonnet-system",
+        "namespace": flask_api.global_def.config.system_namespace,
         "labels": {
           "app": getUserJupyterLabelName(loginID)
         }

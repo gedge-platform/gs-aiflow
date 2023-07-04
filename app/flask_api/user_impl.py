@@ -78,7 +78,7 @@ def createUser():
     jupyterPW = flask_api.auth_impl.makePassNotebook(data.get('login_pass'))
 
     res = flask_api.center_client.servicePost(makeUserJupyterNodeportYaml(data.get("login_id")), flask_api.global_def.config.api_id,
-                                              flask_api.global_def.config.system_cluster, "softonnet-system")
+                                              flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
 
     port = -1
     if res:
@@ -90,7 +90,7 @@ def createUser():
     # service failed
     if port == -1:
         res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
-                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                               flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
         return jsonify(status='failed', msg='server error : service failed'), 201
 
     # jupyter pv
@@ -98,21 +98,22 @@ def createUser():
     import ast
     if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
         res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
-                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                               flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
         return jsonify(status='failed', msg='pv make failed'), 400
 
     # jupyter pvc
     status = flask_api.center_client.pvcCreate(flask_api.runtime_helper.makeUserJupyterPVCYaml(data.get("login_id")),
-                                               flask_api.global_def.config.api_id, flask_api.global_def.config.system_cluster, "softonnet-system")
+                                               flask_api.global_def.config.api_id, flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
     if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
         res = flask_api.center_client.pvDelete(flask_api.runtime_helper.getUserJupyterPVName(data.get("login_id")), flask_api.global_def.config.api_id,
-                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                               flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
         res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(data.get("login_id")), flask_api.global_def.config.api_id,
-                                               flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                               flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
         return jsonify(status='failed', msg='pvc make failed'), 400
 
     # jupyter pod
-    flask_api.center_client.podsPost(flask_api.runtime_helper.makeUserJupyterPodYaml(data.get("login_id"), jupyterPW), flask_api.global_def.config.api_id, "mec(ilsan)", "softonnet-system")
+    flask_api.center_client.podsPost(flask_api.runtime_helper.makeUserJupyterPodYaml(data.get("login_id"), jupyterPW), flask_api.global_def.config.api_id,
+                flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
 
     #uuid
     import uuid
@@ -287,10 +288,10 @@ def getUserStorageURL(user : User, path : str = ''):
 
 def deleteUserSystem(loginID):
     res = flask_api.center_client.podsNameDelete(flask_api.runtime_helper.getUserJupyterLabelName(loginID), flask_api.global_def.config.api_id,
-                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                           flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
     res = flask_api.center_client.pvcDelete(flask_api.runtime_helper.getUserJupyterPVCName(loginID), flask_api.global_def.config.api_id,
-                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                           flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
     res = flask_api.center_client.pvDelete(flask_api.runtime_helper.getUserJupyterPVName(loginID), flask_api.global_def.config.api_id,
-                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                           flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)
     res = flask_api.center_client.serviceDelete(flask_api.runtime_helper.getUserJupyterNodeportName(loginID), flask_api.global_def.config.api_id,
-                                           flask_api.global_def.config.system_cluster, 'softonnet-system')
+                                           flask_api.global_def.config.system_cluster, flask_api.global_def.config.system_namespace)

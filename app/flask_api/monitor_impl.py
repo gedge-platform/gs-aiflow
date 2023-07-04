@@ -800,7 +800,7 @@ def getClusterList(userUUID):
         if workspaceName is not None:
             data = flask_api.center_client.workspacesNameGet(workspaceName)
             clusterList = []
-            if data['selectCluster'] is not None:
+            if data.get('selectCluster') is not None:
                 for cluster in data['selectCluster']:
                     clusterList.append({
                         'name' : cluster['clusterName'],

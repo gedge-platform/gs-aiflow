@@ -128,7 +128,7 @@ def userProjectsNameGet(projectName: str):
     except:
         return {}
 
-def projectsPost(workspaceName: str, memberName:str , projectname: str, projectDescription: str,  projectType: str = 'user', clusterName:list = [], istioCheck: str = 'disabled'):
+def projectsPost(workspaceName: str, memberName:str , projectname: str, projectDescription: str = '',  projectType: str = 'user', clusterName:list = [], istioCheck: str = 'disabled'):
     body = {"projectName": projectname,
         "projectDescription": projectDescription,
         "projectType": projectType,
@@ -140,12 +140,12 @@ def projectsPost(workspaceName: str, memberName:str , projectname: str, projectD
 
     response, code = send_api('/projects', 'POST', params={}, body=body)
     if code != 201 and code != 200:
-        return {'status' : 'failed'}
+        return {'status' : 'failed', 'msg' : response.text}
 
     try:
         return response.json()
     except:
-        return {'status' : 'failed'}
+        return {'status' : 'failed', 'msg' : 'unknown'}
 
 def workspacesNameGet(workspace: str):
     response, code = send_api('/workspaces/' + workspace, 'GET', params={}, body={})
@@ -294,3 +294,47 @@ def pvcDelete(name, workspace : str, cluster : str, project : str):
         return response.json()
     except:
         return {'status' : "Failure"}
+
+
+def secretPost(workspace, cluster, project, body):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/secrets", method="POST", params=query, body=body)
+    if code != 201 and code != 200:
+        return {'status' : "Failure", 'msg' : response.text}
+    try:
+        return response.json()
+    except:
+        return {'status' : "Failure", 'msg' : response.text}
+
+
+def deploymentPost(workspace, cluster, project, body):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/deployments", method="POST", params=query, body=body)
+    if code != 201 and code != 200:
+        return {'status' : "Failure", 'msg' : response.text}
+    try:
+        return response.json()
+    except:
+        return {'status' : "Failure", 'msg' : response.text}
+
+def deploymentNameGet(workspace, cluster, project, name = ''):
+    query = dict()
+    query['workspace'] = workspace
+    query['cluster'] = cluster
+    query['project'] = project
+
+    response, code = send_api(path="/deployments/" + name, method="GET", params=query)
+    if code != 201 and code != 200:
+        return {'status' : "Failure", 'msg' : response.text}
+    try:
+        return response.json()
+    except:
+        return {'status' : "Failure", 'msg' : response.text}

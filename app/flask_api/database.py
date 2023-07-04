@@ -6,7 +6,7 @@ from flask_api.global_def import g_var
 
 
 dbHost = os.getenv('DB_HOST', 'localhost')
-dbPort = os.getenv('DB_PORT', '3307')
+dbPort = os.getenv('DB_PORT', '3306')
 dbUser = os.getenv('DB_USER', 'admin')
 dbPass = os.getenv('DB_PASS', 'admin')
 

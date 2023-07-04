@@ -8,6 +8,7 @@ import yaml
 from flask_cors import CORS
 from gevent.pywsgi import WSGIServer
 
+import flask_api.setup
 from flask_api.web_api import app
 from common.logger import initialize_logger, get_logger
 from flask_api.global_def import config
@@ -42,7 +43,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--init_db',action='store_true')
+    parser.add_argument('--setup',action='store_true')
     parser.add_argument('-p', '--port', type=int, default=5500)
     # parser.add_argument('-ah' '--api-host', required=True)
     # parser.add_argument('-aid' '--api-id', required=True)
@@ -65,6 +66,11 @@ if __name__ == "__main__":
         with open(conf_file, 'r', encoding='utf-8') as yamlfile:
             config.__dict__ = yaml.load(yamlfile, Loader=yaml.FullLoader)
         initialize_logger(config)
+
+        if args.setup:
+            flask_api.setup.setupToserver()
+            sys.exit(0)
+
         get_logger().info("Start AIFLOW Server")
         main()
     else:
