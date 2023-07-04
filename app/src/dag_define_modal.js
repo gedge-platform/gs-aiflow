@@ -5,7 +5,6 @@ const DagDefineModal = (props) => {
   const type = props.type;
   const modalType = props.modalType;
   const form = props.form;
-  console.log(form, props)
   const nodes = props.nodes;
   var modal = null;
   if(modalType == 'define'){
@@ -37,7 +36,7 @@ const DagDefineModal = (props) => {
   }
   return (
     // 모달이 열릴때 openModal 클래스가 생성된다.
-    <div id='dag_define_modal_wrapper'>
+    <div id='dag_define_modal_wrapper' style={{height:'650px', overflowY:'auto'}}>
       {modal}
     </div>
   );

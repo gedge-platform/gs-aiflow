@@ -64,7 +64,10 @@ function DagDefine(props) {
 
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID], () => {
-            return axios.get(process.env.REACT_APP_API + '/api/getDAG/' + projectID, {withCredentials:true})
+            if (projectID == undefined){
+                return;
+            }
+            return axios.get(process.env.REACT_APP_API + '/api/project/dag/' + projectID, {withCredentials:true})
                 .then((res) => {
                     var nodes = res['data']['nodes'];
                     var edges = res['data']['edges'];
@@ -80,7 +83,7 @@ function DagDefine(props) {
     const navigate = useNavigate();
 
     const getProjectList = async ( id ) => {
-        const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
+        const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
         var list = data.project_list;
         list.forEach(function(item){
             item.value = item.project_name;
@@ -218,7 +221,10 @@ function DagDefine(props) {
                 model : data.model,
                 framework : data.framework,
                 runtime : data.runtime,
-                tensorRT : data.tensorRT
+                tensorRT : data.tensorRT,
+                datasetPath : data.datasetPath,
+                modelPath : data.modelPath,
+                outputPath : data.outputPath
             });
             setTaskEditingOpen(true);
         }
@@ -277,7 +283,6 @@ function DagDefine(props) {
 
     const onNodesDelete = useCallback(
         (deleted) => {
-            console.log(deleted)
             setEdges(
                 deleted.reduce((acc, node) => {
                     const incomers = getIncomers(node, nodes, edges);
@@ -360,6 +365,9 @@ function DagDefine(props) {
         const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
+        const datasetPath = form.datasetPath;
+        const modelPath = form.modelPath;
+        const outputPath = form.outputPath;
 
         if (!name) {
             return;
@@ -394,6 +402,21 @@ function DagDefine(props) {
         taskCreating.data.runtime = runtime;
         taskCreating.data.tensorRT = tensorRT;
         taskCreating.data.type = type;
+        if(datasetPath)
+            taskCreating.data.datasetPath = datasetPath;
+        else if(taskCreating.data.datasetPath)
+            delete taskCreating.data.datasetPath;
+
+        if(modelPath)
+            taskCreating.data.modelPath = modelPath;
+        else if(taskCreating.data.modelPath)
+            delete taskCreating.data.modelPath;
+            
+        if(outputPath)
+            taskCreating.data.outputPath = outputPath;
+        else if(taskCreating.data.outputPath)
+            delete taskCreating.data.outputPath;
+                
 
         const newEdges = [];
         precondition.forEach((prec) => {
@@ -425,6 +448,9 @@ function DagDefine(props) {
         const framework = form.framework;
         const runtime = form.runtime;
         const tensorRT = form.tensorRT;
+        const datasetPath = form.datasetPath;
+        const modelPath = form.modelPath;
+        const outputPath = form.outputPath;
 
         if (!name) {
             return;
@@ -466,6 +492,20 @@ function DagDefine(props) {
         node.data.runtime = runtime;
         node.data.tensorRT = tensorRT;
         node.data.type = type;
+        if(datasetPath)
+            node.data.datasetPath = datasetPath;
+        else if(node.data.datasetPath)
+            delete node.data.datasetPath
+            
+        if(modelPath)
+            node.data.modelPath = modelPath;
+        else if(node.data.modelPath)
+            delete node.data.modelPath
+
+        if(outputPath)
+            node.data.outputPath = outputPath;
+        else if(node.data.outputPath)
+            delete node.data.outputPath
 
         newNodes.push(node);
 
@@ -482,7 +522,12 @@ function DagDefine(props) {
     }
 
     function saveGraph() {
-        axios.post(process.env.REACT_APP_API + '/api/project/dag',
+        if(projectID == undefined){
+            openErrorNotification("저장 오류", "프로젝트를 먼저 선택해주세요.");
+            return;
+        }
+
+        axios.post(process.env.REACT_APP_API + '/api/project/dag/' + projectID,
             { projectID: projectID, nodes: nodes, edges: edges }, {withCredentials:true})
             .then(response => {
                 if (response.data['status'] == 'success') {
@@ -569,7 +614,6 @@ function DagDefine(props) {
                                         onDrop={onDrop}
                                         nodeTypes={nodeTypes}
                                         onNodesChange={onNodesChange}
-                                        // onNodeDoubleClick={(data, target) => {console.log(data, target);
                                         onNodeDoubleClick={onNodeDoubleClick}
                                         onEdgesChange={onEdgesChange}
                                         onDragOver={onDragOver}

@@ -2,7 +2,6 @@
 
 const DeleteProjectModal = (props) => {
   const projectName = props.project_name
-  console.log(props)
 
   return (
     // 모달이 열릴때 openModal 클래스가 생성된다.

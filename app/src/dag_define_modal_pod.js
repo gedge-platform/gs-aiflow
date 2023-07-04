@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from 'react';
-import { Form, Input, Select } from 'antd';
+import { Form, Input, Select, Button, Modal, Space } from 'antd';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -13,6 +13,19 @@ const DagDefineModalPod = (props) => {
   const [runtimeList, setRuntimeList] = useState([])
   const [tensorRTList, setTensorRTList] = useState([])
 
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailEnabled, setDetailEnabled] = useState(false);
+  const [detailDatasetPath, setDetailDatasetPath] = useState(form.datasetPath ? form.datasetPath : null);
+  const [detailModelPath, setDetailModelPath] = useState(form.modelPath ? form.modelPath : null);
+  const [detailOutputPath, setDetailOutputPath] = useState(form.outputPath ? form.outputPath : null);
+  const [selectedTask, setSelectedTask] = useState(form.task ? form.task : null);
+  const [selectedModel, setSelectedModel] = useState(form.model ? form.model : null);
+  const [selectedFramework, setSelectedFramework] = useState(getDefaultFrameworkList);
+  const [selectedRuntime, setSelectedRuntime] = useState(getDefaultRuntimeList);
+  const [selectedTensorRT, setSelectedTensorRT] = useState(getDefaultTensorRTList);
+  useEffect(()=>{
+
+  }, [detailEnabled]);
 
   const getEnv = async () => {
     const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env', {withCredentials:true});
@@ -21,7 +34,6 @@ const DagDefineModalPod = (props) => {
 
   const getModelsAPI = async () => {
     const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model', {withCredentials:true})
-    console.log(data)
     return data;
   };
 
@@ -47,7 +59,8 @@ const DagDefineModalPod = (props) => {
 
     options.push({
       label: node.id,
-      value: node.id
+      value: node.id,
+      key: node.id
     });
     ids.push(node.id);
   });
@@ -138,6 +151,8 @@ const DagDefineModalPod = (props) => {
 
   function onChangeModel(data) {
     form.model = data;
+    setSelectedModel(data);
+
     axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data, {withCredentials:true})
     .then((res) => {
       setFrameworkList(res.data.framework);
@@ -145,36 +160,111 @@ const DagDefineModalPod = (props) => {
     .catch((error) => {
       setFrameworkList([]);
     });
+
+    onChangeFrameWorks(null);
   }
   
   function onChangeTask(data) {
+    setSelectedTask(data);
     form.task = data;
+
+    onChangeDatasetPath(null);
+    onChangeModelPath(null);
+    onChangeOutputPath(null);
+  }
+
+  function onChangeDatasetPath(target){
+    var data = null;
+    if(target){
+      if(target.target){
+        if(target.target.value){
+          data = target.target.value
+        }
+      }
+    }
+
+    setDetailDatasetPath(data);
+    form.datasetPath = data;
+  }
+
+  function onChangeModelPath(target){
+    var data = null;
+    if(target){
+      if(target.target){
+        if(target.target.value){
+          data = target.target.value
+        }
+      }
+    }
+
+    setDetailModelPath(data);
+    form.modelPath = data;
+  }
+
+  function onChangeOutputPath(target){
+    var data = null;
+    if(target){
+      if(target.target){
+        if(target.target.value){
+          data = target.target.value
+        }
+      }
+    }
+
+    setDetailOutputPath(data);
+    form.outputPath = data;
   }
 
   function onChangeFrameWorks(data) {
     form.framework = data;
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data, {withCredentials:true})
-    .then((res) => {
-      setRuntimeList(res.data.runtime)
-    })
-    .catch((error) => {
+    setSelectedFramework(data);
+
+    if(data){
+      axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data, {withCredentials:true})
+      .then((res) => {
+        setRuntimeList(res.data.runtime)
+      })
+      .catch((error) => {
+        setRuntimeList([]);
+      });  
+    }
+    else{
       setRuntimeList([]);
-    });
+    }
+
+    onChangeRuntime(null);
   }
 
   function onChangeRuntime(data) {
     form.runtime = data;
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data, {withCredentials:true})
-    .then((res) => {
-      setTensorRTList(res.data.tensorrt)
-    })
-    .catch((error) => {
+    setSelectedRuntime(data);
+
+    if(data){
+      axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data, {withCredentials:true})
+      .then((res) => {
+        setTensorRTList(res.data.tensorrt)
+      })
+      .catch((error) => {
+        setTensorRTList([]);
+      });
+    }
+    else{
       setTensorRTList([]);
-    });
+    }
+
+    setDetailEnabled(false);
+    onChangeTensorRT(null);
   }
 
   function onChangeTensorRT(data) {
     form.tensorRT = data;
+    setSelectedTensorRT(data);
+    if(data == null){
+      setDetailEnabled(false);
+    }
+    else{
+      setDetailEnabled(true);
+    }
   }
 
   function getDefaultName(){
@@ -200,7 +290,6 @@ const DagDefineModalPod = (props) => {
     }
 
     if(form.framework != null && form.framework != undefined){
-      console.log(form.framework)
       return form.framework;
     }
     return '';
@@ -212,7 +301,6 @@ const DagDefineModalPod = (props) => {
       && form.model != null && form.model != undefined){
       axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + form.framework, {withCredentials:true})
       .then((res) => {
-        console.log(res)
         setRuntimeList(res.data.runtime);
       })
       .catch((error) => {
@@ -239,9 +327,45 @@ const DagDefineModalPod = (props) => {
     }
 
     if(form.tensorRT != null && form.tensorRT != undefined){
+      setDetailEnabled(true);
       return form.tensorRT;
     }
+    setDetailEnabled(false);
     return '';
+  }
+
+
+  function getIsDisplayDatasetPath(){
+    if(selectedTask == 'Train')
+      return '';
+    if(selectedTask == 'Validate')
+      return '';
+    if(selectedTask == 'Opt_Validate')
+      return '';
+    
+    return 'none';
+  }
+
+  function getIsDisplayModelPath(){
+    if(selectedTask == 'Validate')
+      return '';
+    if(selectedTask == 'Optimization')
+      return '';
+    if(selectedTask == 'Opt_Validate')
+      return '';
+    
+    return 'none';
+  }
+
+  function getIsDisplayOutputPath(){
+    if(selectedTask == 'Train')
+      return '';
+    if(selectedTask == 'Validate')
+      return '';
+    if(selectedTask == 'Opt_Validate')
+      return '';
+    
+    return 'none';
   }
 
   return (
@@ -262,13 +386,30 @@ const DagDefineModalPod = (props) => {
           <label>알파벳과 숫자, 특수문자 - 만 가능합니다.</label>
         </Form.Item>
         <Form.Item label="Task">
-          <Select onChange={onChangeTask} defaultValue={form.task != null && form.task != undefined ? form.task : ''}>
+          <Select onChange={onChangeTask} defaultValue={selectedTask}>
             <Select.Option value="Train">Train</Select.Option>
             <Select.Option value="Validate">Validate</Select.Option>
             <Select.Option value="Optimization">Optimization</Select.Option>
             <Select.Option value="Opt_Validate">Opt_Validate</Select.Option>
+            <Select.Option value="Inference">Inference</Select.Option>
           </Select>
         </Form.Item>
+        <div style={{ display: selectedTask ? '' : 'none'}}>
+          <Form.Item label="Dataset Path" style={{display: getIsDisplayDatasetPath()}}>
+            <Input placeholder='Dataset Path' value={detailDatasetPath} onChange={onChangeDatasetPath} />
+            <label>경로에 dataset.yaml이 존재해야 합니다. default = 빈칸</label>
+          </Form.Item>
+
+          <Form.Item label="Model Path" style={{display: getIsDisplayModelPath()}}>
+            <Input placeholder='Model Path' value={detailModelPath} onChange={onChangeModelPath} />
+            <label>모델 경로를 지정해야 합니다. default = 빈칸</label>
+          </Form.Item>
+
+          <Form.Item label="Output Path" style={{display: getIsDisplayOutputPath()}}>
+            <Input placeholder='Output Path' value={detailOutputPath} onChange={onChangeOutputPath} />
+            <label>해당 기존 경로의 내용물은 지워집니다. default = 빈칸</label>
+          </Form.Item>
+        </div>
         <Form.Item label="Precondition">
           <Select
             mode="multiple"
@@ -281,22 +422,24 @@ const DagDefineModalPod = (props) => {
         </Form.Item>
         <Form.Item label="Model">
           <Select onChange={onChangeModel}
-          defaultValue={form.model != null && form.model != undefined ? form.model : null }>
+          // defaultValue={form.model != null && form.model != undefined ? form.model : null }>
+          value={selectedModel}
+          >
             {!isLoading && getModels()}
           </Select>
         </Form.Item>
          <Form.Item label="Framework">
-          <Select onChange={onChangeFrameWorks} defaultValue={getDefaultFrameworkList}>
+          <Select onChange={onChangeFrameWorks} value={selectedFramework}>
             {!isLoading && getFrameworks()}
           </Select>
         </Form.Item>
          <Form.Item label="Runtime">
-          <Select onChange={onChangeRuntime} defaultValue={getDefaultRuntimeList }>
+          <Select onChange={onChangeRuntime}  value={selectedRuntime}>
             {!isLoading && getRuntimes()}
           </Select>
         </Form.Item>
         <Form.Item label="TensorRT">
-          <Select onChange={onChangeTensorRT} defaultValue={getDefaultTensorRTList} >
+          <Select onChange={onChangeTensorRT} value={selectedTensorRT} >
             {!isLoading && getTensorRTs()}
           </Select>
         </Form.Item>

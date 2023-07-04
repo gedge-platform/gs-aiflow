@@ -1,4 +1,6 @@
 import os
+import sys
+
 import mysql.connector
 from flask_api.global_def import g_var
 
@@ -10,12 +12,16 @@ dbPass = os.getenv('DB_PASS', 'admin')
 
 def create_tables(dbcon=None):
     if dbcon is None:
-        dbcon = mysql.connector.connect(
-            host=dbHost,
-            port=dbPort,
-            user=dbUser,
-            password=dbPass,
-        )
+        try:
+            dbcon = mysql.connector.connect(
+                host=dbHost,
+                port=dbPort,
+                user=dbUser,
+                password=dbPass,
+            )
+        except:
+            print("CANT CONNECT DATABASE")
+            sys.exit(1)
 
     cursor = dbcon.cursor()
     cursor.execute(
@@ -24,10 +30,11 @@ def create_tables(dbcon=None):
     rets = cursor.fetchall()
 
     if ('aiflow',) in rets:
-        return print("DATABASE ALREADY EXIST")
-
-    cursor.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
-    cursor.execute(f'CREATE DATABASE IF NOT EXISTS {"aiflow"} CHARACTER SET utf8')
+        #return print("DATABASE ALREADY EXIST")
+        print("DATABASE ALREADY EXIST")
+    else:
+        cursor.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
+        cursor.execute(f'CREATE DATABASE IF NOT EXISTS {"aiflow"} CHARACTER SET utf8')
     cursor.execute('USE aiflow')
     dbcon.commit()
 
@@ -40,7 +47,7 @@ def create_tables(dbcon=None):
         pass
     dbcon.commit()
 
-    return print("SUCCESS CREATE DATABASE")
+    return print("SUCCESS SET DATABASE")
 
 
 def get_db_connection():

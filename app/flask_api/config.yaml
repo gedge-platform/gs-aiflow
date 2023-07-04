@@ -30,3 +30,15 @@ nfs_path: "/path"
 
 #salt string
 salt : 'salt'
+
+#database server
+#storage_server : "http://"
+storage_server : "http://"
+
+#system_cluster
+system_cluster : ""
+system_namespace : ""
+
+#database_info
+mariadb_user : 'admin'
+mariadb_pass : 'admin'

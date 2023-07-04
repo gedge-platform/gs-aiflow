@@ -16,6 +16,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import common.logger
 import flask_api.center_client
 import flask_api.runtime_helper
+import flask_api.filesystem_impl
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -425,7 +426,7 @@ def setMonitor(result):
     return str('success')
 
 
-def abstractMonitor(clusterName):
+def abstractMonitor(clusterName: object) -> object:
     try:
         mycon = get_db_connection()
 
@@ -748,9 +749,9 @@ def launchProject(user, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{user.userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectID = rows[0]['project_uuid']
     dag = getDag(user, projectName, True)
@@ -760,7 +761,7 @@ def launchProject(user, projectName):
     if res is True:
         return jsonify(status="success"), 200
     else:
-        return jsonify(status="failed"), 200
+        return jsonify(status="failed"), 400
 # return None
 def initProject(userUUID, workspaceName, projectName):
     mycon = get_db_connection()
@@ -768,9 +769,9 @@ def initProject(userUUID, workspaceName, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectID = rows[0]['project_uuid']
 
@@ -799,7 +800,7 @@ def getClusterList(userUUID):
         if workspaceName is not None:
             data = flask_api.center_client.workspacesNameGet(workspaceName)
             clusterList = []
-            if data['selectCluster'] is not None:
+            if data.get('selectCluster') is not None:
                 for cluster in data['selectCluster']:
                     clusterList.append({
                         'name' : cluster['clusterName'],
@@ -836,32 +837,40 @@ def createProject(userUUID, userLoginID, projectName, projectDesc, clusterName):
             workspaceName = row.get("workspace_name")
             break
 
+    if workspaceName is None:
+        return jsonify(status='failed', msg='can not find userUUID'), 404
+
     if workspaceName is not None:
         status = flask_api.center_client.projectsPost(workspaceName, config.api_id, centerProjectID, projectDesc,
                                                       clusterName=clusterName)
         if status['status'] != 'failed':
+            #make folder
+            flask_api.filesystem_impl.makeFolderToNFS('user/' + userLoginID + '/' + projectName)
+
             for cluster in clusterName:
                 # pv 부터 pvc는 프로젝트 생성후
                 status = flask_api.center_client.pvCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PV'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
-                    return jsonify(status='failed', msg='pv make failed'), 200
+                    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
+                    return jsonify(status='failed', msg='pv make failed'), 400
 
                 status = flask_api.center_client.pvcCreate(flask_api.runtime_helper.getProjectYaml(userLoginID, projectName)['PVC'], workspaceName, cluster, centerProjectID)
                 if (status['code'] != 201 or ast.literal_eval(status['data'])['status'] == 'Failure'):
                     flask_api.center_client.projectsDelete(centerProjectID)
+                    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
                     # TODO: PV 제거
-                    return jsonify(status='failed', msg='pvc make failed'), 200
+                    return jsonify(status='failed', msg='pvc make failed'), 400
 
             cursor.execute(
                 f'insert into TB_PROJECT (project_uuid, project_name, user_uuid, pv_name) value ("{projectID}", "{projectName}", "{userUUID}", "testPV");')
             mycon.commit()
             return jsonify(status='success'), 200
         else:
-            return jsonify(status='failed'), 200
+            return jsonify(status='failed'), 400
 
 
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
 
 
 def deletePV(userUUID, userLoginID, workspaceName, projectName):
@@ -900,14 +909,17 @@ def deleteProject(userUUID, userLoginID, workspaceName, projectName):
     cursor.execute(f'select project_uuid from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{projectName}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
+
+    #delete folder
+    flask_api.filesystem_impl.removeFolderFromNFS('user/' + userLoginID + '/' + projectName)
 
     #pv 지우기
     status = deletePV(userUUID, userLoginID, workspaceName, projectName)
     if status['status'] == 'failed':
-        return jsonify(status = 'failed', msg = 'cant delete pv'), 200
+        return jsonify(status = 'failed', msg = 'cant delete pv'), 400
 
     projectUUID = rows[0]['project_uuid']
     centerProjectID = getCenterProjectID(projectUUID, projectName)
@@ -918,7 +930,7 @@ def deleteProject(userUUID, userLoginID, workspaceName, projectName):
             f'delete from TB_PROJECT where project_uuid = "{projectUUID}";')
         mycon.commit()
         return jsonify(status='success'), 200
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
 
 
 def getProject(userUUID, projectName):
@@ -963,12 +975,12 @@ def getProject(userUUID, projectName):
                 return returnResponse, 200
             else:
                 #TODO: db 동기화 필요
-                return jsonify(msg='no data'), 200
+                return jsonify(msg='no data'), 404
         #db에 없음
         else:
-            return jsonify(msg='no data'), 200
+            return jsonify(msg='no data'), 404
 
-    return jsonify(msg='error'), 404
+    return jsonify(msg='error'), 400
 
 
 def getPodEnv():
@@ -997,17 +1009,17 @@ def getPodEnv():
 def postDag(userUUID, userLoginID, userName, workspaceName):
     data = request.json
 
-    if data['projectID'] is None:
-        return jsonify(status = 'failed'), 200
+    if data.get('projectID') is None:
+        return jsonify(status = 'failed', msg="project ID is None"), 400
 
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
     cursor.execute(f'select project_uuid, project_name from TB_PROJECT where user_uuid = "{userUUID}" and project_name = "{data["projectID"]}"')
     rows = cursor.fetchall()
     if rows is None:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 400
     if len(rows) == 0:
-        return jsonify(status = 'failed'), 200
+        return jsonify(status = 'failed'), 404
 
     projectUUID = rows[0]['project_uuid']
     projectName = rows[0]['project_name']
@@ -1043,16 +1055,60 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
                 preCond = []
             preCond = preCond.__str__()
             task = node['data']['task']
+
+            model = node['data']['model']
+
+            datasetPath = ''
+            modelPath = ''
+            outputPath = ''
+            if model == 'yolov5':
+                datasetPath = '~/volume/dataset/coco128'
+
+                if task == 'Validate' or task == 'Optimization':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.pt'
+                elif task == 'Opt_Validate':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.engine'
+
+                if task == 'Train':
+                    outputPath = 'yolo_coco128_train'
+                elif task == 'Validate':
+                    outputPath = 'yolo_coco128_validate'
+                elif task == 'Opt_Validate':
+                    outputPath = 'yolo_coco128_opt_validate'
+            elif model == 'retinaface':
+                datasetPath = '~/volume/dataset/widerface'
+
+                if task == 'Validate' or task == 'Optimization':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.pt'
+                elif task == 'Opt_Validate':
+                    modelPath = '/root/user/yolo_coco128_train/weights/best.engine'
+
+                if task == 'Train':
+                    outputPath = 'yolo_coco128_train'
+                elif task == 'Validate':
+                    outputPath = 'yolo_coco128_validate'
+                elif task == 'Opt_Validate':
+                    outputPath = 'yolo_coco128_opt_validate'
+
+            if node['data'].get('datasetPath'):
+                datasetPath = '/root/user/' + node['data'].get('datasetPath')
+            if node['data'].get('modelPath'):
+                modelPath = '/root/user/' + node['data'].get('modelPath')
+            if node['data'].get('outputPath'):
+                outputPath = node['data'].get('outputPath')
+
+
             yaml = {}
             if task == 'Train':
-                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlTrainRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, outputPath)
             elif task == 'Validate':
-                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
             elif(task == 'Optimization'):
-                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+                yaml = flask_api.runtime_helper.makeYamlOptimizationRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], modelPath)
             elif(task == 'Opt_Validate'):
-                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
-
+                yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
+            elif(task == 'Inference'):
+                yaml = flask_api.runtime_helper.makeYamlInferenceRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
             yaml = yaml.__str__()
             d = node['data'].__str__()
             #TODO: yaml 생성
@@ -1196,4 +1252,28 @@ def initProjectForAdmin(loginID, projectName):
         if len(rows) != 0:
             return initProject(rows[0]['user_uuid'], rows[0]['workspace_name'], projectName)
 
-    return jsonify(status='failed'), 200
+    return jsonify(status='failed'), 400
+
+
+def getPodYaml(projectName, taskName, userUUID):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(f'select yaml from TB_NODE INNER JOIN TB_PROJECT ON TB_PROJECT.project_uuid = TB_NODE.project_uuid where user_uuid = "{userUUID}" and node_name = "{taskName}" and project_name = "{projectName}";')
+    rows = cursor.fetchall()
+
+
+    if rows is not None:
+        if len(rows) != 0:
+            try:
+                resultJson = json.loads(stringToJsonAvailableStr(rows[0]['yaml']))
+                return jsonify(yaml=resultJson), 200
+            except json.decoder.JSONDecodeError as e:
+                return jsonify(status='failed'), 404
+
+        else:
+            return jsonify(status='failed'), 404
+    else:
+        jsonify(status='failed'), 400
+
+def stringToJsonAvailableStr(str : str):
+    return str.replace("\'", "\"").replace("True", "true")

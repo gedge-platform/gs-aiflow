@@ -8,14 +8,14 @@ import hashlib
 
 def login():
     if request.is_json is False:
-        return jsonify(status='failed', msg='not json'), 200
+        return jsonify(status='failed', msg='not json'), 400
     data = request.json
     if data is None:
-        return jsonify(status='failed', msg='wrong data'), 200
+        return jsonify(status='failed', msg='wrong data'), 400
     if type(data.get('ID')) != str:
-        return jsonify(status='failed', msg='id is not str'), 200
+        return jsonify(status='failed', msg='id is not str'), 400
     if type(data.get('PW')) != str:
-        return jsonify(status='failed', msg='pw is not str'), 200
+        return jsonify(status='failed', msg='pw is not str'), 400
 
     id = data.get('ID')
     pw = data.get('PW')
@@ -36,7 +36,7 @@ def login():
         }
         return jsonify(status='success', data=data), 200
     else:
-        return jsonify(status='failed', msg='id or pw is wrong'), 200
+        return jsonify(status='failed', msg='id or pw is wrong'), 401
 
 def needLogin():
     def _login_filter(func):
@@ -115,3 +115,8 @@ def isLogin():
     }
 
     return jsonify(status="success", data=data), 200
+
+#make password for jupyter notebook
+def makePassNotebook(pw : str = ''):
+    from notebook.auth import passwd
+    return passwd(pw, 'sha256')

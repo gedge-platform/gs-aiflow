@@ -83,7 +83,6 @@ function UserList(props) {
   ];
 
   const updateUser = (value) => {
-    console.log(value)
     setEditingIsAdmin(value.is_admin);
     setEditingID(value.login_id);
     setEditingName(value.user_name);

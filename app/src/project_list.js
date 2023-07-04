@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@ant-design/icons";
 import CreateProjectModal from './create_project_modal';
 import DeleteProjectModal from './delete_project_modal';
+import { catchError } from "./utils/network";
 const getProjectList = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/getProjectList', {withCredentials:true});
+    const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
     var list = data.project_list;
     var count = 0;
     list.forEach(function(item){
@@ -160,12 +161,6 @@ function ProjectList(props) {
       }
       else{
         sendCreateProject();
-        // setModalText('The modal will be closed after two seconds');
-        // setConfirmLoading(true);
-        // setTimeout(() => {
-        //   setOpen(false);
-        //   setConfirmLoading(false);
-        // }, 2000);
       }
       
     };
@@ -202,6 +197,9 @@ function ProjectList(props) {
           setConfirmLoading(false);
           refetch();
       })
+      .catch((error) => {
+        catchError(error, navigate);
+      });
 
   }
 

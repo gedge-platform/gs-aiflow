@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS TB_USER (
   user_uuid VARCHAR(36) NOT NULL PRIMARY KEY,
   login_id VARCHAR(30) NOT NULL UNIQUE,
   login_pass VARCHAR(64),
+  jupyter_pass VARCHAR(84),
+  jupyter_port SMALLINT(5) UNSIGNED NULL DEFAULT NULL,
   user_name VARCHAR(30),
   workspace_name VARCHAR(36),
   is_admin BOOL NOT NULL DEFAULT 0,
@@ -76,7 +78,8 @@ CREATE TABLE IF NOT EXISTS TB_CUDA (
     cuda_name VARCHAR(30) NOT NULL PRIMARY KEY,
     cuda_version VARCHAR(30) NOT NULL,
     cudnn_version VARCHAR(30) NOT NULL,
-    path VARCHAR(30) NOT NULL
+    cuda_path TEXT NOT NULL,
+    cudnn_path TEXT NOT NULL
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_TENSORRT (
@@ -88,15 +91,18 @@ CREATE TABLE IF NOT EXISTS TB_TENSORRT (
     INDEX FK_TB_TENSORRT_TB_RUNTIME (runtime_name), CONSTRAINT FK_TB_TENSORRT_TB_RUNTIME FOREIGN KEY (runtime_name) REFERENCES TB_RUNTIME (runtime_name) ON DELETE CASCADE
 )CHARACTER SET 'utf8';
 
-INSERT INTO TB_USER (user_uuid, login_id, login_pass, user_name, workspace_name , is_admin)
- SELECT * FROM (select 'user1', 'admin', '6c0b5679c1424be25ffe601af2dcfff0a7113d62a603ff54be9a593e46baedb5', '기본관리자', 'softonnet', 1) AS admin
+INSERT INTO TB_USER (user_uuid, login_id, login_pass, user_name, jupyter_pass, workspace_name , is_admin)
+ SELECT * FROM (select '9dda2182-99f2-46b6-b6c7-00e19a4ab08d', 'admin', '6c0b5679c1424be25ffe601af2dcfff0a7113d62a603ff54be9a593e46baedb5', '기본관리자', 'sha256:baab4ec63e94:8d680919ae7039fcf398b73aaf29ccab755fdbccaf64d56f29c596cd982acd2a', 'softonnet', 1) AS admin
  WHERE NOT EXISTS (SELECT user_uuid FROM TB_USER) LIMIT 1;
 
 INSERT INTO TB_RUNTIME (runtime_name, framework, version, python_version,  cuda_version, cudnn_version, model, path, image_name)
- VALUES ('pt1.12.1_py3.8_cuda11.3_cudnn8.3', 'PyTorch', '1.2.1', '3.8', '11.3', '8.3', 'yolov5', '.', 'yolov5:v0.0.230511');
+SELECT * FROM (select 'pt1.12.1_py3.8_cuda11.3_cudnn8.3', 'PyTorch', '1.2.1', '3.8', '11.3', '8.3', 'yolov5', '.', 'yolov5:v0.0.230511') AS admin
+WHERE NOT EXISTS (SELECT runtime_name FROM TB_RUNTIME) LIMIT 1;
 
-INSERT INTO TB_CUDA (cuda_name, cuda_version, cudnn_version, path)
- VALUES ('cuda11.2-cudnn8.2.1', '11.2', '8.2.1', '.');
+INSERT INTO TB_CUDA (cuda_name, cuda_version, cudnn_version, cuda_path, cudnn_path)
+SELECT * FROM (select 'cuda11.2-cudnn8.2.1', '11.2', '8.2.1', './cuda11.2','.cudnn/') AS admin
+WHERE NOT EXISTS (SELECT cuda_name FROM TB_CUDA) LIMIT 1;
 
  INSERT INTO TB_TENSORRT (tensorrt_name, tensorrt_version, path, runtime_name)
- VALUES ('tensorRT8.2.5.1', '8.2.5.1', '.', 'pt1.12.1_py3.8_cuda11.3_cudnn8.3');
+ SELECT * FROM (select 'tensorRT8.2.5.1', '8.2.5.1', '.', 'pt1.12.1_py3.8_cuda11.3_cudnn8.3') AS admin
+ WHERE NOT EXISTS (SELECT tensorrt_name FROM TB_TENSORRT) LIMIT 1;

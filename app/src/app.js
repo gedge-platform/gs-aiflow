@@ -1,7 +1,7 @@
 import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
 import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification, Divider } from 'antd';
 import { Component, useEffect, useState } from 'react';
-import { Link, Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
+import { Link, Route, Routes, Navigate, BrowserRouter, json, useNavigate } from 'react-router-dom';
 
 import './css/index.css';
 import { Sidemenu } from './sidemenu';
@@ -24,6 +24,7 @@ import axios from 'axios';
 import { UserList } from './user_list';
 import { UserManagement } from './user_management';
 import { AdminServiceDefine } from './admin_service_define';
+import Test from './test_page';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -48,7 +49,9 @@ const App = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+  const storage = window.localStorage;
 
+  const storageKeyStr = 'my_storage'
 
   const items = [
     getItem('AI-Project', '1', <PieChartOutlined />, [
@@ -56,7 +59,7 @@ const App = () => {
       getItem(<Link to='monitoring/'>Monitoring</Link>, 'monitoring', <DesktopOutlined />),
       getItem(<Link to='editing/'>DAG Editing</Link>, 'editing', <FormOutlined />)
     ]),
-    getItem(<a href={process.env.REACT_APP_API + '/api/storage'}>MY Storage</a>, 'my_storage', <FileSearchOutlined />),
+    getItem(<a href={process.env.REACT_APP_API + '/api/storage'}  target="_blank">MY Storage</a>, storageKeyStr, <FileSearchOutlined />),
   ];
   if (isAdmin == true) {
     items.push(getItem(<Link to='users/'>Users Management</Link>, 'user_management', <TeamOutlined />));
@@ -69,10 +72,41 @@ const App = () => {
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();
+      storage.removeItem('loggedInfo');
       setLogin('', false, false);
       setIsAdmin(false);
+      navigate('/login');
     });
   };
+
+  const navigate = useNavigate();
+  const initializeUserInfo = () => {
+    const loggedInfo = storage.getItem('loggedInfo'); // 로그인 정보를 로컬스토리지에서 가져옵니다.
+    if (!loggedInfo) {
+      setLogin('', '', false, false);
+      storage.removeItem('loggedInfo');
+      navigate('/login');
+      return;
+    } // 로그인 정보가 없다면 여기서 멈춥니다.
+    const obj = JSON.parse(loggedInfo);
+    setUsername(obj.userName);
+    setUserID(obj.userID);
+    setLoggedIn(obj.loggedIn);
+    setIsAdmin(obj.isAdmin);
+
+    axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
+      setLogin(res.data.data.userID, res.data.data.userName, true, res.data.data.isAdmin);
+    })
+      .catch((error) => {
+        setLogin('', '', false, false);
+        storage.removeItem('loggedInfo');
+        navigate('/login');
+      });
+
+}
+  useEffect(()=>{initializeUserInfo();},[navigate]);
+  
+
 
   var notificationData = { message: "", description: "" }
 
@@ -87,21 +121,21 @@ const App = () => {
   };
 
   const setLogin = (id, name, status, isAdmin) => {
+    storage.setItem('loggedInfo', JSON.stringify({userName : name, userID : id, loggedIn : status, isAdmin:isAdmin}))
     setUsername(name);
     setUserID(id);
     setLoggedIn(status)
     setIsAdmin(isAdmin);
   }
 
-  axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
-    setLogin(res.data.data.userID, res.data.data.userName, true, res.data.data.isAdmin);
-  })
-    .catch((error) => { setLogin('', '', false, false) });
+
+
 
   const handleLogin = (id, name, isAdmin) => {
     notificationData.message = "로그인";
     notificationData.description = "안녕하세요. " + name + "님!\n환영합니다.";
     openNotification();
+    window.location.href = '/';
     setLogin(id, name, true, isAdmin);
   };
 
@@ -121,18 +155,22 @@ const App = () => {
 
   const pageOnClick = (data) => {
     var key = data.key
-    setSelectedKey(key)
+    if(key != storageKeyStr){
+      setSelectedKey(key)
+    }
   }
   return (
     <Content style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Routes>
         <Route
           path="/login"
-          element={(loggedIn ? <Navigate to='/' /> : <LoginPage handleLogin={handleLogin} />)}
+          // element={(loggedIn ? <Navigate to='/' /> : <LoginPage handleLogin={handleLogin} />)}
+          element={<LoginPage handleLogin={handleLogin}/>}
         />
         <Route
           path="*"
-          element={(loggedIn ? <><Header className="header" style={{ paddingInline: '16px' }}>
+          // element={(loggedIn ? <><Header className="header" style={{ paddingInline: '16px' }}>
+          element={<><Header className="header" style={{ paddingInline: '16px' }}>
             <div style={{ display: 'flex', height: '100%' }}>
 
               <div
@@ -181,6 +219,7 @@ const App = () => {
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
+                              <Route path='/test/' element={<Test/>}></Route>
                               <Route path='/users/' element={isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
                               <Route path='/admin_project_list/' element={isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
                               <Route path='*' element={<NotFound />}></Route>
@@ -194,7 +233,8 @@ const App = () => {
                   </ReactFlowProvider>
                 </Content>
               </Layout>
-            </Layout></> : <Navigate to='/login' />)}
+            </Layout></>
+                }
         />
       </Routes>
 

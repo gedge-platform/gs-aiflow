@@ -19,7 +19,6 @@ function ProjectDetail(props) {
       const getProjectDetail = async ( ) => {
         if(selectedProject != ""){
           const { data } = await axios.get(process.env.REACT_APP_API+'/api/project/' + selectedProject, {withCredentials:true});
-          console.log(data)
           return data;
         }
 
@@ -103,6 +102,30 @@ function ProjectDetail(props) {
     return "";
   }
 
+  function getProjectDescription(){
+    if(data != null && data != undefined){
+      if(data.projectDescription != null && data != undefined){
+        return data.projectDescription;
+      }
+    }
+    return "";
+  }
+
+  function getClusterList() {
+    if (data && data.clusterList && typeof data.clusterList === 'object') {
+      return data.clusterList.join(', ');
+    }
+  
+    return "";
+  }
+
+  function getCreatedAt() {
+    if (data && data.created_at && typeof data.created_at === 'string'){
+      return data.created_at
+    }
+    return '';
+  }
+
 
     return (
         <> < div id = 'project_detail' > 
@@ -115,15 +138,15 @@ function ProjectDetail(props) {
 </Row>
 <Row className="project_detail_row">
 <Col className="project_detail_col head" span={6}><h4>Project description</h4></Col>
-<Col className="project_detail_col data" span={18}><h4>{!isLoading && data.projectDescription}</h4></Col>
+<Col className="project_detail_col data" span={18}><h4>{!isLoading && getProjectDescription()}</h4></Col>
 </Row>
 <Row className="project_detail_row">
 <Col className="project_detail_col head" span={6}><h4>Cluster List</h4></Col>
-<Col className="project_detail_col data" span={18}><h4>{!isLoading && data.clusterList.join(', ')}</h4></Col>
+<Col className="project_detail_col data" span={18}><h4>{!isLoading && getClusterList()}</h4></Col>
 </Row>
 <Row className="project_detail_row">
 <Col className="project_detail_col head" span={6}><h4>Create At</h4></Col>
-<Col className="project_detail_col data" span={6}><h4>{!isLoading && data.created_at}</h4></Col>
+<Col className="project_detail_col data" span={6}><h4>{!isLoading && getCreatedAt()}</h4></Col>
 <Col className="project_detail_col head" span={6}><h4>Total Node</h4></Col>
 <Col className="project_detail_col data" span={6}><h4>{!isLoading && getTotalNode()}</h4></Col>
 </Row>

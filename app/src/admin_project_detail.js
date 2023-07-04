@@ -21,7 +21,7 @@ function AdminProjectDetail(props) {
           if(selectedProject.project_name == null || selectedProject.login_id == null){
             return {};
           }
-          const { data } = await axios.get(process.env.REACT_APP_API+'/api/project/'+ selectedProject.login_id + '/' + selectedProject.project_name, {withCredentials:true});
+          const { data } = await axios.get(process.env.REACT_APP_API+'/api/admin/project/'+ selectedProject.login_id + '/' + selectedProject.project_name, {withCredentials:true});
           return data;
         }
 

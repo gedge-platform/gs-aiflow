@@ -30,7 +30,6 @@ const CreateProjectModal = (props) => {
       const { data } = await axios.get(process.env.REACT_APP_API+'/api/clusters', {withCredentials:true});
       var list = data.cluster_list;
       var count = 0;
-      console.log(data)
       list.forEach(function(item){
           item.key = count;
           count++;
@@ -48,7 +47,6 @@ const CreateProjectModal = (props) => {
 const rowSelection = {
   onChange: (selectedRowKeys, selectedRows) => {
     setClusterList(selectedRows);
-    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
   },
   getCheckboxProps: (record) => ({
     disabled: record.name === 'Disabled User',
@@ -92,13 +90,21 @@ const validateProjectFromServer = (name) => {
   .then(response => {
     if(response['data']['data'] != undefined){
         setValidation(false);
-        console.log(response['data']['data']);
     }
     else{
         setValidation(true);
-        console.log(response['data']['data']);
     }
     
+    setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[0] = false;
+      return newLoadings;
+    });
+  })
+  .catch(err => {
+    if(err.response.status == 404){
+      setValidation(true);
+    }
     setLoadings((prevLoadings) => {
       const newLoadings = [...prevLoadings];
       newLoadings[0] = false;
