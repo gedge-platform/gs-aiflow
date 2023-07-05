@@ -17,6 +17,7 @@ import common.logger
 import flask_api.center_client
 import flask_api.runtime_helper
 import flask_api.filesystem_impl
+from flask_api import user_impl
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -942,7 +943,7 @@ def getProject(userUUID, projectName):
         if len(rows) != 0:
             pid = getCenterProjectID(rows[0]['project_uuid'], projectName)
             response = flask_api.center_client.userProjectsNameGet(pid)
-            if response['data'] is not None:
+            if response.get('data') is not None:
                 returnResponse = {}
                 returnResponse['projectName'] = projectName
                 returnResponse['projectDescription'] = response['data']['projectDescription']
@@ -953,6 +954,15 @@ def getProject(userUUID, projectName):
                     returnResponse['status'] = 'Running'
                 for cluster in response['data']['selectCluster']:
                     returnResponse['clusterList'].append(cluster['clusterName'])
+
+                #detailInfo
+                returnResponse['DetailInfo'] = []
+                if type(response['data'].get('DetailInfo')) is list:
+                    for detailInfo in response['data'].get('DetailInfo'):
+                        returnResponse['DetailInfo'].append( {
+                            "clusterName" : detailInfo.get('clusterName'),
+                            "resourceUsage" : detailInfo.get('resourceUsage')
+                        })
 
                 #node db
                 returnResponse['nodes'] = {}
@@ -1277,3 +1287,10 @@ def getPodYaml(projectName, taskName, userUUID):
 
 def stringToJsonAvailableStr(str : str):
     return str.replace("\'", "\"").replace("True", "true")
+
+def getDagForAdmin(loginID, projectName, needYaml):
+    user = user_impl.getUser(loginID)
+    if user is None:
+        return jsonify(status='failed', msg = f'not found {loginID}'), 404
+    else:
+        return getDag(user, projectName, needYaml)

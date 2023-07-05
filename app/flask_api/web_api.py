@@ -260,6 +260,16 @@ def getProjectForAdmin(login_id, projectName):
 
         return monitor_impl.getProjectForAdmin(login_id, projectName)
 
+@app.route('/api/admin/project/<string:login_id>/<string:projectName>/dag', methods=['GET'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def getProjectDagForAdmin(login_id, projectName):
+    if request.method == 'GET':
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+        return monitor_impl.getDagForAdmin(login_id, projectName, False)
+
 @app.route('/api/project/init', methods=['POST'])
 @auth_impl.needLogin()
 def initProject():
@@ -385,7 +395,7 @@ def manageUser(loginID):
     if request.method == 'PUT':
         return user_impl.updateUser(loginID)
     if request.method == 'GET':
-        return user_impl.getUser(loginID)
+        return user_impl.getUserAPI(loginID)
 
 @app.route('/api/clusters/all', methods=['GET'])
 @auth_impl.needLogin()
