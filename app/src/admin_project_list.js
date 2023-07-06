@@ -2,9 +2,10 @@ import React, { useEffect } from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
 import { useState } from 'react';
-import { Space, Table, Tag, Button, Modal, notification, Select, Input } from 'antd';
-import { DesktopOutlined } from "@ant-design/icons";
+import { Space, Table, Tag, Button, Modal, notification, Select, Input} from 'antd';
+import { DesktopOutlined ,  MinusCircleOutlined, DeleteOutlined} from "@ant-design/icons";
 import StopProjectModal from "./stop_project_modal";
+import InitProjectModal from "./init_project_modal";
 
 
 
@@ -58,7 +59,7 @@ function AdminProjectList(props) {
       width: 200,
       render: (value) => {
         let color = 'blue';
-        if (value == 'Running') {
+        if (value == 'Launching') {
           color = 'green';
         }
         return (
@@ -74,7 +75,13 @@ function AdminProjectList(props) {
       width: 200,
       render: (_, record) => (
         <Space size="middle">
-          <Button type="primary" icon={<DesktopOutlined />} style={{ backgroundColor: '#CC0000' }} onClick={(event) => {
+        <Button type="primary" icon={<MinusCircleOutlined />} style={{ backgroundColor: '#CC7700' }} onClick={(event) => {
+          event.stopPropagation();
+          stopProjectData(record);
+        }}>
+          Stop
+        </Button>
+          <Button type="primary" icon={<DeleteOutlined />} style={{ backgroundColor: '#CC0000' }} onClick={(event) => {
             event.stopPropagation();
             initProjectData(record);
           }}>
@@ -95,6 +102,12 @@ function AdminProjectList(props) {
     setStopLoginID(record.login_id);
     showDeleteModal();
   }
+
+  function stopProjectData(record) {
+    setStopProjectName(record.project_name);
+    setStopLoginID(record.login_id);
+    showStopModal();
+  }
   var id = props.id;
   const { isLoading, isError, data, error, refetch } = useQuery(["projectList"], () => { return getProjectList(id) }, {
     refetchOnWindowFocus: false,
@@ -111,13 +124,20 @@ function AdminProjectList(props) {
   };
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [stopOpen, setStopOpen] = useState(false);
   const [confirmDeleteLoading, setConfirmDeleteLoading] = useState(false);
+  const [confirmStopLoading, setConfirmStopLoading] = useState(false);
   const [stopProjectName, setStopProjectName] = useState("");
   const [stopLoginID, setStopLoginID] = useState("");
 
   const showDeleteModal = () => {
     setDeleteOpen(true);
   };
+
+  const showStopModal = () => {
+    setStopOpen(true);
+  };
+
 
   const handleDeleteOk = () => {
     sendDeleteProject();
@@ -127,6 +147,14 @@ function AdminProjectList(props) {
     setDeleteOpen(false);
   }
 
+  const handleStopOk = () => {
+    sendStopProject();
+  }
+
+  const handleStopCancel = () => {
+    setStopOpen(false);
+  }
+
 
 
 
@@ -134,6 +162,32 @@ function AdminProjectList(props) {
     setConfirmDeleteLoading(true);
 
     axios.post(process.env.REACT_APP_API + '/api/admin/project/init/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
+      .then(response => {
+
+        if (response.data['status'] == 'success') {
+          notificationData.message = '프로젝트 초기화 성공';
+          notificationData.description = '프로젝트 초기화에 성공했습니다.';
+          openNotificationWithIcon("success");
+        }
+        else {
+          notificationData.message = '프로젝트 초기화 실패';
+          notificationData.description = '프로젝트 초기화에 실패했습니다.';
+          openNotificationWithIcon("error");
+        }
+
+        setDeleteOpen(false);
+        setConfirmDeleteLoading(false);
+        refetch();
+      })
+
+  }
+
+
+
+  function sendStopProject() {
+    setConfirmStopLoading(true);
+
+    axios.post(process.env.REACT_APP_API + '/api/admin/project/stop/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
       .then(response => {
 
         if (response.data['status'] == 'success') {
@@ -147,8 +201,8 @@ function AdminProjectList(props) {
           openNotificationWithIcon("error");
         }
 
-        setDeleteOpen(false);
-        setConfirmDeleteLoading(false);
+        setStopOpen(false);
+        setConfirmStopLoading(false);
         refetch();
       })
 
@@ -207,11 +261,23 @@ function AdminProjectList(props) {
 
       }
       <Modal
-        title="프로젝트 정지"
+        title="프로젝트 초기화"
         open={deleteOpen}
         onOk={handleDeleteOk}
         confirmLoading={confirmDeleteLoading}
         onCancel={handleDeleteCancel}
+        destroyOnClose={true}
+      >
+        <div style={{ height: '10px' }} />
+        <InitProjectModal project_name={stopProjectName} />
+      </Modal>
+
+      <Modal
+        title="프로젝트 정지"
+        open={stopOpen}
+        onOk={handleStopOk}
+        confirmLoading={confirmStopLoading}
+        onCancel={handleStopCancel}
         destroyOnClose={true}
       >
         <div style={{ height: '10px' }} />

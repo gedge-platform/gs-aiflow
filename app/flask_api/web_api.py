@@ -290,6 +290,18 @@ def initProjectForAdmin(login_id, projectName):
             return flask.jsonify(status='failed', msg='auth failed'), 401
 
         return monitor_impl.initProjectForAdmin(login_id, projectName)
+
+
+@app.route('/api/admin/project/stop/<string:login_id>/<string:projectName>', methods=['POST'])
+@auth_impl.needLogin()
+@auth_impl.forAdmin()
+def stopProjectForAdmin(login_id, projectName):
+    if request.method == 'POST':
+        user = user_impl.getUserInSession()
+        if user is None:
+            return flask.jsonify(status='failed', msg='auth failed'), 401
+
+        return monitor_impl.stopProjectForAdmin(login_id, projectName)
 @app.route('/api/clusters', methods=['GET'])
 @auth_impl.needLogin()
 def getClusterList():
@@ -396,13 +408,6 @@ def manageUser(loginID):
         return user_impl.updateUser(loginID)
     if request.method == 'GET':
         return user_impl.getUserAPI(loginID)
-
-@app.route('/api/clusters/all', methods=['GET'])
-@auth_impl.needLogin()
-@auth_impl.forAdmin()
-def getAllClusters():
-    if request.method == 'GET':
-        return monitor_impl.getAllClusters()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

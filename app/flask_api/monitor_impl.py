@@ -782,7 +782,7 @@ def initProject(userUUID, workspaceName, projectName):
     monitoringManager.deleteWorkFlow(projectID)
     for item in rows:
         flask_api.center_client.podsNameDelete(item['node_name'], workspaceName, 'mec(ilsan)', projectID)
-    return jsonify(status = 'success'), 200
+    return jsonify(status = 'success'), 201
 
 
 def getClusterList(userUUID):
@@ -1233,7 +1233,7 @@ def getProjectAllListForAdmin():
             data['user_name'] = row['user_name']
             data['status'] = 'Waiting'
             if monitoringManager.getIsRunning(getCenterProjectID(row['project_uuid'], row['project_name'])) is True:
-                data['status'] = 'Running'
+                data['status'] = 'Launching'
             projectList.append(data)
         return jsonify(project_list=projectList), 200
     else:
@@ -1264,6 +1264,29 @@ def initProjectForAdmin(loginID, projectName):
 
     return jsonify(status='failed'), 400
 
+def stopProject(user, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(
+        f'select project_uuid from TB_PROJECT where user_uuid = "{user.userUUID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status='failed', msg='database error'), 400
+    if len(rows) == 0:
+        return jsonify(status='failed', msg='Project is not found'), 404
+
+    projectID = rows[0]['project_uuid']
+    projectID = getCenterProjectID(projectID, projectName)
+    monitoringManager.deleteWorkFlow(projectID)
+    return jsonify(status='success'), 201
+
+def stopProjectForAdmin(loginID, projectName):
+    user = user_impl.getUser(loginID)
+
+    if user is None:
+        return jsonify(status='failed', msg = f'not found {loginID}'), 404
+    else:
+        return stopProject(user, projectName)
 
 def getPodYaml(projectName, taskName, userUUID):
     mycon = get_db_connection()
