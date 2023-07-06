@@ -1,5 +1,5 @@
 import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification, Divider } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification} from 'antd';
 import { Component, useEffect, useState } from 'react';
 import { Link, Route, Routes, Navigate, BrowserRouter, json, useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,7 @@ import { UserList } from './user_list';
 import { UserManagement } from './user_management';
 import { AdminServiceDefine } from './admin_service_define';
 import Test from './test_page';
+import LoadingPage from './loading_page';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -219,9 +220,9 @@ const App = () => {
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
-                              <Route path='/test/' element={<Test/>}></Route>
-                              <Route path='/users/' element={isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
-                              <Route path='/admin_project_list/' element={isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
+                              <Route path='/test/' element={<LoadingPage/>}></Route>
+                              <Route path='/users/' element={loggedIn ?  isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} /> : <LoadingPage/>}></Route>
+                              <Route path='/admin_project_list/' element={loggedIn ? isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} /> : <LoadingPage/>}></Route>
                               <Route path='*' element={<NotFound />}></Route>
                             </Routes>
                           </Content>
