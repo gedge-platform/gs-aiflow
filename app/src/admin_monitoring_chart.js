@@ -30,7 +30,7 @@ import "./css/dagModal.css";
 import DagModal from './dag_modal';
 import dagre from 'dagre';
 import { Button, Row, Col, Divider, Select , notification, Modal} from 'antd';
-import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
+import { MinusCircleOutlined, CloseOutlined , RollbackOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from './dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
 
@@ -78,7 +78,7 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
   return { nodes, edges, label };
 };
 
-function Flow(props) {
+function AdminFlow(props) {
   const setProjectID = props.setProjectID;
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -89,6 +89,7 @@ function Flow(props) {
   const [toggleFlag, setToggleFlag] = useState(false);
   const [pjList, setPjList] = useState([]);
   const id = useParams().projectID;
+  const userID = useParams().userID;
   const navigate = useNavigate();
   const [needFitView, setNeedFitView]=useState(true);
   const { isLoading, error, data, isFetching, refetch} = useQuery(
@@ -96,7 +97,7 @@ function Flow(props) {
       if(id == undefined){
         return ;
       }
-      return axios.get(process.env.REACT_APP_API + '/api/project/dag/' + id, {withCredentials:true})
+      return axios.get(process.env.REACT_APP_API + '/api/admin/project/' + userID + '/' + id + '/dag', {withCredentials:true})
         .then((res) => {
           return setGraph(res);
         })
@@ -149,18 +150,6 @@ function Flow(props) {
     //fit view
     return res['data'];
   }
-
-
-  const getProjectList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/project', { withCredentials: true });
-    var list = data.project_list;
-    list.forEach(function (item) {
-      item.value = item.project_name;
-      item.label = item.project_name;
-    })
-    setPjList(list)
-    return list;
-  };
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -253,12 +242,10 @@ function Flow(props) {
   const [title, setTitle] = useState("hello")
 
   function afterOpenModal() {
-    // references are now sync'd and can be accessed.
     subtitle.text = selectedNodeData.id;
   }
 
   function afterPopUpOpenModal() {
-    // references are now sync'd and can be accessed.
     subtitle.text = "실패했습니다."
   }
 
@@ -271,25 +258,25 @@ function Flow(props) {
   }
 
 
-  function launchProject() {
-    axios.post(process.env.REACT_APP_API + '/api/project/launch',
+  function stopProject() {
+    axios.post(process.env.REACT_APP_API + '/api/admin/project/stop' + userID + '/' + id,
       { projectID: id }, {withCredentials:true})
       .then(response => {
         if (response.data['status'] == 'success') {
-          openNotificationWithIcon("success", {message:"Launch Project", description:"실행에 성공했습니다."})
+          openNotificationWithIcon("success", {message:"Stop Project", description:"정지에 성공했습니다."})
         }
         else {
-          openNotificationWithIcon("error", {message:"Launch Project", description:"실행에 실패했습니다. 워크플로를 초기화 해주십시오."})
+          openNotificationWithIcon("error", {message:"Stop Project", description:"정지에 실패했습니다."})
         }
       })
       .catch(error => {
-        openNotificationWithIcon("error", {message:"Launch Project", description:"서버 에러, 실행에 실패했습니다."})
+        openNotificationWithIcon("error", {message:"Stop Project", description:"서버 에러, 정지에 실패했습니다."})
       })
 
   }
 
   function InitProject() {
-    axios.post(process.env.REACT_APP_API + '/api/project/init',
+    axios.post(process.env.REACT_APP_API + '/api/admin/project/init/' + userID + '/' + id,
       { projectID: id }, {withCredentials:true})
       .then(response => {
         if (response.data['status'] == 'success') {
@@ -303,19 +290,6 @@ function Flow(props) {
         openNotificationWithIcon("error", {message:"Init Project", description:"서버 에러, 초기화에 실패했습니다."})
       })
   }
-  const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
-    return getProjectList()
-  }, {
-    refetchOnWindowFocus:false,
-    retry:0,
-  });
-
-  const onChangeProjectSelect = (data) =>{
-    setNeedFitView(true)
-    setProjectID(data);
-    setSelectedNodeData(null);
-    navigate('/monitoring/' + data)
-  } 
 
   const nodeColor = (node) =>{
     if(node){
@@ -348,13 +322,8 @@ function Flow(props) {
     <div id='reactflow_wrapper'>
       {contextHolder}
       <div style={{width:'100%', display: 'flex'}}>
-        <Select style={{width : "180px", fontWeight:'bold'}} defaultValue={id} onChange={onChangeProjectSelect} placeholder='select project'
-        options={pjList}></Select>
-
         <div style={{marginLeft:'auto'}}>
-          <a href={'/api/storage/' + id} target="_blank">
-            <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<FileSearchOutlined />}>Storage</Button>
-          </a>
+          <Button style={{backgroundColor: '#FFFFFF', color: '#000000'}} type="primary" icon={<RollbackOutlined />} onClick={()=>{navigate(-1);}}>Return to List</Button>
           </div>
       </div>
       <div className='content_box' style={{minHeight:'200px'}}>
@@ -390,8 +359,8 @@ function Flow(props) {
             </Row>
           </div>
           <div align='right' style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button style={{ backgroundColor: '#00CC00', margin: 'auto 0' }} type="primary" icon={<CaretRightOutlined />} onClick={launchProject}>
-              Launch Project
+            <Button style={{ backgroundColor: '#CC7700', margin: 'auto 0' }} type="primary" icon={<MinusCircleOutlined />} onClick={stopProject}>
+              Stop Project
             </Button>
             <div style={{ width: '15px' }} />
             <Button style={{ backgroundColor: '#CC0000', margin: 'auto 0' }} type="primary" icon={<CloseOutlined />} onClick={InitProject}>
@@ -414,7 +383,6 @@ function Flow(props) {
             nodeTypes={nodeTypes}
             fitView
             onInit={setReactFlowInstance}
-            // translateExtent={[[-300, -100], [2500, 300]]}
             panOnScrollMode={PanOnScrollMode.Horizontal}
             zoomOnScroll={true}
             nodesDraggable={false}
@@ -422,9 +390,6 @@ function Flow(props) {
             <MiniMap nodeColor={nodeColor} nodeStrokeWidth={5} nodeStrokeColor={'black'}/>
             <Controls/>
             <Background />
-
-            {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
-                </Sidebar> */}
           </ReactFlow>
         </div>
       </div>
@@ -464,4 +429,4 @@ function Flow(props) {
   );
 }
 
-export default Flow;
+export default AdminFlow;

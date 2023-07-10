@@ -6,6 +6,7 @@ import { Space, Table, Tag, Button, Modal, notification, Select, Input} from 'an
 import { DesktopOutlined ,  MinusCircleOutlined, DeleteOutlined} from "@ant-design/icons";
 import StopProjectModal from "./stop_project_modal";
 import InitProjectModal from "./init_project_modal";
+import { useNavigate } from "react-router";
 
 
 
@@ -24,6 +25,8 @@ function AdminProjectList(props) {
 
   };
 
+  const navigate = useNavigate();
+
   const columns = [
     {
       title: '유저 아이디',
@@ -32,7 +35,7 @@ function AdminProjectList(props) {
       value: 'login_id',
       label: '유저 아이디',
       sorter: (a, b) => { return ([a.login_id, b.login_id].sort()[0] === a.login_id ? 1 : -1) },
-      width: 400,
+      width: 200,
     },
     {
       title: '유저 이름',
@@ -40,7 +43,7 @@ function AdminProjectList(props) {
       key: 'user_name',
       value: 'user_name',
       label: '유저 이름',
-      width: 400,
+      width: 200,
     },
     {
       title: '프로젝트 이름',
@@ -48,7 +51,7 @@ function AdminProjectList(props) {
       key: 'project_name',
       value: 'project_name',
       label: '프로젝트 이름',
-      width: 400,
+      width: 300,
     },
     {
       title: '상태',
@@ -56,7 +59,7 @@ function AdminProjectList(props) {
       key: 'status',
       value: 'status',
       label: '상태',
-      width: 200,
+      width: 100,
       render: (value) => {
         let color = 'blue';
         if (value == 'Launching') {
@@ -72,9 +75,15 @@ function AdminProjectList(props) {
     {
       title: 'Action',
       key: 'action',
-      width: 200,
+      width: 300,
       render: (_, record) => (
         <Space size="middle">
+        <Button type="primary" icon={<DesktopOutlined />} style={{ backgroundColor: '#00CC00' }} onClick={(event) => {
+          event.stopPropagation();
+          monitoringProjectData(record);
+        }}>
+          Monitoring
+        </Button>
         <Button type="primary" icon={<MinusCircleOutlined />} style={{ backgroundColor: '#CC7700' }} onClick={(event) => {
           event.stopPropagation();
           stopProjectData(record);
@@ -87,6 +96,7 @@ function AdminProjectList(props) {
           }}>
             Init
           </Button>
+
         </Space>
       ),
     },
@@ -108,6 +118,11 @@ function AdminProjectList(props) {
     setStopLoginID(record.login_id);
     showStopModal();
   }
+
+  function monitoringProjectData(record){
+    navigate('monitoring/' + record.login_id + '/' + record.project_name);
+  }
+
   var id = props.id;
   const { isLoading, isError, data, error, refetch } = useQuery(["projectList"], () => { return getProjectList(id) }, {
     refetchOnWindowFocus: false,
@@ -119,7 +134,7 @@ function AdminProjectList(props) {
     return {
       onClick: (event) => {
         setSelectedProject({ project_name: record.project_name, login_id: record.login_id, user_name: record.user_name });
-      },
+      }
     };
   };
 
