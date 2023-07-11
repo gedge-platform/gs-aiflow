@@ -41,19 +41,39 @@ $ npm install react-hook-form@^7.39.2
 ## Make Docker image
 ### React
 ```shell
-$ sudo docker build -t react .
+$ sudo docker build -t react:{version} .
 ```
 ### Flask
 ```shell
-$ sudo docker build -t flask -f DockerfilePython .
+$ sudo docker build -t flask:{version} -f DockerfilePython .
 ```
 
 ## Run Docker Container
 ### React
 ```shell
-$ sudo docker run -d -p 3000:3000 --name react_container react:버전
+$ sudo docker run -d -p 3000:3000 --name react_container react:{version}
 ```
 ### Flask
 ```shell
-$ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e DB_PORT={DB port} -e DB_USER={DB user} -e DB_PASS={DB pass} flask:버전
+$ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e DB_PORT={DB port} -e DB_USER={DB user} -e DB_PASS={DB pass} flask:{version}
 ```
+
+## Kubernetes Setting
+### Precondition
+
+1. Modify config.yaml
+2. React, Flask Image Build 
+3. Prepare NFS Storage
+4. Make system Directory to NFS Storage Root
+```
+$ mkdir system
+```
+5. Copy runtime_data/conf.d to system folder
+```commandline
+NFS Storage Root
+├── system
+│   └── conf.d
+│       └── default.conf
+└── ...
+```
+6. Run bin/setup
