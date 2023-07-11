@@ -9,7 +9,6 @@ const UserInfo = ({ username, avatarSrc, onLogout }) => {
                 padding: '8px 20px', height: '50%', margin: 'auto', display: 'flex', alignItems: 'center', verticalAlign: 'middle',
                 color: 'white', fontWeight: 'bold', fontSize: '16px', backgroundColor: '#142c42', borderRadius: '30px'
             }}>
-                {/* <Avatar icon={<UserOutlined/>} src={avatarSrc} style={{ marginRight: '16px' }} /> */}
                 <Avatar icon={<UserOutlined />} style={{ marginRight: '16px', backgroundColor: 'white', color: 'black' }} />
                 <div style={{ marginRight: '16px' }}>{username}</div>
                 <Button onClick={onLogout} style={{fontWeight:'bold'}} icon={<LogoutOutlined />}>

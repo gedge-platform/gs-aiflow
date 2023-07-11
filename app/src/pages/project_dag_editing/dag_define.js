@@ -20,19 +20,18 @@ import ReactFlow, {
     deleteElements,
 } from 'reactflow';
 
-import './css/textUpdaterNode.scss'
+import 'css/textUpdaterNode.scss'
 import axios from 'axios';
-import "./css/dagModal.css";
+import "css/dagModal.css";
 import dagre from 'dagre';
 import { Button, Select } from 'antd';
 import { UndoOutlined, DeleteOutlined, DashOutlined, SaveOutlined } from "@ant-design/icons";
-import TextUpdaterNode from './textUpdaterNode';
-import './css/textUpdaterNode.scss'
-import { DagDefineSideBar } from "./dag_define_sidebar";
+import TextUpdaterNode from '../../components/chart_node/textUpdaterNode';
+import { DagDefineSideBar } from "../../components/side/dag_define_sidebar";
 import { useQuery } from 'react-query';
-import DagDefineModal from "./dag_define_modal";
-import DagDefineDetail from "./dag_define_detail";
-import PodNode from "./pod_node_small";
+import DagDefineModal from "components/modals/dag_define_modal";
+import DagDefineDetail from "../../components/dag/dag_define_detail";
+import PodNode from "../../components/chart_node/pod_node_small";
 const queryClient = new QueryClient();
 
 let id = 0;

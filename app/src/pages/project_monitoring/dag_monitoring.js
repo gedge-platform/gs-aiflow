@@ -1,7 +1,7 @@
 import {React, useState} from "react";
-import Flow from "./react_flow_chart";
+import Flow from "components/chart/react_flow_chart";
 import { ReactFlowProvider } from "reactflow";
-import AdminFlow from "./admin_monitoring_chart";
+import AdminFlow from "components/chart/admin_monitoring_chart";
 
 //ReactFlowProvider wrapper용
 function DagMonitoring(props) {

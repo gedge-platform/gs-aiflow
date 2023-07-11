@@ -4,8 +4,8 @@ import axios from "axios";
 import { useState } from 'react';
 import { Space, Table, Tag, Button, Modal, notification, Select, Input} from 'antd';
 import { DesktopOutlined ,  MinusCircleOutlined, DeleteOutlined} from "@ant-design/icons";
-import StopProjectModal from "./stop_project_modal";
-import InitProjectModal from "./init_project_modal";
+import StopProjectModal from "components/modals/stop_project_modal";
+import InitProjectModal from "components/modals/init_project_modal";
 import { useNavigate } from "react-router";
 
 

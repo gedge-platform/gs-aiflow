@@ -17,21 +17,19 @@ import { useQuery } from 'react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
-import { catchError } from './utils/network';
-import Sidebar from './service_define_sidebar';
-import NodeInfo from './service_define_node_info';
-import TextUpdaterNode from './textUpdaterNode';
-import PodNode from './pod_node_small';
-import './css/textUpdaterNode.scss'
+import { catchError } from '../../utils/network';
+import TextUpdaterNode from '../chart_node/textUpdaterNode';
+import PodNode from '../chart_node/pod_node_small';
+import 'css/textUpdaterNode.scss'
 import axios from 'axios';
 // import Modal from 'react-modal';
 // import Modal from 'antd';
-import "./css/dagModal.css";
-import DagModal from './dag_modal';
+import "css/dagModal.css";
+import DagModal from 'components/modals/dag_modal';
 import dagre from 'dagre';
 import { Button, Row, Col, Divider, Select , notification, Modal} from 'antd';
 import { MinusCircleOutlined, CloseOutlined , RollbackOutlined} from "@ant-design/icons";
-import DagMonitoringDetail from './dag_monitoring_detail';
+import DagMonitoringDetail from '../dag/dag_monitoring_detail';
 import Icon from '@ant-design/icons/lib/components/Icon';
 
 const nodeTypes = { textUpdater: TextUpdaterNode, Pod: PodNode };

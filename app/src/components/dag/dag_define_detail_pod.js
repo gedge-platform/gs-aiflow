@@ -1,7 +1,7 @@
 import { React, useEffect, useState } from 'react';
 import { Row, Col, Button, Modal } from 'antd';
 import axios from 'axios';
-import { catchError } from './utils/network';
+import { catchError } from '../../utils/network';
 import { useNavigate } from 'react-router';
 
 const DagDefineDetailPod = (props) => {

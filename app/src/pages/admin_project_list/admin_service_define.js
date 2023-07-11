@@ -1,8 +1,8 @@
 import {React, useState} from "react";
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route,Routes} from 'react-router-dom';
-import { AdminProjectList } from "./admin_project_list";
-import { AdminProjectDetail } from "./admin_project_detail";
+import { AdminProjectList } from "../../components/projects/admin_project_list";
+import { AdminProjectDetail } from "../../components/projects/admin_project_detail";
 const queryClient = new QueryClient();
 
 function AdminServiceDefine(props) {

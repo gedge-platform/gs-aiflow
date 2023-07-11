@@ -1,5 +1,5 @@
 import {React, useEffect, useState} from 'react';
-import './css/create_project_modal.css';
+import 'css/create_project_modal.css';
 import { Col, Row , Table, Button } from 'antd';
 import { useQuery } from "react-query";
 import {CheckOutlined} from '@ant-design/icons'

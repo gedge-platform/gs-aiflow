@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { Space, Table, Tag, Button, Modal, notification, Select, Input } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined, DesktopOutlined, DeleteOutlined, FormOutlined } from "@ant-design/icons";
-import CreateProjectModal from './create_project_modal';
-import DeleteProjectModal from './delete_project_modal';
-import CreateUserModal from "./create_user_modal";
+import CreateProjectModal from '../modals/create_project_modal';
+import DeleteProjectModal from '../modals/delete_project_modal';
+import CreateUserModal from "../modals/create_user_modal";
 import useNotification from "antd/es/notification/useNotification";
-import EditUserModal from "./edit_user_modal";
+import EditUserModal from "../modals/edit_user_modal";
 
 
 

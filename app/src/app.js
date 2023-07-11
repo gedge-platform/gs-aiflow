@@ -1,31 +1,22 @@
-import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification} from 'antd';
-import { Component, useEffect, useState } from 'react';
-import { Link, Route, Routes, Navigate, BrowserRouter, json, useNavigate, useLocation } from 'react-router-dom';
+import { PieChartOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
+import { Layout, Menu, theme, notification} from 'antd';
+import { useEffect, useState } from 'react';
+import { Link, Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
-import './css/index.css';
-import { Sidemenu } from './sidemenu';
-import { Monitor } from './monitor';
-import { EnrollClusterMonitoring } from './enroll';
-import { NotFound } from './notfound';
-import { Create } from './create.js';
-import { Delete } from './delete.js';
-import { LogIn } from './login.js';
-import { LogViewer } from './logviewer.js';
-import { ServiceDefine } from './service_define';
-import Flow from "./react_flow_chart";
+import 'css/index.css';
+import { NotFound } from 'pages/not_found/notfound';
+import { ServiceDefine } from './pages/project_list/service_define';
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { DagDefine } from './dag_define';
+import { DagDefine } from './pages/project_dag_editing/dag_define';
 import { ReactFlowProvider } from 'reactflow';
-import { DagMonitoring } from './dag_monitoring';
-import UserInfo from './user_info';
-import LoginPage from './login_page';
+import { DagMonitoring } from './pages/project_monitoring/dag_monitoring';
+import UserInfo from './components/users/user_info';
+import LoginPage from './pages/login/login_page';
 import axios from 'axios';
-import { UserList } from './user_list';
-import { UserManagement } from './user_management';
-import { AdminServiceDefine } from './admin_service_define';
+import { UserManagement } from './pages/user_management/user_management';
+import { AdminServiceDefine } from 'pages/admin_project_list/admin_service_define';
 import Test from './test_page';
-import LoadingPage from './loading_page';
+import LoadingPage from './components/loading/loading_page';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;

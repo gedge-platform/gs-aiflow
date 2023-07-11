@@ -1,10 +1,7 @@
-import { React, useEffect, useState } from 'react';
-import './css/create_project_modal.css';
-import { Col, Row, Table, Button, Form, Input, Modal, notification, message, Select } from 'antd';
-import { useQuery } from "react-query";
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { React, useState } from 'react';
+import 'css/create_project_modal.css';
+import { Button, Form, Input, Select } from 'antd';
 import axios from "axios";
-import useNotification from 'antd/es/notification/useNotification';
 
 const EditUserModal = (props) => {
   // 열기, 닫기, 모달 헤더 텍스트를 부모로부터 받아옴

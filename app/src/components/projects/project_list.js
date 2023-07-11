@@ -5,9 +5,9 @@ import { useState} from 'react';
 import { Space, Table, Tag, Button, Modal, notification } from 'antd';
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@ant-design/icons";
-import CreateProjectModal from './create_project_modal';
-import DeleteProjectModal from './delete_project_modal';
-import { catchError } from "./utils/network";
+import CreateProjectModal from '../modals/create_project_modal';
+import DeleteProjectModal from '../modals/delete_project_modal';
+import { catchError } from "../../utils/network";
 const getProjectList = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
     var list = data.project_list;
