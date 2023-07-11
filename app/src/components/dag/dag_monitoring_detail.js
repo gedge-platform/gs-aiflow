@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from 'react';
+import { React } from 'react';
 import DagDefineDetailPod from './dag_monitoring_detail_pod';
 
 const DagMonitoringDetail = (props) => {

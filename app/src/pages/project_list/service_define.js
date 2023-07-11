@@ -1,8 +1,6 @@
 import {React, useState} from "react";
-import Flow, {ExampleBasic, Flowchart} from "../../components/chart/react_flow_chart";
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route,Routes,Router} from 'react-router-dom';
-import Switch from "switch";
+import {Route,Routes} from 'react-router-dom';
 import { ProjectList } from "../../components/projects/project_list";
 import { ProjectDetail } from "../../components/projects/project_detail";
 const queryClient = new QueryClient();

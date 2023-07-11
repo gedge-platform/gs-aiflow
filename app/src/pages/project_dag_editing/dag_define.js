@@ -1,7 +1,7 @@
 import { React, useState, useRef, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { Route, Routes, Router, useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Modal, notification, message } from "antd";
+import { useParams, useNavigate } from 'react-router-dom';
+import { Row, Col, Modal, notification } from "antd";
 import ReactFlow, {
     ReactFlowProvider,
     MiniMap,
@@ -10,14 +10,10 @@ import ReactFlow, {
     useNodesState,
     useEdgesState,
     addEdge,
-    MarkerType,
-    updateEdge,
-    Connection,
     PanOnScrollMode,
     getIncomers,
     getOutgoers,
     getConnectedEdges,
-    deleteElements,
 } from 'reactflow';
 
 import 'css/textUpdaterNode.scss'
@@ -323,7 +319,6 @@ function DagDefine(props) {
     const [taskType, setTaskType] = useState(null);
     const [taskCreating, setTaskCreating] = useState(null);
     const [form, setForm] = useState({});
-    // var form = {}
 
     const showModal = () => {
         setOpen(true);

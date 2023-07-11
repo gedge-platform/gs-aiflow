@@ -2,7 +2,6 @@ import { useQuery } from "react-query";
 import { memo } from "react";
 import axios from "axios";
 
-var printLog = ""
 const getUserWithAxios = async ( id ) => {
     const { data } = await axios.get(process.env.REACT_APP_API+'/api/pod/' + id + '/detail', {withCredentials:true});
     return JSON.stringify(data.data);

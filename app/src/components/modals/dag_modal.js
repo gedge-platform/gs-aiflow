@@ -1,6 +1,5 @@
 import DagModalPod from "./dag_modal_pod";
 import {memo} from 'react';
-import axios from 'axios';
 
 function DagModal(props) {
     const nodeType = props.nodeType;

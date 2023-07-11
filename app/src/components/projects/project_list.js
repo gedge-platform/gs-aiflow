@@ -96,8 +96,6 @@ function ProjectList(props) {
               // rowIndex: row의 index
               // event: event prototype
               setSelectedProject(record.project_name);
-            // navigate('/monitoring/' + record.project_name)
-            // setPage('monitoring')
           },
         };
       };

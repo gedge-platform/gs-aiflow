@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Handle, Position } from 'reactflow';
 
-// const startHandleStyle = { width:'12px', height:'12px', position:'absolute', top:'12px', left: '0px' };
-// const endHandleStyle = { width:'12px', height:'12px', position: 'absolute', top:'12px', left: '35px' };
 const startHandleStyle = { width:'12px', height:'12px' };
 const endHandleStyle = { width:'12px', height:'12px' };
 
@@ -75,10 +73,9 @@ function PodNode({ id, data }) {
 
   return (
     <div className='node_wrapper'>
-      
-    <div className="pod_node_border" style={{ backgroundColor: getStatusBorder()}}>
-      <div className="pod_node" style={{ border: '#000000' + ' solid 3px', backgroundColor: getBackgroundColor() }}>
-      </div>
+      <div className="pod_node_border" style={{ backgroundColor: getStatusBorder() }}>
+        <div className="pod_node" style={{ border: '#000000' + ' solid 3px', backgroundColor: getBackgroundColor() }}>
+        </div>
         <Handle
           type="target"
           position={Position.Left}
@@ -93,12 +90,11 @@ function PodNode({ id, data }) {
           style={endHandleStyle}
           isConnectable={isConnectable}
         />
+      </div>
+      <div className='node_text_wrapper'>
+        {id}
+      </div>
     </div>
-    <div className='node_text_wrapper'>
-
-    {id}
-    
-    </div></div>
   );
 }
 

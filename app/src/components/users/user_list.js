@@ -2,11 +2,8 @@ import React, { useEffect } from "react";
 import { useQuery } from "react-query";
 import axios from "axios";
 import { useState } from 'react';
-import { Space, Table, Tag, Button, Modal, notification, Select, Input } from 'antd';
-import { useNavigate } from "react-router-dom";
-import { PlusOutlined, DesktopOutlined, DeleteOutlined, FormOutlined } from "@ant-design/icons";
-import CreateProjectModal from '../modals/create_project_modal';
-import DeleteProjectModal from '../modals/delete_project_modal';
+import { Table, Tag, Button, Modal, notification, Select, Input } from 'antd';
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import CreateUserModal from "../modals/create_user_modal";
 import useNotification from "antd/es/notification/useNotification";
 import EditUserModal from "../modals/edit_user_modal";
@@ -286,7 +283,6 @@ function UserList(props) {
         title="유저 생성"
         open={open}
         width={700}
-        // onOk={handleOk}
         confirmLoading={confirmLoading}
         onCancel={handleCancel}
         destroyOnClose={true}
@@ -310,7 +306,6 @@ function UserList(props) {
         title="유저 수정"
         open={editOpen}
         width={700}
-        // onOk={handleOk}
         onCancel={handleEditCancel}
         destroyOnClose={true}
         footer={[]}

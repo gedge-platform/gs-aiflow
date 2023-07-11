@@ -6,9 +6,6 @@ const endHandleStyle = { width:'12px', height:'12px' };
 
 function PodNode({ id, data, isConnectable }) {
   const [stat, setStat] = useState("waiting")
-  const onChange = useCallback((evt) => {
-    console.log(evt.target.value);
-  }, []);
   useEffect(() => {
     setStatus(data.status)
   }, [data]);
@@ -72,30 +69,9 @@ function PodNode({ id, data, isConnectable }) {
   return (
     <div className="pod_node_border" style={{ backgroundColor: getStatusBorder()}}>
       <div className="pod_node" style={{ border: '#000000' + ' solid 3px', backgroundColor: getBackgroundColor() }}>
-        {/* <Handle type="target" position={Position.Top} isConnectable={isConnectable} /> */}
         <div>
-          {/* <label htmlFor="text">{data.type}</label> */}
           <h3 htmlFor='text'>{id}</h3>
-          {/* <input id="text" name="text" onChange={onChange} className="nodrag" /> */}
-
         </div>
-        {/* <div>
-        <span className='loading-btn-wrapper'>
-            <button className={statPrefix + stat + statPostfix}>
-                <span className="success-btn__text">
-                    {stat}  
-                </span>
-            </button>
-        </span>
-        </div> */}
-
-        {/* <Handle
-        type="source"
-        position={Position.Bottom}
-        id="a"
-        style={handleStyle}
-        isConnectable={isConnectable}
-      /> */}
         <Handle
           type="target"
           position={Position.Left}
@@ -110,7 +86,6 @@ function PodNode({ id, data, isConnectable }) {
           style={endHandleStyle}
           isConnectable={isConnectable}
         />
-        {/* <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} /> */}
       </div>
     </div>
   );

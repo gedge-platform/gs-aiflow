@@ -8,29 +8,22 @@ import ReactFlow, {
   addEdge,
   MarkerType,
   updateEdge,
-  Connection,
   PanOnScrollMode,
-  useNodes,
-  ReactFlowProvider
 } from 'reactflow';
 import { useQuery } from 'react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import 'reactflow/dist/style.css';
-import { catchError } from '../../utils/network';
+import { catchError } from 'utils/network';
+import { getLayoutedElements } from 'utils/graph';
 import TextUpdaterNode from '../chart_node/textUpdaterNode';
 import PodNode from '../chart_node/pod_node_small';
 import 'css/textUpdaterNode.scss'
 import axios from 'axios';
-// import Modal from 'react-modal';
-// import Modal from 'antd';
 import "css/dagModal.css";
-import DagModal from 'components/modals/dag_modal';
-import dagre from 'dagre';
 import { Button, Row, Col, Divider, Select , notification, Modal} from 'antd';
 import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from '../dag/dag_monitoring_detail';
-import Icon from '@ant-design/icons/lib/components/Icon';
 
 const nodeTypes = { textUpdater: TextUpdaterNode, Pod: PodNode };
 const rfStyle = {
@@ -40,41 +33,6 @@ const rfStyle = {
 
 const nodeWidth = 252;
 const nodeHeight = 142;
-
-const getLayoutedElements = (nodes, edges, direction = 'LR') => {
-  var dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction, width: 0, height:0 });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-  var label = dagreGraph._label;
-
-  nodes.forEach((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = isHorizontal ? 'left' : 'top';
-    node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-
-    // We are shifting the dagre node position (anchor=center center) to the top left
-    // so it matches the React Flow node anchor point (top left).
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
-
-    return node;
-  });
-
-  return { nodes, edges, label };
-};
 
 function Flow(props) {
   const setProjectID = props.setProjectID;
@@ -127,6 +85,8 @@ function Flow(props) {
     });
 
     var layoutedElems = getLayoutedElements(
+      nodeWidth,
+      nodeHeight,
       nodes,
       edges
     );
@@ -196,10 +156,8 @@ function Flow(props) {
   );
 
   const onNodeClick = (target, node) => {
-    // setToggleFlag(true);
     setTitle(node.id);
     setSelectedNodeData(node);
-    // openModal();
   };
 
   const onNodeContextMenu = (target, node) => {
@@ -210,33 +168,7 @@ function Flow(props) {
 
   const onPaneClick = (e) => {
     setToggleFlag(false);
-    // setSelectedNodeData(null);
   };
-
-  //https://reactflow.dev/docs/examples/nodes/update-node/
-  const onEdgeClick = (target, edge, dd) => {
-    var selectedEdge = edges.find(elem => elem.id == edge.id);
-    selectedEdge['animated'] = true;
-    selectedEdge['type'] = 'smoothstep';
-    selectedEdge['style'] = {
-      stroke: 'red',
-      storkeWidth: 2
-    };
-    selectedEdge['markerEnd'] = {
-      type: MarkerType.ArrowClosed,
-      width: 20,
-      height: 20,
-      color: 'red'
-    };
-    setEdges(edges);
-    setEdges((edges) => {
-      return [
-        ...edges
-      ];
-    });
-    console.log(edges)
-  }
-
 
   let subtitle;
   const [modalIsOpen, setIsOpen] = useState(false);
@@ -245,9 +177,6 @@ function Flow(props) {
     setIsOpen(true);
   }
 
-  function openPopUpModal() {
-    setPopUpIsOpen(true);
-  }
   const [title, setTitle] = useState("hello")
 
   function afterOpenModal() {
@@ -338,7 +267,6 @@ function Flow(props) {
     return '#666666'
   }
   const openNotificationWithIcon = (type, data) => {
-    console.log(api, type, api[type])
     api[type](data);
   };
 
@@ -361,7 +289,6 @@ function Flow(props) {
 
       <div className='content_box'>
         <div style={{ display: 'flex',height:'50px' }} >
-          {/* <h2>{id}</h2> */}
           <div style={{ height: '100%' }}>
             <Row>
               <div className='dag_status_color waiting' />
@@ -412,7 +339,6 @@ function Flow(props) {
             nodeTypes={nodeTypes}
             fitView
             onInit={setReactFlowInstance}
-            // translateExtent={[[-300, -100], [2500, 300]]}
             panOnScrollMode={PanOnScrollMode.Horizontal}
             zoomOnScroll={true}
             nodesDraggable={false}
@@ -420,9 +346,6 @@ function Flow(props) {
             <MiniMap nodeColor={nodeColor} nodeStrokeWidth={5} nodeStrokeColor={'black'}/>
             <Controls/>
             <Background />
-
-            {/* <Sidebar width={320} children={<NodeInfo setValue={setValue} nodeData={selectedNodeData}/>} toggleFlag={{value:toggleFlag, set:setToggleFlag}}>
-                </Sidebar> */}
           </ReactFlow>
         </div>
       </div>

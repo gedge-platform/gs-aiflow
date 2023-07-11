@@ -13,8 +13,6 @@ const CreateProjectModal = (props) => {
   const [projectDesc, setProjectDesc] = props.validation.projectDesc;
   const [clusterList, setClusterList] = props.validation.clusterList;
 
-  const flexWidth = '150px'
-
   const columns = [
     {
       title: '이름',
@@ -43,6 +41,7 @@ const CreateProjectModal = (props) => {
     refetchOnWindowFocus:false,
     retry:0,
 });
+
   // rowSelection object indicates the need for row selection
 const rowSelection = {
   onChange: (selectedRowKeys, selectedRows) => {
@@ -62,14 +61,6 @@ const enterLoading = (index) => {
     newLoadings[index] = true;
     return newLoadings;
   });
-  // setTimeout(() => {
-  //   setLoadings((prevLoadings) => {
-  //     const newLoadings = [...prevLoadings];
-  //     newLoadings[index] = false;
-  //     setValidation(true)
-  //     return newLoadings;
-  //   });
-  // }, 6000);
 };
 
 
@@ -113,56 +104,55 @@ const validateProjectFromServer = (name) => {
   });
 }
 
-// loading={loadings[0]} onClick={() => enterLoading(0)}
   return (
     // 모달이 열릴때 openModal 클래스가 생성된다.
     <div id='create_project_modal'>
 
-    <Row >
+      <Row >
         <label class="required">Project Name</label>
-    </Row>
-    <label>알파벳과 숫자, 특수문자 - 만 가능합니다.</label>
-    <Row>
+      </Row>
+      <label>알파벳과 숫자, 특수문자 - 만 가능합니다.</label>
+      <Row>
 
-    <div style={{width: '100%', display:'flex'}}>
-        <input style={{flex:1}} placeholder='Project Name' onInput={(data) => {
-          setProjectName(data.target.value);
-          setValidation(false);
-        }}/>
-        {
-          validation ? 
-            <Button style={{backgroundColor:'#52c41a'}} type="primary" shape="circle" icon={<CheckOutlined />} />
-          :
-            <Button type="primary" loading={loadings[0]} onClick={() => {
-                if(validateProjectName(projectName)){
+        <div style={{ width: '100%', display: 'flex' }}>
+          <input style={{ flex: 1 }} placeholder='Project Name' onInput={(data) => {
+            setProjectName(data.target.value);
+            setValidation(false);
+          }} />
+          {
+            validation ?
+              <Button style={{ backgroundColor: '#52c41a' }} type="primary" shape="circle" icon={<CheckOutlined />} />
+              :
+              <Button type="primary" loading={loadings[0]} onClick={() => {
+                if (validateProjectName(projectName)) {
                   validateProjectFromServer(projectName)
                 }
               }}>
-              중복확인
-            </Button>
-        }
-    </div>
-    </Row>
-    <Row>
-      <label>Project Description</label>
-    </Row>
-    <label>한글, 알파벳과 숫자, 띄어쓰기만 가능합니다.</label>
-    <Row>
-      <input style={{width:'100%'}} placeholder='Project Description' onInput={(data) => {setProjectDesc(data.target.value)}}/>
-    </Row>
-    <Row>
-      <label class="required">Clutser</label>
-    </Row>
-    <Row>
-      <Table style={{width:'100%'}}
-        rowSelection={{
-          ...rowSelection,
-        }}
-        columns={columns}
-        dataSource={data}
-        pagination={false} 
-      />
-    </Row>
+                중복확인
+              </Button>
+          }
+        </div>
+      </Row>
+      <Row>
+        <label>Project Description</label>
+      </Row>
+      <label>한글, 알파벳과 숫자, 띄어쓰기만 가능합니다.</label>
+      <Row>
+        <input style={{ width: '100%' }} placeholder='Project Description' onInput={(data) => { setProjectDesc(data.target.value) }} />
+      </Row>
+      <Row>
+        <label class="required">Clutser</label>
+      </Row>
+      <Row>
+        <Table style={{ width: '100%' }}
+          rowSelection={{
+            ...rowSelection,
+          }}
+          columns={columns}
+          dataSource={data}
+          pagination={false}
+        />
+      </Row>
     </div>
   );
 }

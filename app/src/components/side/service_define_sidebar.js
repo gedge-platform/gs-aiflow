@@ -32,25 +32,6 @@ const Sidebar = ({
       setOpen(false);
     };
 
-    // 사이드바 외부 클릭시 닫히는 함수
-    const handleClose = async e => {
-        let sideArea = side.current;
-        let sideCildren = side
-            .current
-            .contains(e.target);
-        if (isOpen && (!sideArea || !sideCildren)) {
-            await setX(-width);
-            await setOpen(false);
-        }
-    }
-
-    // useEffect(() => {
-    //     window.addEventListener('click', handleClose);
-    //     return() => {
-    //         window.removeEventListener('click', handleClose);
-    //     };
-    // })
-
     useEffect(() => {
       if(toggleFlag.value != false){
         openMenu();
@@ -71,10 +52,6 @@ const Sidebar = ({
                     transform: `translatex(${ - xPosition}px)`
                 }}>
                 <button onClick={() => toggleMenu()} className={styles.button}>
-                    {/* {isOpen ?
-            <span>X</span> : <img src="images/avatar.png" alr="contact open button" className={styles.openBtn}/>
-            } */
-                    }
                 </button>
                 <div className={styles.content}>{children}</div>
             </div>

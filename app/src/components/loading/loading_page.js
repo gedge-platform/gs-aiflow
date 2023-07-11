@@ -1,5 +1,5 @@
 
-import {Space, Spin} from 'antd'
+import {Spin} from 'antd'
 import { LoadingOutlined } from '@ant-design/icons';
 
 const LoadingPage = (props) => {

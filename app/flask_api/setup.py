@@ -154,7 +154,7 @@ def getBackDeplYaml():
                     "containers": [
                         {
                             "name": "flask",
-                            "image": "ai_flask:v0.0.2.230630",
+                            "image": flask_api.global_def.config.flask_image,
                             "volumeMounts": [
                                 {
                                     "mountPath": "/shared/nfs",
@@ -236,7 +236,7 @@ def getWebDeplYaml():
                     "containers": [
                         {
                             "name": "react",
-                            "image": "ai_react:v0.0.2.230630",
+                            "image": flask_api.global_def.config.react_image,
                             "ports": [
                                 {
                                     "containerPort": 3000,

@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from 'react';
-import { Form, Input, Select, Button, Modal, Space } from 'antd';
+import { Form, Input, Select } from 'antd';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -13,7 +13,6 @@ const DagDefineModalPod = (props) => {
   const [runtimeList, setRuntimeList] = useState([])
   const [tensorRTList, setTensorRTList] = useState([])
 
-  const [detailOpen, setDetailOpen] = useState(false);
   const [detailEnabled, setDetailEnabled] = useState(false);
   const [detailDatasetPath, setDetailDatasetPath] = useState(form.datasetPath ? form.datasetPath : null);
   const [detailModelPath, setDetailModelPath] = useState(form.modelPath ? form.modelPath : null);
@@ -27,21 +26,10 @@ const DagDefineModalPod = (props) => {
 
   }, [detailEnabled]);
 
-  const getEnv = async () => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/pod/env', {withCredentials:true});
-    return data;
-  };
-
   const getModelsAPI = async () => {
     const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model', {withCredentials:true})
     return data;
   };
-
-
-  // const { isLoading, isError, data, error } = useQuery(["env"], () => { return getEnv() }, {
-  //   refetchOnWindowFocus: false,
-  //   retry: 0,
-  // });
 
   const {isLoading, isError, data, error} = useQuery(["models"], () => { return getModelsAPI() }, {
     refetchOnWindowFocus: false,
@@ -422,7 +410,6 @@ const DagDefineModalPod = (props) => {
         </Form.Item>
         <Form.Item label="Model">
           <Select onChange={onChangeModel}
-          // defaultValue={form.model != null && form.model != undefined ? form.model : null }>
           value={selectedModel}
           >
             {!isLoading && getModels()}

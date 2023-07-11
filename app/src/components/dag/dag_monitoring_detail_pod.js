@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from 'react';
+import { React } from 'react';
 import { Row, Col } from 'antd';
 
 const DagMonitoringDetailPod = (props) => {
@@ -123,16 +123,6 @@ const DagMonitoringDetailPod = (props) => {
     return "";
   }
 
-  function getCuda(){
-    if(data.data){
-      if(data.data.cuda){
-        return data.data.cuda;
-      }
-    }
-    
-    return "";
-  }
-  
   return (
     // 모달이 열릴때 openModal 클래스가 생성된다.
     <div id='dag_define_detail'>
