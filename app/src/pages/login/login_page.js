@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Form, Input, Button } from 'antd';
 import axios from 'axios';
+import { APILogin } from 'utils/api';
 
 const LoginPage = (props) => {
     const handleLogin = props.handleLogin;
     const onFinish = (values) => {
-        axios.post(process.env.REACT_APP_API + "/api/login", values, { withCredentials: true })
+        APILogin(values)
             .then((res) => {
                 if (res.data.status == 'success') {
                     handleLogin(res.data.data.userID, res.data.data.userName, res.data.data.isAdmin);

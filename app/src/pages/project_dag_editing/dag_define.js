@@ -28,6 +28,8 @@ import { useQuery } from 'react-query';
 import DagDefineModal from "components/modals/dag_define_modal";
 import DagDefineDetail from "../../components/dag/dag_define_detail";
 import PodNode from "../../components/chart_node/pod_node_small";
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from "utils/notification";
+import { APIGetProjectDag, APIGetProjectList, APISaveProjectDag } from "utils/api";
 const queryClient = new QueryClient();
 
 let id = 0;
@@ -49,20 +51,12 @@ function DagDefine(props) {
     const [modalType, setModalType] = useState('define');
     const [needFitView, setNeedFitView]=useState(true);
 
-    var notificationData = { message : "", description : ""}
-    const openNotificationWithIcon = (type) => {
-        api[type]({
-          message: notificationData.message,
-          description: notificationData.description,
-        });
-      };
-
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID], () => {
             if (projectID == undefined){
                 return;
             }
-            return axios.get(process.env.REACT_APP_API + '/api/project/dag/' + projectID, {withCredentials:true})
+            return APIGetProjectDag(projectID)
                 .then((res) => {
                     var nodes = res['data']['nodes'];
                     var edges = res['data']['edges'];
@@ -78,7 +72,7 @@ function DagDefine(props) {
     const navigate = useNavigate();
 
     const getProjectList = async ( id ) => {
-        const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
+        const { data } = await APIGetProjectList();
         var list = data.project_list;
         list.forEach(function(item){
             item.value = item.project_name;
@@ -302,10 +296,10 @@ function DagDefine(props) {
             const deleteNode = [selectedNode];
             reactFlowInstance.deleteElements({ nodes: deleteNode, edges: [] });
             setSelectedNode(null);
-            openSuccessNotification("삭제 성공", "삭제 성공했습니다.")
+            openSuccessNotificationWithIcon(api, "삭제 성공", "삭제 성공했습니다.");
         }
         else{
-            openErrorNotification("삭제 실패", "삭제할 것을 선택해주세요.");
+            openErrorNotificationWithIcon(api, "삭제 실패", "삭제할 것을 선택해주세요.");
         }
     }
 
@@ -517,22 +511,21 @@ function DagDefine(props) {
 
     function saveGraph() {
         if(projectID == undefined){
-            openErrorNotification("저장 오류", "프로젝트를 먼저 선택해주세요.");
+            openErrorNotificationWithIcon(api, "저장 오류", "프로젝트를 먼저 선택해주세요.");
             return;
         }
 
-        axios.post(process.env.REACT_APP_API + '/api/project/dag/' + projectID,
-            { projectID: projectID, nodes: nodes, edges: edges }, {withCredentials:true})
+        APISaveProjectDag(projectID, nodes, edges)
             .then(response => {
                 if (response.data['status'] == 'success') {
-                    openSuccessNotification('저장 성공', '저장에 성공했습니다.');
+                    openSuccessNotificationWithIcon(api, '저장 성공', '저장에 성공했습니다.');
                 }
                 else {
-                    openErrorNotification("저장 실패", "서버 오류로 저장 실패했습니다.");
+                    openErrorNotificationWithIcon(api, "저장 실패", "서버 오류로 저장 실패했습니다.");
                 }
             })
             .catch((error) => {
-                openErrorNotification("저장 실패", "서버 오류로 저장 실패했습니다.");
+                openErrorNotificationWithIcon(api, "저장 실패", "서버 오류로 저장 실패했습니다.");
             });
     }
 
@@ -559,18 +552,6 @@ function DagDefine(props) {
         return '#666666'
       }
     
-    const openSuccessNotification = (message, des) => {
-        notificationData.message = message;
-        notificationData.description = des;
-        openNotificationWithIcon('success');
-    }
-
-    const openErrorNotification = (message, des) => {
-        notificationData.message = message;
-        notificationData.description = des;
-        openNotificationWithIcon('error');
-    }
-    
     return (
         <>
             {contextHolder}
@@ -591,11 +572,11 @@ function DagDefine(props) {
                                     <Button style={{ float: 'right', backgroundColor: '#CC0000' }} type="primary" icon={<DeleteOutlined />} onClick={onNodeDeleteClick}>Delete</Button>
                                     <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#00CC00' }} icon={<SaveOutlined />} onClick={() => { saveGraph() }} type="primary">Save</Button>
                                     <Button style={{ float: 'right', marginRight: '15px', }} type="primary" icon={<DashOutlined />} onClick={() => { 
-                                            openSuccessNotification("정렬 성공", "데이터를 정렬 했습니다.");
+                                            openSuccessNotificationWithIcon(api, "정렬 성공", "데이터를 정렬 했습니다.");
                                             sortGraph(nodes, edges)
                                          }}>Sort Graph</Button>
                                     <Button style={{ float: 'right', marginRight: '15px', backgroundColor: '#CC9900' }} icon={<UndoOutlined />} onClick={() => {
-                                            openSuccessNotification("리셋 성공", "원래 데이터로 리셋 했습니다.");
+                                            openSuccessNotificationWithIcon(api, "리셋 성공", "원래 데이터로 리셋 했습니다.");
                                             refetch()
                                         }} type="primary">Reset Graph</Button>
                                 </div>

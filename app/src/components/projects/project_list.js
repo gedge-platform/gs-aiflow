@@ -8,8 +8,9 @@ import { PlusOutlined, DesktopOutlined , DeleteOutlined, FormOutlined} from "@an
 import CreateProjectModal from '../modals/create_project_modal';
 import DeleteProjectModal from '../modals/delete_project_modal';
 import { catchError } from "../../utils/network";
+import { APICreateProject, APIDeleteProject, APIGetProjectList } from "utils/api";
 const getProjectList = async ( id ) => {
-    const { data } = await axios.get(process.env.REACT_APP_API+'/api/project', {withCredentials:true});
+    const { data } = await APIGetProjectList();
     var list = data.project_list;
     var count = 0;
     list.forEach(function(item){
@@ -176,8 +177,7 @@ function ProjectList(props) {
 
       const cL = []
       clusterList.forEach(elem => cL.push(elem.name))
-      axios.post(process.env.REACT_APP_API + '/api/project', 
-      {projectName: projectName, projectDesc: projectDesc, clusterName: cL}, {withCredentials:true})
+      APICreateProject(projectName, projectDesc, cL)
       .then(response => {
 
           if(response.data['status'] == 'success'){
@@ -205,8 +205,8 @@ function ProjectList(props) {
 
   function sendDeleteProject() {
     setConfirmDeleteLoading(true);
-
-    axios.delete(process.env.REACT_APP_API + '/api/project/' + deleteProjectName, {withCredentials:true})
+    
+    APIDeleteProject(deleteProjectName)
     .then(response => {
 
         if(response.data['status'] == 'success'){
@@ -240,7 +240,6 @@ function ProjectList(props) {
   };
   
     const handleCancel = () => {
-      console.log('Clicked cancel button');
       setOpen(false);
     };
 

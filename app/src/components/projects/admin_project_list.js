@@ -7,13 +7,15 @@ import { DesktopOutlined ,  MinusCircleOutlined, DeleteOutlined} from "@ant-desi
 import StopProjectModal from "components/modals/stop_project_modal";
 import InitProjectModal from "components/modals/init_project_modal";
 import { useNavigate } from "react-router";
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from "utils/notification";
+import { APIAdminGetProject, APIAdminInitProject, APIAdminStopProject } from "utils/api";
 
 
 
 
 function AdminProjectList(props) {
   const getProjectList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/admin/project', { withCredentials: true });
+    const { data } = await APIAdminGetProject();
     var list = data.project_list;
     var count = 0;
     list.forEach(function (item) {
@@ -176,24 +178,23 @@ function AdminProjectList(props) {
   function sendDeleteProject() {
     setConfirmDeleteLoading(true);
 
-    axios.post(process.env.REACT_APP_API + '/api/admin/project/init/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
+    APIAdminInitProject(stopLoginID, stopProjectName)
       .then(response => {
 
         if (response.data['status'] == 'success') {
-          notificationData.message = '프로젝트 초기화 성공';
-          notificationData.description = '프로젝트 초기화에 성공했습니다.';
-          openNotificationWithIcon("success");
+          openSuccessNotificationWithIcon(api, '프로젝트 초기화 성공', '프로젝트 초기화에 성공했습니다.');
         }
         else {
-          notificationData.message = '프로젝트 초기화 실패';
-          notificationData.description = '프로젝트 초기화에 실패했습니다.';
-          openNotificationWithIcon("error");
+          openErrorNotificationWithIcon(api, "프로젝트 초기화 실패", "프로젝트 초기화에 실패했습니다.");
         }
 
         setDeleteOpen(false);
         setConfirmDeleteLoading(false);
         refetch();
       })
+      .catch(error => {
+        openErrorNotificationWithIcon(api, "프로젝트 초기화 실패", "프로젝트 초기화에 실패했습니다.");
+      });
 
   }
 
@@ -202,24 +203,23 @@ function AdminProjectList(props) {
   function sendStopProject() {
     setConfirmStopLoading(true);
 
-    axios.post(process.env.REACT_APP_API + '/api/admin/project/stop/' + stopLoginID + '/' + stopProjectName, {}, { withCredentials: true })
+    APIAdminStopProject(stopLoginID, stopProjectName)
       .then(response => {
 
         if (response.data['status'] == 'success') {
-          notificationData.message = '프로젝트 정지 성공';
-          notificationData.description = '프로젝트 정지에 성공했습니다.';
-          openNotificationWithIcon("success");
+          openSuccessNotificationWithIcon(api, '프로젝트 정지 성공', '프로젝트 정지에 성공했습니다.');
         }
         else {
-          notificationData.message = '프로젝트 정지 실패';
-          notificationData.description = '프로젝트 정지에 실패했습니다.';
-          openNotificationWithIcon("error");
+          openErrorNotificationWithIcon(api, "프로젝트 정지 실패", "프로젝트 정지에 실패했습니다.");
         }
 
         setStopOpen(false);
         setConfirmStopLoading(false);
         refetch();
       })
+      .catch(error => {
+        openErrorNotificationWithIcon(api, "프로젝트 정지 실패", "프로젝트 정지에 실패했습니다.");
+      });
 
   }
 
@@ -237,11 +237,6 @@ function AdminProjectList(props) {
   const onChangeFilterInput = (data) => {
     setFilterInput(data.target.value);
   }
-
-  const notificationData = {message:"", description:""};
-  const openNotificationWithIcon = (type) => {
-    api[type](notificationData);
-  };
 
   //filter
   useEffect(() => {

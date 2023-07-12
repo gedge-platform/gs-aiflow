@@ -3,6 +3,7 @@ import { Row, Col, Button, Modal } from 'antd';
 import axios from 'axios';
 import { catchError } from '../../utils/network';
 import { useNavigate } from 'react-router';
+import { APIGetProjectPodYaml } from 'utils/api';
 
 const DagDefineDetailPod = (props) => {
   const data = props.data;
@@ -100,7 +101,7 @@ const DagDefineDetailPod = (props) => {
 
   function onClickYaml(){
     setOpen(true)
-    axios.get('/api/project/' + projectID + '/' + getPodName() + '/yaml', {withCredentials:true})
+    APIGetProjectPodYaml(projectID, getPodName())
     .then((res) => {
       if(res.data.yaml){
         setYaml(res.data.yaml);

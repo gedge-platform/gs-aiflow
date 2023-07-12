@@ -24,6 +24,8 @@ import "css/dagModal.css";
 import { Button, Row, Divider, notification, Modal} from 'antd';
 import { MinusCircleOutlined, CloseOutlined , RollbackOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from '../dag/dag_monitoring_detail';
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from 'utils/notification';
+import { APIAdminGetProjectDag, APIAdminInitProject, APIAdminStopProject } from 'utils/api';
 
 const nodeTypes = { textUpdater: TextUpdaterNode, Pod: PodNode };
 const rfStyle = {
@@ -54,7 +56,7 @@ function AdminFlow(props) {
       if(id == undefined){
         return ;
       }
-      return axios.get(process.env.REACT_APP_API + '/api/admin/project/' + userID + '/' + id + '/dag', {withCredentials:true})
+      return APIAdminGetProjectDag(userID, id)
         .then((res) => {
           return setGraph(res);
         })
@@ -186,35 +188,33 @@ function AdminFlow(props) {
   }
 
   function stopProject() {
-    axios.post(process.env.REACT_APP_API + '/api/admin/project/stop/' + userID + '/' + id,
-      { projectID: id }, {withCredentials:true})
+    APIAdminStopProject(userID, id)
       .then(response => {
         if (response.data['status'] == 'success') {
-          openNotificationWithIcon("success", {message:"Stop Project", description:"정지에 성공했습니다."})
+          openSuccessNotificationWithIcon(api, "Stop Project", "정지에 성공했습니다.");
         }
         else {
-          openNotificationWithIcon("error", {message:"Stop Project", description:"정지에 실패했습니다."})
+          openErrorNotificationWithIcon(api, "Stop Project", "정지에 실패했습니다.");
         }
       })
       .catch(error => {
-        openNotificationWithIcon("error", {message:"Stop Project", description:"서버 에러, 정지에 실패했습니다."})
+        openErrorNotificationWithIcon(api, "Stop Project", "서버 에러, 정지에 실패했습니다.");
       })
 
   }
 
   function InitProject() {
-    axios.post(process.env.REACT_APP_API + '/api/admin/project/init/' + userID + '/' + id,
-      { projectID: id }, {withCredentials:true})
+    APIAdminInitProject(userID, id)
       .then(response => {
         if (response.data['status'] == 'success') {
-          openNotificationWithIcon("success", {message:"Init Project", description:"초기화에 성공했습니다."})
+          openSuccessNotificationWithIcon(api, "Init Project", "초기화에 성공했습니다.");
         }
         else{
-          openNotificationWithIcon("error", {message:"Init Project", description:"초기화에 실패했습니다."})
+          openErrorNotificationWithIcon(api, "Init Project", "초기화에 실패했습니다.");
         }
       })
       .catch(error => {
-        openNotificationWithIcon("error", {message:"Init Project", description:"서버 에러, 초기화에 실패했습니다."})
+        openErrorNotificationWithIcon(api, "Init Project", "서버 에러, 초기화에 실패했습니다.");
       })
   }
 
@@ -240,9 +240,6 @@ function AdminFlow(props) {
     }
     return '#666666'
   }
-  const openNotificationWithIcon = (type, data) => {
-    api[type](data);
-  };
 
   return (
     <div id='reactflow_wrapper'>

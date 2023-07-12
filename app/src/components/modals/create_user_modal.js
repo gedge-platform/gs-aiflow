@@ -4,6 +4,8 @@ import { Table, Button, Form, Input, Select } from 'antd';
 import { useQuery } from "react-query";
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import axios from "axios";
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from 'utils/notification';
+import { APIAdminGetCluster, APICreateUser, APIGetUserName } from 'utils/api';
 
 const CreateUserModal = (props) => {
   // 열기, 닫기, 모달 헤더 텍스트를 부모로부터 받아옴
@@ -32,7 +34,7 @@ const CreateUserModal = (props) => {
   ];
 
   const getAllClusterList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/admin/clusters', { withCredentials: true });
+    const { data } = await APIAdminGetCluster();
     var list = data.cluster_list;
     var count = 0;
     list.forEach(function (item) {
@@ -85,7 +87,7 @@ const CreateUserModal = (props) => {
 
   const validateIDFromServer = (name) => {
     enterLoading(0);
-    axios.get(process.env.REACT_APP_API + '/api/users/' + name, { withCredentials: true })
+    APIGetUserName(name)
       .then(response => {
         if (response['data']['user'] != undefined) {
           setValidationFailed(true);
@@ -119,39 +121,31 @@ const CreateUserModal = (props) => {
       clusterList.forEach((item) => {
         clusterNameList.push(item.clusterName);
       })
-      axios.post(process.env.REACT_APP_API + '/api/users', {
-        login_id: values.id,
-        user_name: values.nickname,
-        login_pass: values.password,
-        cluster_list: clusterNameList,
-        is_admin : role
-      }, { withCredentials: true })
+      APICreateUser(values.id, values.nickname, values.password, clusterNameList, role)
         .then((res) => {
           if (res.data.status == 'success') {
-            notificationData.message = "유저 생성 성공";
-            notificationData.description = "유저 생성에 성공했습니다."
-            openNotificationWithIcon('success');
+            openSuccessNotificationWithIcon(api, "유저 생성 성공", "유저 생성에 성공했습니다.");
             handleSuccess();
           }
           else {
             if (res.data.msg != undefined) {
-              openErrorNotificationWithIcon(res.data.msg);
+              openErrorNotificationWithIcon(api, "유저 생성 실패", res.data.msg);
             }
             else {
-              openErrorNotificationWithIcon("유저 생성에 실패했습니다.");
+              openErrorNotificationWithIcon(api, "유저 생성 실패", "유저 생성에 실패했습니다.");
             }
           }
 
         })
         .catch((error) => {
-          openErrorNotificationWithIcon("서버와 통신에 실패했습니다.");
+          openErrorNotificationWithIcon(api, "유저 생성 실패", "서버와 통신에 실패했습니다.");
         })
     }
     else if (validation && validationFailed) {
-      openErrorNotificationWithIcon("중복된 아이디입니다.");
+      openErrorNotificationWithIcon(api, "유저 생성 실패", "중복된 아이디입니다.");
     }
     else {
-      openErrorNotificationWithIcon("아이디 중복 확인이 필요합니다.");
+      openErrorNotificationWithIcon(api, "유저 생성 실패", "아이디 중복 확인이 필요합니다.");
     }
   };
 
@@ -176,20 +170,7 @@ const CreateUserModal = (props) => {
   const [form] = Form.useForm();
   const handleSuccess = props.handleSuccess;
   const [ID, setID] = useState("");
-
-  var notificationData = { message: "", description: "" }
   const [api, contextHolder] = props.contextHolder;
-  const openNotificationWithIcon = (type) => {
-    api[type]({
-      message: notificationData.message,
-      description: notificationData.description,
-    });
-  };
-  const openErrorNotificationWithIcon = (description) => {
-    notificationData.message = "유저 생성 실패"
-    notificationData.description = description;
-    openNotificationWithIcon('error');
-  }
 
   const onChangeIDInput = (value) => {
     setID(value.target.value);

@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "react-query";
 import {Row, Col} from "antd"
 import axios from "axios";
+import { APIGetProjectName } from "utils/api";
 
 
 function ProjectDetail(props) {
@@ -18,7 +19,7 @@ function ProjectDetail(props) {
 
       const getProjectDetail = async ( ) => {
         if(selectedProject != ""){
-          const { data } = await axios.get(process.env.REACT_APP_API+'/api/project/' + selectedProject, {withCredentials:true});
+          const { data } = await APIGetProjectName(selectedProject);
           return data;
         }
 

@@ -17,6 +17,7 @@ import { UserManagement } from './pages/user_management/user_management';
 import { AdminServiceDefine } from 'pages/admin_project_list/admin_service_define';
 import Test from './test_page';
 import LoadingPage from './components/loading/loading_page';
+import { APICheckLogin, APILogout } from 'utils/api';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -61,7 +62,7 @@ const App = () => {
 
 
   const handleLogout = () => {
-    axios.post(process.env.REACT_APP_API + "/api/logout", {}, { withCredentials: true }).finally(() => {
+    APILogout().finally(() => {
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();
@@ -87,7 +88,7 @@ const App = () => {
     setLoggedIn(obj.loggedIn);
     setIsAdmin(obj.isAdmin);
 
-    axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
+    APICheckLogin().then((res) => {
       setLogin(res.data.data.userID, res.data.data.userName, true, res.data.data.isAdmin);
     })
       .catch((error) => {

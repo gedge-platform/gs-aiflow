@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "react-query";
 import {Row, Col} from "antd"
 import axios from "axios";
+import { APIAdminGetProjectDetail } from "utils/api";
 
 
 function AdminProjectDetail(props) {
@@ -21,7 +22,7 @@ function AdminProjectDetail(props) {
           if(selectedProject.project_name == null || selectedProject.login_id == null){
             return {};
           }
-          const { data } = await axios.get(process.env.REACT_APP_API+'/api/admin/project/'+ selectedProject.login_id + '/' + selectedProject.project_name, {withCredentials:true});
+          const { data } = await APIAdminGetProjectDetail(selectedProject.login_id, selectedProject.project_name);
           return data;
         }
 

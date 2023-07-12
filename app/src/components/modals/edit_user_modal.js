@@ -2,6 +2,8 @@ import { React, useState } from 'react';
 import 'css/create_project_modal.css';
 import { Button, Form, Input, Select } from 'antd';
 import axios from "axios";
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from 'utils/notification';
+import { APIUpdateUser } from 'utils/api';
 
 const EditUserModal = (props) => {
   // 열기, 닫기, 모달 헤더 텍스트를 부모로부터 받아옴
@@ -13,29 +15,24 @@ const EditUserModal = (props) => {
   var specialNickRegex = /^[A-Za-z0-9가-힣]{4,}$/;
 
   const onFinish = (values) => {
-      axios.put(process.env.REACT_APP_API + '/api/users/' + id , {
-        user_name: values.nickname,
-        is_admin : values.Role
-      }, { withCredentials: true })
+      APIUpdateUser(id, values.nickname, values.Role)
         .then((res) => {
           if (res.data.status == 'success') {
-            notificationData.message = "유저 수정 성공";
-            notificationData.description = "유저 수정에 성공했습니다."
-            openNotificationWithIcon('success');
+            openSuccessNotificationWithIcon(api, "유저 수정 성공", "유저 수정에 성공했습니다.")
             handleSuccess();
           }
           else {
             if (res.data.msg != undefined) {
-              openErrorNotificationWithIcon(res.data.msg);
+              openErrorNotificationWithIcon(api, "유저 수정 실패", res.data.msg);
             }
             else {
-              openErrorNotificationWithIcon("유저 수정에 실패했습니다.");
+              openErrorNotificationWithIcon(api, "유저 수정 실패", "유저 수정에 실패했습니다.");
             }
           }
 
         })
         .catch((error) => {
-          openErrorNotificationWithIcon("서버와 통신에 실패했습니다.");
+          openErrorNotificationWithIcon(api, "유저 수정 실패", "서버와 통신에 실패했습니다.");
         })
     
   };
@@ -60,20 +57,7 @@ const EditUserModal = (props) => {
   };
   const [form] = Form.useForm();
   const handleSuccess = props.handleSuccess;
-
-  var notificationData = { message: "", description: "" }
   const [api, contextHolder] = props.contextHolder;
-  const openNotificationWithIcon = (type) => {
-    api[type]({
-      message: notificationData.message,
-      description: notificationData.description,
-    });
-  };
-  const openErrorNotificationWithIcon = (description) => {
-    notificationData.message = "유저 수정 실패"
-    notificationData.description = description;
-    openNotificationWithIcon('error');
-  }
 
   const onChangeSelectAdmin = (value) => {
     setRole(value);

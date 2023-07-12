@@ -24,6 +24,8 @@ import "css/dagModal.css";
 import { Button, Row, Col, Divider, Select , notification, Modal} from 'antd';
 import { CaretRightOutlined, CloseOutlined , FileSearchOutlined} from "@ant-design/icons";
 import DagMonitoringDetail from '../dag/dag_monitoring_detail';
+import { openSuccessNotificationWithIcon, openErrorNotificationWithIcon } from 'utils/notification';
+import { APIGetProjectDag, APIGetProjectList, APIInitProject, APILaunchProject } from 'utils/api';
 
 const nodeTypes = { textUpdater: TextUpdaterNode, Pod: PodNode };
 const rfStyle = {
@@ -52,7 +54,7 @@ function Flow(props) {
       if(id == undefined){
         return ;
       }
-      return axios.get(process.env.REACT_APP_API + '/api/project/dag/' + id, {withCredentials:true})
+      return APIGetProjectDag(id)
         .then((res) => {
           return setGraph(res);
         })
@@ -110,7 +112,7 @@ function Flow(props) {
 
 
   const getProjectList = async (id) => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/project', { withCredentials: true });
+    const { data } = await APIGetProjectList();
     var list = data.project_list;
     list.forEach(function (item) {
       item.value = item.project_name;
@@ -199,35 +201,33 @@ function Flow(props) {
 
 
   function launchProject() {
-    axios.post(process.env.REACT_APP_API + '/api/project/launch',
-      { projectID: id }, {withCredentials:true})
+    APILaunchProject(id)
       .then(response => {
         if (response.data['status'] == 'success') {
-          openNotificationWithIcon("success", {message:"Launch Project", description:"실행에 성공했습니다."})
+          openSuccessNotificationWithIcon(api, "Launch Project", "실행에 성공했습니다.");
         }
         else {
-          openNotificationWithIcon("error", {message:"Launch Project", description:"실행에 실패했습니다. 워크플로를 초기화 해주십시오."})
+          openErrorNotificationWithIcon(api, "Launch Project", "실행에 실패했습니다. 워크플로를 초기화 해주십시오.");
         }
       })
       .catch(error => {
-        openNotificationWithIcon("error", {message:"Launch Project", description:"서버 에러, 실행에 실패했습니다."})
+        openErrorNotificationWithIcon(api, "Launch Project", "서버 에러, 실행에 실패했습니다.");
       })
 
   }
 
   function InitProject() {
-    axios.post(process.env.REACT_APP_API + '/api/project/init',
-      { projectID: id }, {withCredentials:true})
+    APIInitProject(id)
       .then(response => {
         if (response.data['status'] == 'success') {
-          openNotificationWithIcon("success", {message:"Init Project", description:"초기화에 성공했습니다."})
+          openSuccessNotificationWithIcon(api, "Init Project", "초기화에 성공했습니다.");
         }
         else{
-          openNotificationWithIcon("error", {message:"Init Project", description:"초기화에 실패했습니다."})
+          openErrorNotificationWithIcon(api, "Init Project", "초기화에 실패했습니다.");
         }
       })
       .catch(error => {
-        openNotificationWithIcon("error", {message:"Init Project", description:"서버 에러, 초기화에 실패했습니다."})
+        openErrorNotificationWithIcon(api, "Init Project", "서버 에러, 초기화에 실패했습니다.");
       })
   }
   const { isProjectLoading, isProjectError, projectData, projectError, projectRefetch } = useQuery(["projectList"], () => {
@@ -266,9 +266,6 @@ function Flow(props) {
     }
     return '#666666'
   }
-  const openNotificationWithIcon = (type, data) => {
-    api[type](data);
-  };
 
   return (
     <div id='reactflow_wrapper'>

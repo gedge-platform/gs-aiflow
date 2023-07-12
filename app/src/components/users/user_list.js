@@ -7,6 +7,8 @@ import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import CreateUserModal from "../modals/create_user_modal";
 import useNotification from "antd/es/notification/useNotification";
 import EditUserModal from "../modals/edit_user_modal";
+import { openErrorNotificationWithIcon, openSuccessNotificationWithIcon } from "utils/notification";
+import { APIDeleteUser, APIGetUser } from "utils/api";
 
 
 
@@ -17,7 +19,7 @@ function UserList(props) {
   const [editingIsAdmin, setEditingIsAdmin] = useState(1);
 
   const getUserList = async () => {
-    const { data } = await axios.get(process.env.REACT_APP_API + '/api/users', { withCredentials: true });
+    const { data } = await APIGetUser();
     var list = data.users;
     var count = 0;
     list.forEach(function (item) {
@@ -97,14 +99,10 @@ function UserList(props) {
 
   function deleteUser() {
     if(selectedRowKeys.length == 0){
-      notificationData.message = "유저 삭제 실패";
-      notificationData.description = "유저를 선택해주세요."
-      openNotificationWithIcon('error');
+      openErrorNotificationWithIcon(api, "유저 삭제 실패", "유저를 선택해주세요.");
     }
     else if(selectedRowKeys[0] == userID){
-      notificationData.message = "유저 삭제 실패";
-      notificationData.description = "자신은 삭제할 수 없습니다."
-      openNotificationWithIcon('error');
+      openErrorNotificationWithIcon(api, "유저 삭제 실패", "자신은 삭제할 수 없습니다.");
     }
     else{
       showDeleteModal();
@@ -156,18 +154,14 @@ function UserList(props) {
   function sendDeleteUser() {
     setConfirmDeleteLoading(true);
 
-    axios.delete(process.env.REACT_APP_API + '/api/users/' + selectedRowKeys[0], { withCredentials: true })
+    APIDeleteUser(selectedRowKeys[0])
       .then(response => {
 
         if (response.data['status'] == 'success') {
-          notificationData.message = '유저 삭제 성공';
-          notificationData.description = '유저 삭제에 성공했습니다.';
-          openNotificationWithIcon('success');
+          openSuccessNotificationWithIcon(api, '유저 삭제 성공', '유저 삭제에 성공했습니다.')
         }
         else {
-          notificationData.message = '유저 삭제 실패';
-          notificationData.description = '유저 삭제에 실패했습니다.';
-          openNotificationWithIcon('error');
+          openErrorNotificationWithIcon(api, '유저 삭제 실패', '유저 삭제에 실패했습니다.')
         }
 
         setDeleteOpen(false);
@@ -175,9 +169,7 @@ function UserList(props) {
         refetch();
       })
       .catch(error => {
-        notificationData.message = '유저 삭제 실패';
-        notificationData.description = '유저 삭제에 실패했습니다.';
-        openNotificationWithIcon('error');
+        openErrorNotificationWithIcon(api, '유저 삭제 실패', '유저 삭제에 실패했습니다.')
         setDeleteOpen(false);
         setConfirmDeleteLoading(false);
         refetch();
@@ -185,17 +177,6 @@ function UserList(props) {
 
   }
 
-  var notificationData = { message: "", description: "" }
-
-  const openNotification = () => {
-    notification.open({
-      message: notificationData.message,
-      description:
-        notificationData.description,
-      onClick: () => {
-      },
-    });
-  };
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const onSelectChange = (newSelectedRowKeys) => {
     setSelectedRowKeys(newSelectedRowKeys);
@@ -244,12 +225,6 @@ function UserList(props) {
 
   //notification
   const [api, contextHolder] = useNotification();
-  const openNotificationWithIcon = (type) => {
-    api[type]({
-      message: notificationData.message,
-      description: notificationData.description,
-    });
-  };
 
   return (
     <> < div id='service_define_main' >

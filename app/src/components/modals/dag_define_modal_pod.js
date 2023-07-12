@@ -2,6 +2,7 @@ import { React, useEffect, useState } from 'react';
 import { Form, Input, Select } from 'antd';
 import axios from 'axios';
 import { useQuery } from 'react-query';
+import { APIGetPodEnvFramework, APIGetPodEnvModel, APIGetPodEnvRuntime, APIGetPodEnvTensorrt } from 'utils/api';
 
 const DagDefineModalPod = (props) => {
   const form = props.form;
@@ -27,7 +28,7 @@ const DagDefineModalPod = (props) => {
   }, [detailEnabled]);
 
   const getModelsAPI = async () => {
-    const {data} = await axios.get(process.env.REACT_APP_API + '/api/pod/env/model', {withCredentials:true})
+    const {data} = await APIGetPodEnvModel();
     return data;
   };
 
@@ -141,7 +142,7 @@ const DagDefineModalPod = (props) => {
     form.model = data;
     setSelectedModel(data);
 
-    axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + data, {withCredentials:true})
+    APIGetPodEnvFramework(data)
     .then((res) => {
       setFrameworkList(res.data.framework);
     })
@@ -208,7 +209,7 @@ const DagDefineModalPod = (props) => {
     setSelectedFramework(data);
 
     if(data){
-      axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + data, {withCredentials:true})
+      APIGetPodEnvRuntime(form.model, data)
       .then((res) => {
         setRuntimeList(res.data.runtime)
       })
@@ -228,7 +229,7 @@ const DagDefineModalPod = (props) => {
     setSelectedRuntime(data);
 
     if(data){
-      axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + data, {withCredentials:true})
+      APIGetPodEnvTensorrt(data)
       .then((res) => {
         setTensorRTList(res.data.tensorrt)
       })
@@ -268,7 +269,7 @@ const DagDefineModalPod = (props) => {
 
   function getDefaultFrameworkList(){
     if(form.model != null && form.model != undefined){
-      axios.get(process.env.REACT_APP_API + "/api/pod/env/framework/" + form.model, {withCredentials:true})
+      APIGetPodEnvFramework(form.model)
       .then((res) => {
         setFrameworkList(res.data.framework);
       })
@@ -287,7 +288,7 @@ const DagDefineModalPod = (props) => {
   function getDefaultRuntimeList(){
     if(form.framework != null && form.framework != undefined
       && form.model != null && form.model != undefined){
-      axios.get(process.env.REACT_APP_API + "/api/pod/env/runtime/" + form.model + "/" + form.framework, {withCredentials:true})
+      APIGetPodEnvRuntime(form.model, form.framework)
       .then((res) => {
         setRuntimeList(res.data.runtime);
       })
@@ -305,7 +306,7 @@ const DagDefineModalPod = (props) => {
 
   function getDefaultTensorRTList(){
     if(form.runtime != null && form.runtime != undefined){
-      axios.get(process.env.REACT_APP_API + "/api/pod/env/tensorrt/" + form.runtime, {withCredentials:true})
+      APIGetPodEnvTensorrt(form.runtime)
       .then((res) => {
         setTensorRTList(res.data.tensorrt)
       })

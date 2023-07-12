@@ -4,6 +4,7 @@ import { Col, Row , Table, Button } from 'antd';
 import { useQuery } from "react-query";
 import {CheckOutlined} from '@ant-design/icons'
 import axios from "axios";
+import { APIGetCluster, APIGetProjectName } from 'utils/api';
 
 const CreateProjectModal = (props) => {
   // 열기, 닫기, 모달 헤더 텍스트를 부모로부터 받아옴
@@ -25,7 +26,7 @@ const CreateProjectModal = (props) => {
   ];
 
   const getClusterList = async ( id ) => {
-      const { data } = await axios.get(process.env.REACT_APP_API+'/api/clusters', {withCredentials:true});
+      const { data } = await APIGetCluster();
       var list = data.cluster_list;
       var count = 0;
       list.forEach(function(item){
@@ -77,7 +78,7 @@ const validateProjectName = (name) => {
 
 const validateProjectFromServer = (name) => {
   enterLoading(0);
-  axios.get(process.env.REACT_APP_API+'/api/project/' + name, {withCredentials:true})
+  APIGetProjectName(name)
   .then(response => {
     if(response['data']['data'] != undefined){
         setValidation(false);
