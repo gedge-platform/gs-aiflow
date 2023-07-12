@@ -80,7 +80,7 @@ const validateProjectFromServer = (name) => {
   enterLoading(0);
   APIGetProjectName(name)
   .then(response => {
-    if(response['data']['data'] != undefined){
+    if(response['data']['projectName'] != undefined){
         setValidation(false);
     }
     else{

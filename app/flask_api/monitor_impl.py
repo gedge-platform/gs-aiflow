@@ -1119,9 +1119,13 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
                 yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
             elif(task == 'Inference'):
                 yaml = flask_api.runtime_helper.makeYamlInferenceRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+
+            if yaml is None:
+                mycon.rollback()
+                return jsonify(status = 'failed', msg="env error"), 400
+
             yaml = yaml.__str__()
             d = node['data'].__str__()
-            #TODO: yaml 생성
 
             if nodeList.get(node["id"]) != None:
                 cursor.execute(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
@@ -1129,16 +1133,18 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
             else:
                 cursor.execute(f'insert into TB_NODE (node_uuid, node_name, project_uuid, node_type, yaml, precondition_list, data) ' +
                                f'value ("{uid}", "{node["id"]}", "{projectUUID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")')
-            mycon.commit()
+
+    mycon.commit()
+
 
     for n in nodeList.items():
         cursor.execute(
             f'delete from TB_NODE where node_uuid = "{n[1]}";');
-        mycon.commit()
 
         #delete from k8s
         flask_api.center_client.podsNameDelete(n[0], workspaceName, 'mec(ilsan)', centerProjectID)
 
+    mycon.commit()
 
     return jsonify(status="success"), 200
 
