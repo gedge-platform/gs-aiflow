@@ -105,13 +105,23 @@ const CreateUserModal = (props) => {
         });
       })
       .catch(error => {
-        setValidation(false);
-        setValidationFailed(true);
         setLoadings((prevLoadings) => {
           const newLoadings = [...prevLoadings];
           newLoadings[0] = false;
           return newLoadings;
         });
+
+        if(error){
+          if(error.response){
+            if(error.response.status == 404){
+              setValidationFailed(false);
+              setValidation(true);
+              return;
+            }
+          }
+        }
+        setValidation(false);
+        setValidationFailed(true);
       });
   }
 

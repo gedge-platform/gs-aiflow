@@ -262,8 +262,8 @@ def updateUser(loginID):
     if data.get('is_admin') is None or type( data.get('is_admin')) != int:
         return jsonify(status='failed', msg='is_admin is wrong'), 200
 
-    userData, code = getUser(loginID)
-    if userData.json['status'] == 'failed':
+    userData = getUser(loginID)
+    if userData is None:
         return jsonify(status="failed", msg="no user " + loginID), 200
     else:
         mycon = get_db_connection()

@@ -39,7 +39,6 @@ function ProjectList(props) {
           <Button type="primary" icon={<DesktopOutlined />} style={{backgroundColor: '#00CC00'}} onClick={(event)=>{
             event.stopPropagation();
             navigate('/monitoring/' + record.project_name)
-            setPage('monitoring')
           }}>
               Monitoring
           </Button>
@@ -47,7 +46,6 @@ function ProjectList(props) {
           <Button type="primary" icon={<FormOutlined />} style={{backgroundColor: '#CC8800'}} onClick={(event)=>{
             event.stopPropagation();
             navigate('/editing/' + record.project_name)
-            setPage('editing')
           }}>
               Editing
           </Button>
@@ -68,7 +66,6 @@ function ProjectList(props) {
     showDeleteModal();
   }
     var id = props.id;
-    const setPage = props.setPage;
     const [nameValidation, setNameValidation] = useState(false);
     const [projectName, setProjectName] = useState("");
     const [projectDesc, setProjectDesc] = useState("");
@@ -205,7 +202,7 @@ function ProjectList(props) {
 
   function sendDeleteProject() {
     setConfirmDeleteLoading(true);
-    
+
     APIDeleteProject(deleteProjectName)
     .then(response => {
 
