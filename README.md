@@ -37,11 +37,11 @@ Aiflow offers a set of lightweight environments that can be used with any existi
 
 ## User Interface
 
-### Task view
-![Task View](./docs/images/graph_status.png)
+### Project view
+![Task View](./docs/images/project_list.png)
 
 ### Graph view
-![Graph View](./docs/images/graph_details.png)
+![Graph View](./docs/images/project_graph_details.png)
 
 ## Contributing
 If you're interested in being a contributor and want to get involved in developing the GEdge Platform code, please see DOCUMENTATIONs for details on submitting patches and the contribution workflow.

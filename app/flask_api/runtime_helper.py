@@ -38,7 +38,7 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                 {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
                  'command': ['/bin/bash', '-c'], 'args': [
                     'source /root/path.sh; PATH=' + pathJoin('/opt/conda/envs/' , runtimePath , '/bin') + ':' +
-                    pathJoin('/root/volume/cuda/', cudaPath ,'/bin') + ':$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; '],
+                    pathJoin('/root/volume/cuda/', cudaPath ,'/bin') + ':$PATH; env; mkdir -p /root/user/logs; cd /root/scripts; '],
                  'env': [{'name': 'LD_LIBRARY_PATH',
                           'value': pathJoin('/root/volume/cuda/', cudaPath , '/lib64') + ':' +
                                    pathJoin('/root/volume/cudnn/', cudnnPath, '/lib64') + ':' +
@@ -129,15 +129,57 @@ def getBasicPVCYaml(userLoginID, projectName):
 
     return data
 
+def getBasicPodArgs(model, task, **args):
+    if(model == 'yolov5'):
+        if task == 'train':
+            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
+                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device", "0")} --weights {args.get("weightsPath", "./weights/yolov5s-v7.0.pt")} ' \
+                   f'--epochs {args.get("epochs" , "1")} --batch {args.get("batch", "1")} '
+
+        elif task == 'validation':
+            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
+                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device", "0")} --weights {args.get("modelPath" , "./weights/yolov5s-v7.0.pt")} ' \
+                   f'--batch-size {args.get("batch", "1")} '
+
+        elif task == 'optimization':
+            return f' --weights {args.get("modelPath", "./weights/yolov5s-v7.0.pt")} ' \
+                   f'--include engine --device {args.get("device", "0")} --half ' \
+                   f'--batch-size {args.get("batch", "1")} --imgsz {args.get("imgSize", "640")} --verbose '
+
+        elif task == 'opt_validation':
+            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
+                   f'--weights {args.get("weightsPath", "./weights/yolov5s-v7.0.pt")} ' \
+                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device", "0")} --batch-size {args.get("batch", "1")} ' \
+                   f'--imgsz {args.get("imgSize", "640")} '
+        return ''
+    elif(model == 'RetinaFace'):
+        if task == 'train':
+            return f''
+
+        elif task == 'validation':
+            return f''
+
+        elif task == 'optimization':
+            return f''
+
+        elif task == 'opt_validation':
+            return f''
+        return ''
+
+    return ''
 
 def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
     if data is None:
         return None
     data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python train.py --project /root/user --name ' + outputPath \
-                                                + ' --data  ' + pathJoin(datasetPath + '/dataset.yaml') \
-                                                + ' --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
+                                                + '; ./bin/train.sh'
+
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'train', outputPath=outputPath, datasetPath=datasetPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
     return data
 
 def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
@@ -145,18 +187,18 @@ def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_
     if data is None:
         return None
     data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
-                                                +  ' --data ' + pathJoin(datasetPath + '/dataset.yaml') + ' --device 0 --weights ' + modelPath \
-                                                + ' --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
+                                                + '; ./bin/validation.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'validation', outputPath=outputPath, datasetPath=datasetPath, modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
 
     return data
 def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath, modelPath)
     if data is None:
         return None
-    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights ' + modelPath \
-                                                + ' --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
-
+    data['spec']['containers'][0]['args'][0] += './bin/optimization.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'optimization', modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
     return data
 
 def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
@@ -164,9 +206,9 @@ def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, no
     if data is None:
         return None
     data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
-                                                +  ' --weights ' + modelPath + ' --data ' + pathJoin(datasetPath, '/dataset.yaml') \
-                                                + ' --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
+                                                + '; ./bin/opt_validation.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'opt_validation', outputPath= outputPath, datasetPath=datasetPath, modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
 
     return data
 

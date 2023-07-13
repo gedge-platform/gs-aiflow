@@ -108,6 +108,14 @@ const DagDefineDetailPod = (props) => {
       }
     })
     .catch((err)=>{
+      if(err){
+        if(err.response){
+          if(err.response.status == 404){
+            setYaml('yaml not created. please save');
+            return;
+          }
+        }
+      }
       catchError(err, navigate);
     });
   }
