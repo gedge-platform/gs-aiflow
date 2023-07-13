@@ -7,12 +7,12 @@ def getRuntimePathAndImage(runtime, model):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     c = cursor.execute(
-        f'select path, image_name, cuda_path, cudnn_path from TB_RUNTIME INNER JOIN TB_CUDA ON TB_CUDA.cudnn_version = TB_RUNTIME.cudnn_version and TB_CUDA.cuda_version = TB_RUNTIME.cuda_version where runtime_name = "{runtime}" and model = "{model}"')
+        f'select path, image_name, cuda_path, cudnn_path, nccl_path from TB_RUNTIME INNER JOIN TB_CUDA ON TB_CUDA.cudnn_version = TB_RUNTIME.cudnn_version and TB_CUDA.cuda_version = TB_RUNTIME.cuda_version where runtime_name = "{runtime}" and model = "{model}"')
     rows = cursor.fetchall()
     if rows is not None:
         if len(rows) != 0:
-            return rows[0]['path'], rows[0]['image_name'], rows[0]['cuda_path'], rows[0]['cudnn_path']
-    return None, None, None, None
+            return rows[0]['path'], rows[0]['image_name'], rows[0]['cuda_path'], rows[0]['cudnn_path'], rows[0]['nccl_path']
+    return None, None, None, None, None
 
 
 def getTensorRTPath(runtime, tensorRT):
@@ -26,7 +26,7 @@ def getTensorRTPath(runtime, tensorRT):
             return rows[0]['tensorrt_path']
 
 def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework, inputPath, outputPath):
-    runtimePath, imageName, cudaPath, cudnnPath = getRuntimePathAndImage(runtime, model)
+    runtimePath, imageName, cudaPath, cudnnPath, ncclPath = getRuntimePathAndImage(runtime, model)
     tensorRTPath = getTensorRTPath(runtime, tensorRT)
 
     if runtimePath is None or imageName is None or cudnnPath is None or cudaPath is None or tensorRTPath is None:
@@ -42,7 +42,8 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                  'env': [{'name': 'LD_LIBRARY_PATH',
                           'value': pathJoin('/root/volume/cuda/', cudaPath , '/lib64') + ':' +
                                    pathJoin('/root/volume/cudnn/', cudnnPath, '/lib64') + ':' +
-                                   pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib')}],
+                                   pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib') +
+                                   (':' + pathJoin('/root/volume/nccl/', ncclPath)) if ncclPath is not None else '' }],
                  'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
                     {'mountPath': pathJoin('/root/volume/cuda/', cudaPath), 'name': 'nfs-volume-total',
                      'subPath': pathJoin('cuda/', cudaPath),
@@ -60,6 +61,11 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                      'subPath': pathJoin('user/', userLoginID, projectName)}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
+
+    #add nccl
+    if ncclPath is not None:
+        data['spec']['containers'][0]['volumeMounts'].append({'mountPath': f'{pathJoin("root/volume/nccl/", ncclPath)}', 'name': 'nfs-volume-total',
+                         'subPath': f'{pathJoin("nccl", ncclPath)}', 'readOnly': True})
     return data
 
 
@@ -222,7 +228,7 @@ def getProjectYaml(userLoginID, projectName):
 
 
 def makeYamlInferenceRuntime(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework):
-    runtimePath, imageName, cudaPath, cudnnPath = getRuntimePathAndImage(runtime, model)
+    runtimePath, imageName, cudaPath, cudnnPath, ncclPath = getRuntimePathAndImage(runtime, model)
     tensorRTPath = getTensorRTPath(runtime, tensorRT)
 
     appLabel = 'yolo-test'
