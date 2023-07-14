@@ -147,14 +147,25 @@ def createUser():
 def getUser(loginID):
     mycon = get_db_connection()
     cursor = mycon.cursor(dictionary=True)
-    cursor.execute(f'select user_uuid, user_name from TB_USER where login_id = "{loginID}";')
+    cursor.execute(f'select user_uuid, user_name, workspace_name, is_admin from TB_USER where login_id = "{loginID}";')
     rows = cursor.fetchall()
     if rows is not None:
         if len(rows) >= 1:
-            return jsonify(status="success", user=rows[0]), 200
+            try:
+                user = User(rows[0]['user_uuid'], loginID, rows[0]['user_name'], rows[0]['workspace_name'], bool(rows[0]['is_admin']))
+                return user
+            except:
+                return None
+
+    return None
 
 
-    return jsonify(status="failed", msg="no user " + loginID), 200
+def getUserAPI(loginID):
+    user = getUser(loginID)
+    if user is None:
+        return jsonify(status="failed", msg="no user " + loginID), 404
+    else:
+        return jsonify(status="success", user={'user_name': user.userName, 'user_uuid' : user.userUUID}), 200
 
 
 def deleteUser(loginID):
@@ -251,8 +262,8 @@ def updateUser(loginID):
     if data.get('is_admin') is None or type( data.get('is_admin')) != int:
         return jsonify(status='failed', msg='is_admin is wrong'), 200
 
-    userData, code = getUser(loginID)
-    if userData.json['status'] == 'failed':
+    userData = getUser(loginID)
+    if userData is None:
         return jsonify(status="failed", msg="no user " + loginID), 200
     else:
         mycon = get_db_connection()

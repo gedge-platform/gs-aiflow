@@ -7,11 +7,12 @@ def getRuntimePathAndImage(runtime, model):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     c = cursor.execute(
-        f'select path, image_name, cuda_path, cudnn_path from TB_RUNTIME INNER JOIN TB_CUDA ON TB_CUDA.cudnn_version = TB_RUNTIME.cudnn_version and TB_CUDA.cuda_version = TB_RUNTIME.cuda_version where runtime_name = "{runtime}" and model = "{model}"')
+        f'select path, image_name, cuda_path, cudnn_path, nccl_path from TB_RUNTIME INNER JOIN TB_CUDA ON TB_CUDA.cudnn_version = TB_RUNTIME.cudnn_version and TB_CUDA.cuda_version = TB_RUNTIME.cuda_version where runtime_name = "{runtime}" and model = "{model}"')
     rows = cursor.fetchall()
     if rows is not None:
         if len(rows) != 0:
-            return rows[0]['path'], rows[0]['image_name'], rows[0]['cuda_path'], rows[0]['cudnn_path']
+            return rows[0]['path'], rows[0]['image_name'], rows[0]['cuda_path'], rows[0]['cudnn_path'], rows[0]['nccl_path']
+    return None, None, None, None, None
 
 
 def getTensorRTPath(runtime, tensorRT):
@@ -25,8 +26,11 @@ def getTensorRTPath(runtime, tensorRT):
             return rows[0]['tensorrt_path']
 
 def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework, inputPath, outputPath):
-    runtimePath, imageName, cudaPath, cudnnPath = getRuntimePathAndImage(runtime, model)
+    runtimePath, imageName, cudaPath, cudnnPath, ncclPath = getRuntimePathAndImage(runtime, model)
     tensorRTPath = getTensorRTPath(runtime, tensorRT)
+
+    if runtimePath is None or imageName is None or cudnnPath is None or cudaPath is None or tensorRTPath is None:
+        return None
 
     data = {'apiVersion': 'v1', 'kind': 'Pod',
             'metadata': {'name': nodeID, 'labels': {'app': 'nfs-test'}},
@@ -34,12 +38,15 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                 {'name': 'ubuntu', 'image': imageName, 'imagePullPolicy': 'IfNotPresent',
                  'command': ['/bin/bash', '-c'], 'args': [
                     'source /root/path.sh; PATH=' + pathJoin('/opt/conda/envs/' , runtimePath , '/bin') + ':' +
-                    pathJoin('/root/volume/cuda/', cudaPath ,'/bin') + ':$PATH; env; mkdir -p /root/user/logs; cd /root/yolov5; '],
+                    pathJoin('/root/volume/cuda/', cudaPath ,'/bin') + ':$PATH; env; mkdir -p /root/user/logs; cd /root/scripts; '],
                  'env': [{'name': 'LD_LIBRARY_PATH',
                           'value': pathJoin('/root/volume/cuda/', cudaPath , '/lib64') + ':' +
                                    pathJoin('/root/volume/cudnn/', cudnnPath, '/lib64') + ':' +
-                                   pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib')}],
-                 'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
+                                   pathJoin('/root/volume/cuda/', cudaPath, '/lib') + ':' +
+                                   pathJoin('/root/volume/cudnn/', cudnnPath, '/lib') + ':' +
+                                   pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib') +
+                                   ((':' + pathJoin('/root/volume/nccl/', ncclPath, '/lib')) if ncclPath is not None else '') }],
+                 'resources': {'limits': {'cpu': '4', 'memory': '60G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
                     {'mountPath': pathJoin('/root/volume/cuda/', cudaPath), 'name': 'nfs-volume-total',
                      'subPath': pathJoin('cuda/', cudaPath),
                      'readOnly': True}, {'mountPath': pathJoin('/root/volume/cudnn/', cudnnPath), 'name': 'nfs-volume-total',
@@ -49,13 +56,18 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                      'readOnly': True},
                     {'mountPath': pathJoin('/root/volume/tensorrt/', tensorRTPath), 'name': 'nfs-volume-total',
                      'subPath': pathJoin('tensorrt/', tensorRTPath), 'readOnly': True},
-                    {'mountPath': '/root/volume/dataset/coco128', 'name': 'nfs-volume-total',
-                     'subPath': 'dataset/coco128',
+                    {'mountPath': '/root/volume/dataset', 'name': 'nfs-volume-total',
+                     'subPath': 'dataset',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
                      'subPath': pathJoin('user/', userLoginID, projectName)}]}],
                      'volumes': [
                          {'name': 'nfs-volume-total', 'persistentVolumeClaim': {'claimName': getBasicPVCName(userLoginID, projectName)}}]}}
+
+    #add nccl
+    if ncclPath is not None:
+        data['spec']['containers'][0]['volumeMounts'].append({'mountPath': f'{pathJoin("root/volume/nccl/", ncclPath)}', 'name': 'nfs-volume-total',
+                         'subPath': f'{pathJoin("nccl", ncclPath)}', 'readOnly': True})
     return data
 
 
@@ -125,36 +137,91 @@ def getBasicPVCYaml(userLoginID, projectName):
 
     return data
 
+def getBasicPodArgs(model, task, **args):
+    if(model == 'yolov5'):
+        if task == 'train':
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --weights {args.get("weightsPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--epochs {args.get("epochs") or "1"} --batch {args.get("batch") or "1"} '
+
+        elif task == 'validation':
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --weights {args.get("modelPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--batch-size {args.get("batch") or "1"} '
+
+        elif task == 'optimization':
+            return f' --weights {args.get("modelPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--include engine --device {args.get("device") or "0"} --half ' \
+                   f'--batch-size {args.get("batch") or "1"} --imgsz {args.get("imgSize") or "640"} --verbose '
+
+        elif task == 'opt_validation':
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--weights {args.get("weightsPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --batch-size {args.get("batch") or "1"} ' \
+                   f'--imgsz {args.get("imgSize") or "640"} '
+        return ''
+    elif(model == 'RetinaFace'):
+        if task == 'train':
+            return f' --root_path {pathJoin(args.get("datasetPath") or ".")} ' \
+                   f'--dataset_path {pathJoin(args.get("datasetPath") or "/root/volume/dataset", "wider")} ' \
+                   f'--pretrained {args.get("weightsPath") or "model/R50"}  --pretrained_epoch 0 --prefix {args.get("outputPath") or "model/retinaface"} ' \
+                   f'--end_epoch {args.get("epochs") or "1"} '
+
+        elif task == 'validation':
+            return f''
+
+        elif task == 'optimization':
+            return f' --symbol {(args.get("modelPath") or "./model/R50") + "-symbol.json"} ' \
+                   f'--params {(args.get("modelPath") or "./model/R50") + "-0000.params"} ' \
+                   f'-b {args.get("batch") or "1"} '
+
+        elif task == 'opt_validation':
+            return f''
+        return ''
+
+    return ''
 
 def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python train.py --project /root/user --name ' + outputPath \
-                                                + ' --data  ' + pathJoin(datasetPath + '/dataset.yaml') \
-                                                + ' --device 0 --weights ./weights/yolov5s-v7.0.pt --epochs 1 --batch 1  &>> /root/user/logs/' + node_id + '.log'
+    if data is None:
+        return None
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
+                                                + '; ./bin/train.sh'
+
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'train', outputPath=outputPath, datasetPath=datasetPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
     return data
 
 def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
-                                                +  ' --data ' + pathJoin(datasetPath + '/dataset.yaml') + ' --device 0 --weights ' + modelPath \
-                                                + ' --batch-size 1 &>> /root/user/logs/' + node_id + '.log'
+    if data is None:
+        return None
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
+                                                + '; ./bin/validation.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'validation', outputPath=outputPath, datasetPath=datasetPath, modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
 
     return data
 def makeYamlOptimizationRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, modelPath, modelPath)
-    data['spec']['containers'][0]['args'][0] += 'nohup python export.py --weights ' + modelPath \
-                                                + ' --include engine --device 0 --half --batch-size 1 --imgsz 640 --verbose &>> /root/user/logs/' + node_id + '.log'
-
+    if data is None:
+        return None
+    data['spec']['containers'][0]['args'][0] += './bin/optimization.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'optimization', modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
     return data
 
 def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, modelPath, outputPath):
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
-                                                + '; nohup python val.py --project /root/user --name ' + outputPath \
-                                                +  ' --weights ' + modelPath + ' --data ' + pathJoin(datasetPath, '/dataset.yaml') \
-                                                + ' --device 0 --batch-size 1 --imgsz 640 &>> /root/user/logs/' + node_id + '.log'
+    if data is None:
+        return None
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
+                                                + '; ./bin/opt_validation.sh '
+    data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'opt_validation', outputPath= outputPath, datasetPath=datasetPath, modelPath=modelPath)
+    data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
 
     return data
 
@@ -168,7 +235,7 @@ def getProjectYaml(userLoginID, projectName):
 
 
 def makeYamlInferenceRuntime(userLoginID, userName, projectName, projectID, nodeID, runtime, model, tensorRT, framework):
-    runtimePath, imageName, cudaPath, cudnnPath = getRuntimePathAndImage(runtime, model)
+    runtimePath, imageName, cudaPath, cudnnPath, ncclPath = getRuntimePathAndImage(runtime, model)
     tensorRTPath = getTensorRTPath(runtime, tensorRT)
 
     appLabel = 'yolo-test'

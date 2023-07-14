@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS TB_RUNTIME (
     path VARCHAR(30) NOT NULL,
     model VARCHAR(30) NOT NULL,
     PRIMARY KEY (runtime_name, model),
-    image_name VARCHAR(50) NOT NULL
+    image_name VARCHAR(50) NOT NULL,
+    nccl_path TEXT NULL DEFAULT NULL
 )CHARACTER SET 'utf8';
 
 CREATE TABLE IF NOT EXISTS TB_CUDA (
@@ -86,7 +87,7 @@ CREATE TABLE IF NOT EXISTS TB_TENSORRT (
     tensorrt_name VARCHAR(30) NOT NULL,
     tensorrt_version VARCHAR(30) NOT NULL,
     runtime_name VARCHAR(50) NOT NULL,
-    path VARCHAR(30) NOT NULL,
+    tensorrt_path VARCHAR(30) NOT NULL,
     PRIMARY KEY (tensorrt_name, runtime_name),
     INDEX FK_TB_TENSORRT_TB_RUNTIME (runtime_name), CONSTRAINT FK_TB_TENSORRT_TB_RUNTIME FOREIGN KEY (runtime_name) REFERENCES TB_RUNTIME (runtime_name) ON DELETE CASCADE
 )CHARACTER SET 'utf8';
@@ -103,6 +104,6 @@ INSERT INTO TB_CUDA (cuda_name, cuda_version, cudnn_version, cuda_path, cudnn_pa
 SELECT * FROM (select 'cuda11.2-cudnn8.2.1', '11.2', '8.2.1', './cuda11.2','.cudnn/') AS admin
 WHERE NOT EXISTS (SELECT cuda_name FROM TB_CUDA) LIMIT 1;
 
- INSERT INTO TB_TENSORRT (tensorrt_name, tensorrt_version, path, runtime_name)
+ INSERT INTO TB_TENSORRT (tensorrt_name, tensorrt_version, tensorrt_path, runtime_name)
  SELECT * FROM (select 'tensorRT8.2.5.1', '8.2.5.1', '.', 'pt1.12.1_py3.8_cuda11.3_cudnn8.3') AS admin
  WHERE NOT EXISTS (SELECT tensorrt_name FROM TB_TENSORRT) LIMIT 1;

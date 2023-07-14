@@ -1,30 +1,23 @@
-import { FileOutlined, PieChartOutlined, UserOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, MenuProps, Select, notification, Divider } from 'antd';
-import { Component, useEffect, useState } from 'react';
-import { Link, Route, Routes, Navigate, BrowserRouter, json, useNavigate } from 'react-router-dom';
+import { PieChartOutlined, DesktopOutlined, TeamOutlined, BarsOutlined, FormOutlined, FileSearchOutlined, FacebookFilled } from '@ant-design/icons';
+import { Layout, Menu, theme, notification} from 'antd';
+import { useEffect, useState } from 'react';
+import { Link, Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
-import './css/index.css';
-import { Sidemenu } from './sidemenu';
-import { Monitor } from './monitor';
-import { EnrollClusterMonitoring } from './enroll';
-import { NotFound } from './notfound';
-import { Create } from './create.js';
-import { Delete } from './delete.js';
-import { LogIn } from './login.js';
-import { LogViewer } from './logviewer.js';
-import { ServiceDefine } from './service_define';
-import Flow from "./react_flow_chart";
+import 'css/index.css';
+import { NotFound } from 'pages/not_found/notfound';
+import { ServiceDefine } from './pages/project_list/service_define';
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { DagDefine } from './dag_define';
+import { DagDefine } from './pages/project_dag_editing/dag_define';
 import { ReactFlowProvider } from 'reactflow';
-import { DagMonitoring } from './dag_monitoring';
-import UserInfo from './user_info';
-import LoginPage from './login_page';
+import { DagMonitoring } from './pages/project_monitoring/dag_monitoring';
+import UserInfo from './components/users/user_info';
+import LoginPage from './pages/login/login_page';
 import axios from 'axios';
-import { UserList } from './user_list';
-import { UserManagement } from './user_management';
-import { AdminServiceDefine } from './admin_service_define';
+import { UserManagement } from './pages/user_management/user_management';
+import { AdminServiceDefine } from 'pages/admin_project_list/admin_service_define';
 import Test from './test_page';
+import LoadingPage from './components/loading/loading_page';
+import { APICheckLogin, APILogout } from 'utils/api';
 
 const queryClient = new QueryClient();
 const { Header, Content, Footer, Sider } = Layout;
@@ -46,6 +39,7 @@ const App = () => {
   const [userID, setUserID] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [avatarSrc, setAvatarSrc] = useState('');
+  const [innerTitle, setInnerTitle] = useState('');
   const {
     token: { colorBgContainer },
   } = theme.useToken();
@@ -68,7 +62,7 @@ const App = () => {
 
 
   const handleLogout = () => {
-    axios.post(process.env.REACT_APP_API + "/api/logout", {}, { withCredentials: true }).finally(() => {
+    APILogout().finally(() => {
       notificationData.message = "로그아웃";
       notificationData.description = "로그아웃하였습니다.";
       openNotification();
@@ -94,7 +88,7 @@ const App = () => {
     setLoggedIn(obj.loggedIn);
     setIsAdmin(obj.isAdmin);
 
-    axios.get(process.env.REACT_APP_API + "/api/login", { withCredentials: true }).then((res) => {
+    APICheckLogin().then((res) => {
       setLogin(res.data.data.userID, res.data.data.userName, true, res.data.data.isAdmin);
     })
       .catch((error) => {
@@ -128,7 +122,62 @@ const App = () => {
     setIsAdmin(isAdmin);
   }
 
+  const location = useLocation();
+  useEffect(() => {
+    var pathList = location.pathname.split('/');
+    var key = convertAndSaveKeyFromPath(pathList);
+    setInnerTitle(convertTitleFromKey(key));
+    
+  }, [location]);
 
+  const convertAndSaveKeyFromPath = (pathList) => {
+    var key = 'Not Found';
+    if(pathList.at(1)){
+      if(pathList[1] == 'project_list'){
+        key = 'project_list';
+      }
+      else if(pathList[1] == 'monitoring'){
+        key = 'monitoring'
+      }
+      else if(pathList[1] == 'editing'){
+        key = 'editing';
+      }
+      else if(pathList[1] == 'users'){
+        key = 'user_management';
+      }
+      else if(pathList[1] == 'admin_project_list'){
+        key = 'admin_project_list';
+      }
+    }
+    else{
+      key = 'project_list';
+    }
+
+    setSelectedKey(key);
+    return key;
+
+  }
+
+  const convertTitleFromKey = (key) => {
+      if(key == 'project_list'){
+        return '프로젝트 목록';
+      }
+      else if(key == 'monitoring'){
+        return '모니터링';
+      }
+      else if(key == 'editing'){
+        return 'DAG 정의';
+      }
+      else if(key == 'users'){
+        return '유저 관리';
+      }
+      else if(key == 'admin_project_list'){
+        return '관리자용 프로젝트 관리';
+      }
+      else{
+        return '유효하지 않은 페이지';
+      }
+  }
 
 
   const handleLogin = (id, name, isAdmin) => {
@@ -139,37 +188,15 @@ const App = () => {
     setLogin(id, name, true, isAdmin);
   };
 
-  const changeTitle = (data) => {
-    if (data == 'project_list')
-      return '프로젝트 목록'
-    else if (data == 'monitoring')
-      return '모니터링'
-    else if (data == 'editing')
-      return 'DAG 정의'
-    else if (data == 'user_management')
-      return '유저 관리'
-    else if (data == 'admin_project_list')
-      return '관리자용 프로젝트 관리'
-    return "Not Found"
-  }
-
-  const pageOnClick = (data) => {
-    var key = data.key
-    if(key != storageKeyStr){
-      setSelectedKey(key)
-    }
-  }
   return (
     <Content style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Routes>
         <Route
           path="/login"
-          // element={(loggedIn ? <Navigate to='/' /> : <LoginPage handleLogin={handleLogin} />)}
           element={<LoginPage handleLogin={handleLogin}/>}
         />
         <Route
           path="*"
-          // element={(loggedIn ? <><Header className="header" style={{ paddingInline: '16px' }}>
           element={<><Header className="header" style={{ paddingInline: '16px' }}>
             <div style={{ display: 'flex', height: '100%' }}>
 
@@ -196,7 +223,7 @@ const App = () => {
             >
 
               <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} >
-                <Menu theme="dark" defaultSelectedKeys={['1']} selectedKeys={[selectedKey]} mode="inline" items={items} onClick={pageOnClick} />
+                <Menu theme="dark" defaultSelectedKeys={['1']} selectedKeys={[selectedKey]} mode="inline" items={items}/>
               </Sider>
               <Layout className="site-layout">
                 <Content
@@ -211,17 +238,18 @@ const App = () => {
                       <div id='body' >
                         <div id='body_main'>
                           <Content className="body-layout">
-                            <h2>{changeTitle(selectedKey)}</h2>
+                            <h2>{innerTitle}</h2>
                             <Routes>
-                              <Route path='/' element={<ServiceDefine userID={userID} setPage={setSelectedKey} />}></Route>
-                              <Route path='/project_list/*' element={<ServiceDefine userID={userID} setPage={setSelectedKey} />}></Route>
+                              <Route path='/' element={<ServiceDefine userID={userID} />}></Route>
+                              <Route path='/project_list/*' element={<ServiceDefine userID={userID} />}></Route>
                               <Route path='/monitoring/:projectID' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/:projectID' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
                               <Route path='/monitoring/' element={<DagMonitoring setProjectID={setMainProjectID} />}></Route>
                               <Route path='/editing/' element={<DagDefine setProjectID={setMainProjectID} />}></Route>
-                              <Route path='/test/' element={<Test/>}></Route>
-                              <Route path='/users/' element={isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
-                              <Route path='/admin_project_list/' element={isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} />}></Route>
+                              <Route path='/test/' element={<LoadingPage/>}></Route>
+                              <Route path='/users/' element={loggedIn ?  isAdmin ? <UserManagement userID={userID} /> : <Navigate to={'/not_found'} /> : <LoadingPage/>}></Route>
+                              <Route path='/admin_project_list/monitoring/:userID/:projectID' element={loggedIn ? isAdmin ? <DagMonitoring isAdmin={isAdmin} setProjectID={setMainProjectID} /> : <Navigate to={'/not_found'} /> : <LoadingPage/>}></Route>
+                              <Route path='/admin_project_list/' element={loggedIn ? isAdmin ? <AdminServiceDefine userID={userID} /> : <Navigate to={'/not_found'} /> : <LoadingPage/>}></Route>
                               <Route path='*' element={<NotFound />}></Route>
                             </Routes>
                           </Content>

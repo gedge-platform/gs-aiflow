@@ -41,6 +41,10 @@
 
 
 
+.pass_input input{
+    background-color: #F1F1F5;
+}
+
 #image_aieyeflow {
     height: auto;
 }

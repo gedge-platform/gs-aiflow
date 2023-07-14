@@ -17,6 +17,7 @@ import common.logger
 import flask_api.center_client
 import flask_api.runtime_helper
 import flask_api.filesystem_impl
+from flask_api import user_impl
 from flask_api.global_def import g_var, config
 from flask_api.database import get_db_connection
 from flask_api.monitoring_manager import MonitoringManager
@@ -781,7 +782,7 @@ def initProject(userUUID, workspaceName, projectName):
     monitoringManager.deleteWorkFlow(projectID)
     for item in rows:
         flask_api.center_client.podsNameDelete(item['node_name'], workspaceName, 'mec(ilsan)', projectID)
-    return jsonify(status = 'success'), 200
+    return jsonify(status = 'success'), 201
 
 
 def getClusterList(userUUID):
@@ -942,7 +943,7 @@ def getProject(userUUID, projectName):
         if len(rows) != 0:
             pid = getCenterProjectID(rows[0]['project_uuid'], projectName)
             response = flask_api.center_client.userProjectsNameGet(pid)
-            if response['data'] is not None:
+            if response.get('data') is not None:
                 returnResponse = {}
                 returnResponse['projectName'] = projectName
                 returnResponse['projectDescription'] = response['data']['projectDescription']
@@ -953,6 +954,15 @@ def getProject(userUUID, projectName):
                     returnResponse['status'] = 'Running'
                 for cluster in response['data']['selectCluster']:
                     returnResponse['clusterList'].append(cluster['clusterName'])
+
+                #detailInfo
+                returnResponse['DetailInfo'] = []
+                if type(response['data'].get('DetailInfo')) is list:
+                    for detailInfo in response['data'].get('DetailInfo'):
+                        returnResponse['DetailInfo'].append( {
+                            "clusterName" : detailInfo.get('clusterName'),
+                            "resourceUsage" : detailInfo.get('resourceUsage')
+                        })
 
                 #node db
                 returnResponse['nodes'] = {}
@@ -1109,26 +1119,33 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
                 yaml = flask_api.runtime_helper.makeYamlOptValidateRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'], datasetPath, modelPath, outputPath)
             elif(task == 'Inference'):
                 yaml = flask_api.runtime_helper.makeYamlInferenceRuntime(userLoginID, userName, data["projectID"], centerProjectID, node['id'], node['data']['runtime'], node['data']['model'], node['data']['tensorRT'], node['data']['framework'])
+
+            if yaml is None:
+                mycon.rollback()
+                return jsonify(status = 'failed', msg="env error"), 400
+
             yaml = yaml.__str__()
             d = node['data'].__str__()
-            #TODO: yaml 생성
 
             if nodeList.get(node["id"]) != None:
+                print(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
                 cursor.execute(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
                 del nodeList[node["id"]]
             else:
                 cursor.execute(f'insert into TB_NODE (node_uuid, node_name, project_uuid, node_type, yaml, precondition_list, data) ' +
                                f'value ("{uid}", "{node["id"]}", "{projectUUID}", {nodeType}, "{yaml}", "{preCond}",  "{d}")')
-            mycon.commit()
+
+    mycon.commit()
+
 
     for n in nodeList.items():
         cursor.execute(
             f'delete from TB_NODE where node_uuid = "{n[1]}";');
-        mycon.commit()
 
         #delete from k8s
         flask_api.center_client.podsNameDelete(n[0], workspaceName, 'mec(ilsan)', centerProjectID)
 
+    mycon.commit()
 
     return jsonify(status="success"), 200
 
@@ -1223,7 +1240,7 @@ def getProjectAllListForAdmin():
             data['user_name'] = row['user_name']
             data['status'] = 'Waiting'
             if monitoringManager.getIsRunning(getCenterProjectID(row['project_uuid'], row['project_name'])) is True:
-                data['status'] = 'Running'
+                data['status'] = 'Launching'
             projectList.append(data)
         return jsonify(project_list=projectList), 200
     else:
@@ -1254,6 +1271,29 @@ def initProjectForAdmin(loginID, projectName):
 
     return jsonify(status='failed'), 400
 
+def stopProject(user, projectName):
+    mycon = get_db_connection()
+    cursor = mycon.cursor(dictionary=True)
+    cursor.execute(
+        f'select project_uuid from TB_PROJECT where user_uuid = "{user.userUUID}" and project_name = "{projectName}"')
+    rows = cursor.fetchall()
+    if rows is None:
+        return jsonify(status='failed', msg='database error'), 400
+    if len(rows) == 0:
+        return jsonify(status='failed', msg='Project is not found'), 404
+
+    projectID = rows[0]['project_uuid']
+    projectID = getCenterProjectID(projectID, projectName)
+    monitoringManager.deleteWorkFlow(projectID)
+    return jsonify(status='success'), 201
+
+def stopProjectForAdmin(loginID, projectName):
+    user = user_impl.getUser(loginID)
+
+    if user is None:
+        return jsonify(status='failed', msg = f'not found {loginID}'), 404
+    else:
+        return stopProject(user, projectName)
 
 def getPodYaml(projectName, taskName, userUUID):
     mycon = get_db_connection()
@@ -1277,3 +1317,10 @@ def getPodYaml(projectName, taskName, userUUID):
 
 def stringToJsonAvailableStr(str : str):
     return str.replace("\'", "\"").replace("True", "true")
+
+def getDagForAdmin(loginID, projectName, needYaml):
+    user = user_impl.getUser(loginID)
+    if user is None:
+        return jsonify(status='failed', msg = f'not found {loginID}'), 404
+    else:
+        return getDag(user, projectName, needYaml)

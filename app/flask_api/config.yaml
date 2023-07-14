@@ -42,3 +42,8 @@ system_namespace : ""
 #database_info
 mariadb_user : 'admin'
 mariadb_pass : 'admin'
+
+
+#image name
+flask_image : 'flask:{version}'
+react_image : 'react:{version}'
