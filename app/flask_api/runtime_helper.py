@@ -42,9 +42,11 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                  'env': [{'name': 'LD_LIBRARY_PATH',
                           'value': pathJoin('/root/volume/cuda/', cudaPath , '/lib64') + ':' +
                                    pathJoin('/root/volume/cudnn/', cudnnPath, '/lib64') + ':' +
+                                   pathJoin('/root/volume/cuda/', cudaPath, '/lib') + ':' +
+                                   pathJoin('/root/volume/cudnn/', cudnnPath, '/lib') + ':' +
                                    pathJoin('/root/volume/tensorrt/', tensorRTPath, '/lib') +
-                                   (':' + pathJoin('/root/volume/nccl/', ncclPath)) if ncclPath is not None else '' }],
-                 'resources': {'limits': {'cpu': '4', 'memory': '8G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
+                                   ((':' + pathJoin('/root/volume/nccl/', ncclPath, '/lib')) if ncclPath is not None else '') }],
+                 'resources': {'limits': {'cpu': '4', 'memory': '60G', 'nvidia.com/gpu': '1'}}, 'volumeMounts': [
                     {'mountPath': pathJoin('/root/volume/cuda/', cudaPath), 'name': 'nfs-volume-total',
                      'subPath': pathJoin('cuda/', cudaPath),
                      'readOnly': True}, {'mountPath': pathJoin('/root/volume/cudnn/', cudnnPath), 'name': 'nfs-volume-total',
@@ -54,8 +56,8 @@ def getBasicYaml(userLoginID, userName, projectName, projectID, nodeID, runtime,
                      'readOnly': True},
                     {'mountPath': pathJoin('/root/volume/tensorrt/', tensorRTPath), 'name': 'nfs-volume-total',
                      'subPath': pathJoin('tensorrt/', tensorRTPath), 'readOnly': True},
-                    {'mountPath': '/root/volume/dataset/coco128', 'name': 'nfs-volume-total',
-                     'subPath': 'dataset/coco128',
+                    {'mountPath': '/root/volume/dataset', 'name': 'nfs-volume-total',
+                     'subPath': 'dataset',
                      'readOnly': True},
                     {'mountPath': '/root/user', 'name': 'nfs-volume-total',
                      'subPath': pathJoin('user/', userLoginID, projectName)}]}],
@@ -138,38 +140,43 @@ def getBasicPVCYaml(userLoginID, projectName):
 def getBasicPodArgs(model, task, **args):
     if(model == 'yolov5'):
         if task == 'train':
-            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
-                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
-                   f'--device {args.get("device", "0")} --weights {args.get("weightsPath", "./weights/yolov5s-v7.0.pt")} ' \
-                   f'--epochs {args.get("epochs" , "1")} --batch {args.get("batch", "1")} '
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --weights {args.get("weightsPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--epochs {args.get("epochs") or "1"} --batch {args.get("batch") or "1"} '
 
         elif task == 'validation':
-            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
-                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
-                   f'--device {args.get("device", "0")} --weights {args.get("modelPath" , "./weights/yolov5s-v7.0.pt")} ' \
-                   f'--batch-size {args.get("batch", "1")} '
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --weights {args.get("modelPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--batch-size {args.get("batch") or "1"} '
 
         elif task == 'optimization':
-            return f' --weights {args.get("modelPath", "./weights/yolov5s-v7.0.pt")} ' \
-                   f'--include engine --device {args.get("device", "0")} --half ' \
-                   f'--batch-size {args.get("batch", "1")} --imgsz {args.get("imgSize", "640")} --verbose '
+            return f' --weights {args.get("modelPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--include engine --device {args.get("device") or "0"} --half ' \
+                   f'--batch-size {args.get("batch") or "1"} --imgsz {args.get("imgSize") or "640"} --verbose '
 
         elif task == 'opt_validation':
-            return f' --project /root/user --name {args.get("outputPath", "no_path")} ' \
-                   f'--weights {args.get("weightsPath", "./weights/yolov5s-v7.0.pt")} ' \
-                   f'--data {pathJoin(args.get("datasetPath", "."), "/dataset.yaml")} ' \
-                   f'--device {args.get("device", "0")} --batch-size {args.get("batch", "1")} ' \
-                   f'--imgsz {args.get("imgSize", "640")} '
+            return f' --project /root/user --name {args.get("outputPath") or "no_path"} ' \
+                   f'--weights {args.get("weightsPath") or "./weights/yolov5s-v7.0.pt"} ' \
+                   f'--data {pathJoin((args.get("datasetPath") or "."), "/dataset.yaml")} ' \
+                   f'--device {args.get("device") or "0"} --batch-size {args.get("batch") or "1"} ' \
+                   f'--imgsz {args.get("imgSize") or "640"} '
         return ''
     elif(model == 'RetinaFace'):
         if task == 'train':
-            return f''
+            return f' --root_path {pathJoin(args.get("datasetPath") or ".")} ' \
+                   f'--dataset_path {pathJoin(args.get("datasetPath") or "/root/volume/dataset", "wider")} ' \
+                   f'--pretrained {args.get("weightsPath") or "model/R50"}  --pretrained_epoch 0 --prefix {args.get("outputPath") or "model/retinaface"} ' \
+                   f'--end_epoch {args.get("epochs") or "1"} '
 
         elif task == 'validation':
             return f''
 
         elif task == 'optimization':
-            return f''
+            return f' --symbol {(args.get("modelPath") or "./model/R50") + "-symbol.json"} ' \
+                   f'--params {(args.get("modelPath") or "./model/R50") + "-0000.params"} ' \
+                   f'-b {args.get("batch") or "1"} '
 
         elif task == 'opt_validation':
             return f''
@@ -181,7 +188,7 @@ def makeYamlTrainRuntime(userLoginID, userName, projectName, projectID, node_id,
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
     if data is None:
         return None
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
                                                 + '; ./bin/train.sh'
 
     data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'train', outputPath=outputPath, datasetPath=datasetPath)
@@ -192,7 +199,7 @@ def makeYamlValidateRuntime(userLoginID, userName, projectName, projectID, node_
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
     if data is None:
         return None
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
                                                 + '; ./bin/validation.sh '
     data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'validation', outputPath=outputPath, datasetPath=datasetPath, modelPath=modelPath)
     data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'
@@ -211,7 +218,7 @@ def makeYamlOptValidateRuntime(userLoginID, userName, projectName, projectID, no
     data = getBasicYaml(userLoginID, userName, projectName, projectID, node_id, runtime, model, tensorRT, framework, datasetPath, outputPath)
     if data is None:
         return None
-    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', outputPath) \
+    data['spec']['containers'][0]['args'][0] += 'rm -rf ' + pathJoin('/root/user/', (outputPath or 'no_path')) \
                                                 + '; ./bin/opt_validation.sh '
     data['spec']['containers'][0]['args'][0] += getBasicPodArgs(model, 'opt_validation', outputPath= outputPath, datasetPath=datasetPath, modelPath=modelPath)
     data['spec']['containers'][0]['args'][0] += ' &>> /root/user/logs/' + node_id + '.log'

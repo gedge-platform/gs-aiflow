@@ -1128,6 +1128,7 @@ def postDag(userUUID, userLoginID, userName, workspaceName):
             d = node['data'].__str__()
 
             if nodeList.get(node["id"]) != None:
+                print(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
                 cursor.execute(f'update TB_NODE set yaml = "{yaml}", precondition_list = "{preCond}", data = "{d}" where node_uuid = "{nodeList.get(node["id"])}"')
                 del nodeList[node["id"]]
             else:
