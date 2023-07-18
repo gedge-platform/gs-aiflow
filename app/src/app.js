@@ -159,6 +159,7 @@ const App = () => {
   }
 
   const convertTitleFromKey = (key) => {
+    console.log(key)
       if(key == 'project_list'){
         return '프로젝트 목록';
       }
@@ -168,7 +169,7 @@ const App = () => {
       else if(key == 'editing'){
         return 'DAG 정의';
       }
-      else if(key == 'users'){
+      else if(key == 'user_management'){
         return '유저 관리';
       }
       else if(key == 'admin_project_list'){
