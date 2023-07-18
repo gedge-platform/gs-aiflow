@@ -31,11 +31,17 @@ $ sudo npm install -g npm
 
 # current dir: gs-aiflow/app
 $ cd app/
+
+# install npm package
 $ npm install react-router
 $ npm install react-router-dom
 $ npm install axios@^1.1.3
 $ npm install beautiful-react-diagrams@^0.5.1
 $ npm install react-hook-form@^7.39.2
+
+or 
+
+$ npm install .
 ```        
 
 ## Make Docker image
@@ -68,12 +74,31 @@ $ sudo docker run -d -p 5500:5500 --name flask_container -e DB_HOST={DB host} -e
 ```
 $ mkdir system
 ```
-5. Copy runtime_data/conf.d to system folder
+5. Copy runtime_data/conf.d to system folder and runtime Folder
 ```commandline
 NFS Storage Root
 ├── system
 │   └── conf.d
 │       └── default.conf
+├── cuda
+├── cudnn
+├── envs
+├── nccl
+├── tensorrt
 └── ...
 ```
 6. Run bin/setup
+
+# For Run AIFLOW (Important)
+1. Modify config.yaml (essential)
+2. configure Runtime Enviroment Data and Image
+   1.    ```
+         Image /root
+         ├── scripts
+         │   ├── bin
+         │   │   ├── train.sh
+         │   │   ├── optimization.sh
+         │   │   ├── validation.sh
+         │   │   └── opt_validation.sh
+         │   └── ...
+         └── ...
