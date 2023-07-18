@@ -22,48 +22,26 @@ Aiflow offers a set of lightweight environments that can be used with any existi
 
 
 ## Installation
-- check the readme inside app directory
 
 ## System Architecture
 ![GS-aiflow architecutre](./docs/images/gs-aiflow%20architecture.png)
 
+- redis: message broker in GS-aiflow
+- airflow: backend workflow framework in GS-aiflow
   
 ## Features
 - manage workflow with DAG
 - automate configuration and management of tasks
-- work with Kubernetes
+- work with Kubernetes and Dockers
 - optimize and accelerate ML/DL inferencing and training for fastest responce time
-- automate configuration Runtime Enviroment for M/L
 
-## Function
-- Login
-- User
-  - Manage Project(Workflow) List
-  - DAG Workflow Monitoring and Launching
-  - DAG Editing
-  - Manage user storage by jupyter
-- Admin
-  - User Management
-  - All user project monitoring and init & stop
-  
 ## User Interface
-### Login view
-![Login View](./docs/images/login.png)
 
 ### Project view
 ![Task View](./docs/images/project_list.png)
 
-### Graph(DAG) Monitoring view
+### Graph view
 ![Graph View](./docs/images/project_graph_details.png)
-
-### Graph(DAG) Editing view
-![Graph Editing View](./docs/images/project_graph_editing.png)
-
-### User Management view (Admin)
-![User Management view](./docs/images/user_list.png)
-
-### project view (Admin)
-![Admin Project View](./docs/images/admin_project_list.png)
 
 ## Contributing
 If you're interested in being a contributor and want to get involved in developing the GEdge Platform code, please see DOCUMENTATIONs for details on submitting patches and the contribution workflow.
