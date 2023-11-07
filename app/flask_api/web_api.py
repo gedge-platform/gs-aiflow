@@ -237,7 +237,7 @@ def apiNormalUserProjectName(projectName):
     if request.method == 'DELETE':
         return monitor_impl.deleteProject(user.userUUID, user.userLoginID, user.workspaceName, projectName)
     if request.method == 'GET':
-        return monitor_impl.getProject(user.userUUID, projectName)
+        return monitor_impl.getProject(user, projectName)
 
 @app.route('/api/admin/project', methods=['GET'])
 @auth_impl.needLogin()

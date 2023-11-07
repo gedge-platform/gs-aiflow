@@ -40,6 +40,8 @@ def getUsers():
 def getCenterUserName(loginID):
     return config.api_id + "_" + loginID
 
+def getUUIDBySplit(id, full):
+    return full.replace(getCenterUserName(id) + "-", "")
 
 def createUser():
     data = request.json
