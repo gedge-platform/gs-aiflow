@@ -19,6 +19,7 @@ import { getLayoutedElements } from 'utils/graph';
 import TextUpdaterNode from '../chart_node/textUpdaterNode';
 import PodNode from '../chart_node/pod_node_small';
 import 'css/textUpdaterNode.scss'
+import LogModal from 'components/modals/log_modal';
 import axios from 'axios';
 import "css/dagModal.css";
 import { Button, Row, Divider, notification, Modal} from 'antd';
@@ -331,8 +332,7 @@ function AdminFlow(props) {
             style={{ height: '400px' }}>
 
             <h3 ref={(_subtitle) => (subtitle = _subtitle)}>이름 : {title}</h3>
-            {/* <DagModal nodeType={"Pod"} data={selectedNodeData} /> */}
-            "이부분은 로그가 출력될 부분입니다."
+            <LogModal isAdmin={true} userID={userID} podName={title} projectID={id}></LogModal>
           </div>
         </Modal>
         <Modal

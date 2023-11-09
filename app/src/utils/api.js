@@ -16,6 +16,8 @@ const APIAdminGetProject = () => axios.get('/api/admin/project', { withCredentia
 
 const APIAdminGetProjectDetail = (loginID, projectName) => axios.get('/api/admin/project/'+ loginID + '/' + projectName, {withCredentials:true});
 
+const APIAdminGetPodLog = (loginID, projectID, podName) => axios.get('/api/admin/project/' + loginID + '/' + projectID + '/' + podName + '/log', {withCredentials:true});
+
 //// admin end ////
 
 
@@ -109,6 +111,6 @@ const APIGetPodDetail = (podName) => axios.get('/api/pod/' + podName + '/detail'
 
 //// pod env end ////
 
-export { APIGetPodLog, APIAdminStopProject, APIAdminInitProject, APIAdminGetProjectDag, APILogout, APICheckLogin, APIGetProjectDag, APIAdminGetProjectDetail, APIAdminGetProject,
+export { APIAdminGetPodLog, APIGetPodLog, APIAdminStopProject, APIAdminInitProject, APIAdminGetProjectDag, APILogout, APICheckLogin, APIGetProjectDag, APIAdminGetProjectDetail, APIAdminGetProject,
      APIGetProjectList, APILaunchProject, APIInitProject, APILogin, APIGetProjectPodYaml, APIGetCluster, APIGetProjectName, APIAdminGetCluster, APIGetUser, APIGetUserName, APIDeleteProject,
      APICreateUser, APIGetPodEnvModel, APIGetPodEnvFramework, APIGetPodEnvRuntime, APISaveProjectDag,  APIGetPodEnvTensorrt, APIGetPodDetail, APIUpdateUser, APIDeleteUser, APICreateProject}

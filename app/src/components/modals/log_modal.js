@@ -1,5 +1,5 @@
 import { React, useState, useRef, memo} from 'react';
-import { APIGetPodLog } from 'utils/api';
+import { APIGetPodLog, APIAdminGetPodLog } from 'utils/api';
 import Terminal from 'react-console-emulator'
 import { useQuery } from 'react-query';
 
@@ -19,20 +19,32 @@ function LogModal (props)  {
     const terminal = useRef();
     const { isLoading, error, data, isFetching, refetch } = useQuery(
         ['editingDAG' + projectID + podName], () => {
-            if (projectID == undefined){
+            if (projectID == undefined) {
                 return;
             }
 
-            if (podName == undefined){
+            if (podName == undefined) {
                 return;
             }
-            return APIGetPodLog(projectID, podName)
-                .then((res)=>{
 
-                    // terminal.current.clearStdout();
-                    parseLog(res['data']);
-                    return res['data'];
-            })
+            if (props.isAdmin) {
+                return APIAdminGetPodLog(props.userID, projectID, podName)
+                    .then((res) => {
+
+                        // terminal.current.clearStdout();
+                        parseLog(res['data']);
+                        return res['data'];
+                    })
+            }
+            else {
+                return APIGetPodLog(projectID, podName)
+                    .then((res) => {
+
+                        // terminal.current.clearStdout();
+                        parseLog(res['data']);
+                        return res['data'];
+                    })
+            }
         }, {
         refetchOnWindowFocus: false,
         refetchInterval: 2000,
