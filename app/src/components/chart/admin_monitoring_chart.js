@@ -328,8 +328,8 @@ function AdminFlow(props) {
           onOk={afterOpenModal}
           destroyOnClose={true}
         >
-          <div
-            style={{ height: '400px' }}>
+        <div
+          style={{ height: '600px', width:'100%', display:'flex', flexDirection :'column' }}>
 
             <h3 ref={(_subtitle) => (subtitle = _subtitle)}>이름 : {title}</h3>
             <LogModal isAdmin={true} userID={userID} podName={title} projectID={id}></LogModal>
