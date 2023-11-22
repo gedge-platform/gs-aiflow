@@ -230,7 +230,8 @@ def deleteUser(loginID):
                         if row.get('project_uuid') is not None:
                             projectUUID = row.get('project_uuid')
                             projectName = row.get('project_name')
-                            centerProjectID = getCenterProjectID(projectUUID, projectName)
+                            # centerProjectID = getCenterProjectID(projectUUID, projectName)
+                            centerProjectID = projectName
 
                             if projectUUID is not None:
                                 pvName = getBasicPVName(loginID, projectName)
