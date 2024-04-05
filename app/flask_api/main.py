@@ -27,8 +27,6 @@ def main():
     get_logger().info("Start Server")
     try:
         import subprocess as sp
-        url = f"http:\/\/127.0.0.1:{args.port}"
-        # sp.call(['sed', '-i', '-e', f'2s/.*/REACT_APP_API=\"{url}\"/', '.env'], shell=False)
 
         app.secret_key = 'softonnet'
         app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)  # 로그인 지속시간을 정합니다. 현재 30분
@@ -45,9 +43,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--setup',action='store_true')
     parser.add_argument('-p', '--port', type=int, default=5500)
-    # parser.add_argument('-ah' '--api-host', required=True)
-    # parser.add_argument('-aid' '--api-id', required=True)
-    # parser.add_argument('-aps' '--api-pass', required=True)
     parser.add_argument(
         '-c',
         '--config',
@@ -55,10 +50,6 @@ if __name__ == "__main__":
         default='./config.yaml',
         help='server config file path'
     )
-    #parser.add_argument('-t', '--debug', action='store_true')
-    #parser.add_argument('-m', '--host')
-    #parser.add_argument('--daemon', choices=['start', 'stop'])
-
     args = parser.parse_args()
 
     conf_file = args.config
